@@ -23,11 +23,19 @@ jobs:
       - name: Install dev deps
         run: pip install -e ".[dev]"
 
+      - name: Ensure runtime_core exists
+        run: |
+          # runtime-core/ uses a hyphen which is invalid as a Python package name.
+          # If only runtime-core/ exists, create runtime_core/ as a copy.
+          if [ ! -d "runtime_core" ]; then
+            cp -r runtime-core runtime_core
+          fi
+
       - name: Ruff lint
         run: ruff check runtime_core/ ai_engine/ shared/ tests/
 
       - name: Mypy type check
-        run: mypy runtime_core/ ai_engine/ shared/ --ignore-missing-imports
+        run: mypy -p runtime_core -p ai_engine -p shared --ignore-missing-imports
         continue-on-error: true
 
   # ── Unit Tests ─────────────────────────────────────────────────────────────
@@ -45,6 +53,12 @@ jobs:
 
       - name: Install deps
         run: pip install -e ".[dev]"
+
+      - name: Ensure runtime_core exists
+        run: |
+          if [ ! -d "runtime_core" ]; then
+            cp -r runtime-core runtime_core
+          fi
 
       - name: Run unit tests
         run: |
@@ -77,6 +91,12 @@ jobs:
       - name: Install deps
         run: pip install -e ".[dev]"
 
+      - name: Ensure runtime_core exists
+        run: |
+          if [ ! -d "runtime_core" ]; then
+            cp -r runtime-core runtime_core
+          fi
+
       - name: Run integration tests
         run: pytest tests/integration/ -v
         env:
@@ -97,6 +117,12 @@ jobs:
 
       - name: Install deps
         run: pip install -e ".[dev]"
+
+      - name: Ensure runtime_core exists
+        run: |
+          if [ ! -d "runtime_core" ]; then
+            cp -r runtime-core runtime_core
+          fi
 
       - name: DSL Parser
         run: python tests/acceptance/test_dsl_parser.py
