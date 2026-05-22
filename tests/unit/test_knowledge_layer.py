@@ -21,10 +21,8 @@ from ai_engine.knowledge.models import (
     MemoryType,
     OntologyNode,
     PreventiveSuggestion,
-    SuggestionType,
 )
-from ai_engine.knowledge.ontology.registry import OntologyRegistry, get_ontology
-from ai_engine.knowledge.suggestions.engine import SuggestionEngine
+from ai_engine.knowledge.ontology.registry import OntologyRegistry
 from runtime_core.persistence.adapters.sqlite_adapter import SQLiteGraphAdapter
 
 
@@ -347,7 +345,7 @@ class TestLearningEngine:
     @pytest.mark.asyncio
     async def test_feedback_rejected_decays(self, memory):
         engine   = LearningEngine(memory)
-        patterns = await engine.learn_from_defects([make_defect()])
+        await engine.learn_from_defects([make_defect()])
         entries  = await memory.find_by_type(MemoryType.DEFECT_PATTERN)
         if not entries:
             return

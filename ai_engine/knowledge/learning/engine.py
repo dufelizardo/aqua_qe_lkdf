@@ -364,7 +364,6 @@ class LearningEngine:
 
     @staticmethod
     def _pattern_to_memory(pattern: DefectPattern) -> MemoryEntry:
-        import json as _json
         return MemoryEntry(
             memory_type=MemoryType.DEFECT_PATTERN,
             title=pattern.pattern_name,

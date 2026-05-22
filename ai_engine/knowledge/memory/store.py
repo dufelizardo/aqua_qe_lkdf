@@ -14,16 +14,14 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from typing import Any
-from uuid import UUID
 
 import structlog
 
 from ai_engine.knowledge.models import (
-    ConfidenceLevel,
     MemoryEntry,
     MemoryType,
 )
-from runtime_core.persistence.graph.models import Node, RelationType
+from runtime_core.persistence.graph.models import Node
 from runtime_core.persistence.graph.repository import GraphRepository
 
 log = structlog.get_logger(__name__)

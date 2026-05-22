@@ -9,17 +9,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-import pytest
 
 from runtime_core.accessibility.wcag.models import (
     AccessibilityViolation,
     ConformanceLevel,
     ConformanceReport,
     ViolationImpact,
-    ViolationStatus,
-    WcagCriterion,
     WCAG_CRITERIA,
-    CRITERIA_BY_NUMBER,
     aa_criteria,
     criteria_by_level,
     get_criterion,

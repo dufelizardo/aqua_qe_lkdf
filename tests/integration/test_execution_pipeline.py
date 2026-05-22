@@ -4,10 +4,8 @@ AQuA-QE LKDF — Integration Tests: Full Execution Pipeline
 """
 from __future__ import annotations
 
-import asyncio
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -125,7 +123,7 @@ class TestFullPipeline:
 
         report = await engine.execute_flow(flow, context)
 
-        total_steps = sum(len(s.steps) for s in flow.scenarios)
+        sum(len(s.steps) for s in flow.scenarios)
         executed    = sum(len(r.step_results) for r in report.scenario_results)
         # At minimum the first scenario should complete fully
         assert executed > 0

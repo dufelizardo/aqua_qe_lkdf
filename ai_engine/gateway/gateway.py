@@ -13,6 +13,7 @@ Abstração multi-LLM com:
 from __future__ import annotations
 
 import asyncio
+import os
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -444,8 +445,6 @@ class AIGateway:
 # ---------------------------------------------------------------------------
 # Singleton factory
 # ---------------------------------------------------------------------------
-
-import os
 
 def create_default_gateway() -> AIGateway:
     """

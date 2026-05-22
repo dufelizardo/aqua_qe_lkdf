@@ -286,7 +286,7 @@ class ScenarioAgent:
             return self._rule_based_enrichment(flow, self._engine.compose(flow))
 
         # Build prompt
-        scenarios_summary = "\n".join(
+        "\n".join(
             f"  - {s.name}: {len(s.steps)} steps ({s.step_type if hasattr(s, 'step_type') else ''})"
             for s in flow.scenarios
         )
@@ -526,9 +526,9 @@ Gere cenários adicionais, datasets, análise de segurança e cross-impact."""
                 )
                 priority_raw = item.get("priority", "MEDIUM").upper()
                 try:
-                    priority = Priority[priority_raw]
+                    Priority[priority_raw]
                 except KeyError:
-                    priority = Priority.MEDIUM
+                    pass
 
                 cat_raw = item.get("category", "edge_case")
                 try:

@@ -31,9 +31,8 @@ from ai_engine.knowledge.models import (
     MemoryEntry,
     MemoryType,
     PreventiveSuggestion,
-    SuggestionType,
 )
-from ai_engine.knowledge.ontology.registry import OntologyNode, OntologyRegistry, get_ontology
+from ai_engine.knowledge.ontology.registry import OntologyNode, get_ontology
 from ai_engine.knowledge.suggestions.engine import SuggestionEngine
 from runtime_core.persistence.graph.repository import GraphRepository
 

@@ -13,12 +13,9 @@ Responsável por:
 from __future__ import annotations
 
 import hashlib
-import itertools
-from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
-from uuid import uuid4
 
 import structlog
 
@@ -245,10 +242,14 @@ class ScenarioEngine:
 
         # Coverage score: 0-100
         score = 0.0
-        if has_happy:    score += 40.0
-        if has_negative: score += 30.0
-        if has_boundary: score += 20.0
-        if len(composed) >= 3: score += 10.0
+        if has_happy:
+            score += 40.0
+        if has_negative:
+            score += 30.0
+        if has_boundary:
+            score += 20.0
+        if len(composed) >= 3:
+            score += 10.0
 
         gaps: list[str] = []
         recs: list[str] = []
@@ -454,10 +455,13 @@ class ScenarioEngine:
     @staticmethod
     def _invalid_value_for(value: str) -> str:
         """Gera valor inválido correspondente ao valor válido."""
-        if "@" in value:        # email
+        if "@" in value:
+                # email
             return "nao-e-um-email"
-        if value.isdigit():     # number
+        if value.isdigit():
+             # number
             return "-1"
-        if len(value) > 5:     # long string → empty
+        if len(value) > 5:
+             # long string → empty
             return ""
         return "INVALIDO_TESTE"

@@ -25,7 +25,7 @@ from runtime_core.adapters.api.contracts.models import (
     ContentType,
     HttpMethod,
 )
-from runtime_core.adapters.api.rest.adapter import RestAdapter, RestStepResult
+from runtime_core.adapters.api.rest.adapter import RestAdapter
 from shared.models import AdapterType, RuntimeContext
 
 log = structlog.get_logger(__name__)
@@ -268,22 +268,12 @@ class GraphQLAdapter(RestAdapter):
         expected   = p.get("expected")
         op_str     = p.get("op", "eq")
 
-        actual = self._last_gql_response.get(field_path)
-        op     = AssertionOp(op_str)
+        op        = AssertionOp(op_str)
         assertion = ApiAssertion(field=field_path, op=op, expected=expected)
 
-        # Evaluate manually since we have GraphQLResponse not ApiResponse
-        fake_response = type("R", (), {"body": self._last_gql_response.data,
-                                       "status_code": 200,
-                                       "headers": {},
-                                       "json_path": lambda self, p: _path(self.body, p),
-                                       "header": lambda self, n: None})()
-
-        from runtime_core.adapters.api.contracts.models import _json_path
-        actual = _json_path(self._last_gql_response.data, field_path)
-
         from runtime_core.adapters.api.contracts.models import ApiResponse as AR
-        dummy = AR(request_id=__import__("uuid").uuid4(), body=self._last_gql_response.data)
+        import uuid as _uuid
+        dummy = AR(request_id=_uuid.uuid4(), body=self._last_gql_response.data)
         result = assertion.evaluate(dummy)
         if not result.passed:
             raise AssertionError(result.message)

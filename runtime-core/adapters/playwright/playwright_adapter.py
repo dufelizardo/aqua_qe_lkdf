@@ -90,10 +90,14 @@ class PlaywrightAdapter(BaseAdapter):
 
         # Apply extra config from ProjectContext
         extra = context.project.extra or {}
-        if "browser"  in extra: self._manager.config.browser  = extra["browser"]
-        if "headless" in extra: self._manager.config.headless = extra["headless"]
-        if "video"    in extra: self._manager.config.video    = extra["video"]
-        if "slow_mo"  in extra: self._manager.config.slow_mo  = int(extra["slow_mo"])
+        if "browser"  in extra:
+            self._manager.config.browser  = extra["browser"]
+        if "headless" in extra:
+            self._manager.config.headless = extra["headless"]
+        if "video"    in extra:
+            self._manager.config.video    = extra["video"]
+        if "slow_mo"  in extra:
+            self._manager.config.slow_mo  = int(extra["slow_mo"])
 
         await self._manager.start()
         log.info(

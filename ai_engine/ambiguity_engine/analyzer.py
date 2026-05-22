@@ -236,7 +236,7 @@ class AmbiguityAnalyzer:
         rule_findings:  list[Ambiguity],
     ) -> dict[str, Any]:
         try:
-            client = self._get_client()
+            self._get_client()
         except RuntimeError as exc:
             log.warning("claude_unavailable", error=str(exc))
             return {}
@@ -399,8 +399,10 @@ class AmbiguityAnalyzer:
         has_critical = any(a.severity == AmbiguitySeverity.CRITICAL for a in ambiguities)
         has_high     = any(a.severity == AmbiguitySeverity.HIGH     for a in ambiguities)
 
-        if has_critical:   return RiskLevel.HIGH
-        if has_high:       return RiskLevel.MEDIUM
+        if has_critical:
+            return RiskLevel.HIGH
+        if has_high:
+            return RiskLevel.MEDIUM
         return RiskLevel.LOW
 
     # ------------------------------------------------------------------

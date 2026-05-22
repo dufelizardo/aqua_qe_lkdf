@@ -10,10 +10,12 @@ Responsável por:
 """
 from __future__ import annotations
 
+from typing import Any
+
 import json
 from datetime import datetime
 from pathlib import Path
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from shared.models import ExecutionReport, ExecutionStatus, TraceEntry
 

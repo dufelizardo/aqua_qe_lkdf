@@ -9,9 +9,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-import pytest
 
-from shared.models import Flow, Priority, ProjectContext, Scenario, SemanticStep, StepKeyword, StepType
+from shared.models import ProjectContext, SemanticStep, StepKeyword, StepType
 from runtime_core.pom_layer.registry import (
     Locator, LocatorStrategy, PageElement, PageObject, POMRegistry,
 )

@@ -6,22 +6,20 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import pytest
 
 from ai_engine.scenario_agent.agent import (
-    CrossImpactIssue,
     ScenarioAgent,
     ScenarioAgentResult,
-    SecurityScenario,
 )
 from ai_engine.scenario_agent.pipeline import CognitivePipeline, CognitivePipelineResult
 from runtime_core.parser.dsl_parser import DSLParser
 from runtime_core.scenario_engine.engine import ScenarioCategory
-from shared.models import AdapterType, Flow, Priority, ProjectContext, Scenario, SemanticStep, StepKeyword, StepType
+from shared.models import Flow, ProjectContext, StepType
 
 
 # ---------------------------------------------------------------------------

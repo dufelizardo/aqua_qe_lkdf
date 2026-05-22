@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -21,7 +21,6 @@ from runtime_core.adapters.api.contracts.models import (
     AssertionOp,
     AuthConfig,
     AuthStrategy,
-    ContentType,
     HttpMethod,
     _json_path,
 )

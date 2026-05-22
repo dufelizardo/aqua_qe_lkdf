@@ -226,34 +226,53 @@ class ApiAssertion:
         exp = self.expected
         try:
             match self.op:
-                case AssertionOp.EQ:          return actual == exp
-                case AssertionOp.NEQ:         return actual != exp
-                case AssertionOp.GT:          return actual > exp
-                case AssertionOp.GTE:         return actual >= exp
-                case AssertionOp.LT:          return actual < exp
-                case AssertionOp.LTE:         return actual <= exp
+                case AssertionOp.EQ:
+                    return actual == exp
+                case AssertionOp.NEQ:
+                    return actual != exp
+                case AssertionOp.GT:
+                    return actual > exp
+                case AssertionOp.GTE:
+                    return actual >= exp
+                case AssertionOp.LT:
+                    return actual < exp
+                case AssertionOp.LTE:
+                    return actual <= exp
                 case AssertionOp.CONTAINS:
-                    if isinstance(actual, str):   return str(exp) in actual
-                    if isinstance(actual, list):  return exp in actual
-                    if isinstance(actual, dict):  return exp in actual
+                    if isinstance(actual, str):
+                        return str(exp) in actual
+                    if isinstance(actual, list):
+                        return exp in actual
+                    if isinstance(actual, dict):
+                        return exp in actual
                     return False
                 case AssertionOp.NOT_CONTAINS:
-                    if isinstance(actual, str):   return str(exp) not in actual
-                    if isinstance(actual, list):  return exp not in actual
+                    if isinstance(actual, str):
+                        return str(exp) not in actual
+                    if isinstance(actual, list):
+                        return exp not in actual
                     return True
                 case AssertionOp.MATCHES:
                     import re
                     return bool(re.search(str(exp), str(actual)))
-                case AssertionOp.EXISTS:      return actual is not None
-                case AssertionOp.NOT_EXISTS:  return actual is None
-                case AssertionOp.IS_NULL:     return actual is None
-                case AssertionOp.IS_NOT_NULL: return actual is not None
-                case AssertionOp.LENGTH_EQ:   return len(actual) == exp
-                case AssertionOp.LENGTH_GT:   return len(actual) > exp
-                case AssertionOp.LENGTH_LT:   return len(actual) < exp
+                case AssertionOp.EXISTS:
+                    return actual is not None
+                case AssertionOp.NOT_EXISTS:
+                    return actual is None
+                case AssertionOp.IS_NULL:
+                    return actual is None
+                case AssertionOp.IS_NOT_NULL:
+                    return actual is not None
+                case AssertionOp.LENGTH_EQ:
+                    return len(actual) == exp
+                case AssertionOp.LENGTH_GT:
+                    return len(actual) > exp
+                case AssertionOp.LENGTH_LT:
+                    return len(actual) < exp
                 case AssertionOp.SCHEMA:
                     return self._validate_schema(actual, exp)
-                case _:                       return False
+                case _:
+                    return False
         except (TypeError, AttributeError):
             return False
 

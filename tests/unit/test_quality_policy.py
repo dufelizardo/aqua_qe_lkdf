@@ -471,7 +471,7 @@ class TestPolicyEngine:
         await db.initialize()
         eng    = PolicyEngine(repository=db)
         ctx    = perfect_story_ctx()
-        report = await eng.evaluate_story("BFTG-PERSIST", ctx)
+        await eng.evaluate_story("BFTG-PERSIST", ctx)
         nodes  = await db.find_nodes(label="PolicyReport")
         assert len(nodes) >= 1
         assert nodes[0].properties["subject_id"] == "BFTG-PERSIST"

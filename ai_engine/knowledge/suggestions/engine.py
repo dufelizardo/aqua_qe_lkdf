@@ -12,13 +12,10 @@ Integra com o CognitivePipeline como etapa pós-análise de requisito.
 """
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any
 
 import structlog
 
 from ai_engine.knowledge.models import (
-    DefectPattern,
     MemoryEntry,
     MemoryType,
     PreventiveSuggestion,
@@ -227,8 +224,8 @@ class SuggestionEngine:
             title=f"Modo de falha: {memory.title}",
             description=memory.description,
             rationale=(
-                f"Modo de falha recorrente neste domínio. "
-                f"Adicione cenário de teste para cobrir este caminho."
+                "Modo de falha recorrente neste domínio. "
+                "Adicione cenário de teste para cobrir este caminho."
             ),
             source_pattern=str(memory.id),
             target_story_id=req_id,

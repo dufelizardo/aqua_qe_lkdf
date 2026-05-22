@@ -11,8 +11,6 @@ Permite que o sistema:
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
 
 from ai_engine.knowledge.models import OntologyNode
 

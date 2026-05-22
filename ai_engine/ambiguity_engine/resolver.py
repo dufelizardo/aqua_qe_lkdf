@@ -22,7 +22,6 @@ from ai_engine.ambiguity_engine.models import (
     Ambiguity,
     AmbiguityReport,
     AmbiguitySeverity,
-    RiskLevel,
 )
 
 log = structlog.get_logger(__name__)

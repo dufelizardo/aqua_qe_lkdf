@@ -367,13 +367,18 @@ class SeleniumAdapter(BaseAdapter):
         if action in ("navigate", "open_page", "open_url"):
             target = params.get("page", params.get("target", params.get("url", "")))
             url = target if target.startswith("http") else f"{self._base_url}/{target.lstrip('/')}"
-            d.get(url); self._current_page = target; return
+            d.get(url)
+            self._current_page = target
+            return
         if action in ("fill", "fill_field"):
-            d.find_element("css", "input").send_keys(str(params.get("value", ""))); return
+            d.find_element("css", "input").send_keys(str(params.get("value", "")))
+            return
         if action in ("click", "click_element"):
-            d.find_element("css", "button").click(); return
+            d.find_element("css", "button").click()
+            return
         if action == "submit_form":
-            d.find_element("tag", "form").submit(); return
+            d.find_element("tag", "form").submit()
+            return
         if action in ("assert_text", "assert_message", "assert_result"):
             text = params.get("text", params.get("expected", ""))
             if text.lower() not in d.page_source.lower():
@@ -385,7 +390,9 @@ class SeleniumAdapter(BaseAdapter):
                 raise AssertionError(f"URL esperada '{expected}', atual '{d.current_url}'")
             return
         if action == "wait_seconds":
-            import time; time.sleep(float(str(params.get("seconds", "0")).rstrip("s"))); return
+            import time
+            time.sleep(float(str(params.get("seconds", "0")).rstrip("s")))
+            return
         if action in ("assert_title", "assert_visible", "assert_hidden", "wait_for_element"):
             return
         log.debug("selenium_mock_generic", action=action)
