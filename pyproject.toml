@@ -51,9 +51,6 @@ where   = ["."]
 include = ["shared", "shared.*", "runtime_core", "runtime_core.*", "ai_engine", "ai_engine.*"]
 exclude = ["tests*", "frontend*"]
 
-[tool.setuptools.package-dir]
-"runtime_core" = "runtime-core"
-
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths    = ["tests"]

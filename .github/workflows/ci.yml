@@ -24,10 +24,10 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Ruff lint
-        run: ruff check "runtime-core/" ai_engine/ shared/ tests/
+        run: ruff check runtime_core/ ai_engine/ shared/ tests/
 
       - name: Mypy type check
-        run: mypy "runtime-core/" ai_engine/ shared/ --ignore-missing-imports
+        run: mypy runtime_core/ ai_engine/ shared/ --ignore-missing-imports
         continue-on-error: true
 
   # ── Unit Tests ─────────────────────────────────────────────────────────────
