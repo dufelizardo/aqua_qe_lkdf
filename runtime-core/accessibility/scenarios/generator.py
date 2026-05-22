@@ -21,13 +21,11 @@ import structlog
 from runtime_core.accessibility.wcag.models import (
     AccessibilityViolation,
     ConformanceLevel,
-    ConformanceReport,
     WcagCriterion,
     aa_criteria,
 )
 from runtime_core.accessibility.nielsen.heuristics import (
     HEURISTICS,
-    HeuristicId,
     NielsenViolation,
 )
 from shared.models import (
@@ -299,7 +297,7 @@ class AccessibilityScenarioGenerator:
         component = v.component or "o componente"
         return [
             f"Dado que o usuário acessa {component}",
-            f"Quando o usuário interage com a interface",
+            "Quando o usuário interage com a interface",
             f"Então é esperado que a heurística '{h.name if h else v.heuristic.name}' seja satisfeita",
             f"E é esperado que '{v.checklist_item}' esteja correto",
             f"E é esperado que '{v.recommendation}' esteja implementado",
