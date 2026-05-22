@@ -1,635 +1,229 @@
-# AQuA-QE LKDF — Layered Keyword-Driven Framework
+# AQuA-QE LKDF v1.4
 
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-green.svg)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-14.2+-black.svg)](https://nextjs.org/)
+> **Layered Keyword-Driven Framework** — Plataforma cognitiva de Quality Engineering ponta-a-ponta.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/dufelizardo/aqua_qe_lkdf/actions/workflows/ci.yml/badge.svg)](https://github.com/dufelizardo/aqua_qe_lkdf/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![Tests](https://img.shields.io/badge/tests-581%20passing-brightgreen)
+![Lint](https://img.shields.io/badge/ruff-passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
 
 <!-- Visitor badges: unique visitors & page views -->
-[![Visitor Count](https://visitor-badge.laobi.icu/badge?page_id=dufelizardo.aqua_qe_lkdf)](https://github.com/dufelizardo/aqua_qe_lkdf)
-
-
-**AQuA-QE LKDF** is a cognitive quality and testing platform that combines **Keyword-Driven Testing**, **Semantic DSL**, **Generative AI**, and **Requirements Traceability** in a single ecosystem.
-
-> 🇵🇹 **Available in Portuguese**: [README-pt.md](README-pt.md)
+![](https://komarev.com/ghpvc/?username=dufelizardo&repo=aqua_qe_lkdf&color=blue)
+[![](https://komarev.com/ghpvc/?username=dufelizardo&repo=aqua_qe_lkdf&label=Visitors&color=0e75b6&style=flat)](https://github.com/dufelizardo/aqua_qe_lkdf)
 
 ---
 
-## 📋 Overview
+## O que é
 
-AQuA-QE (Adaptive Quality Automation - QE) LKDF offers a revolutionary approach to test automation:
-
-- **🔑 Keyword-Driven Framework**: Semantic DSL inspired by Gherkin, 100% readable for non-technical stakeholders
-- **🧠 Cognitive Engine**: Generative AI that analyzes requirements, generates test scenarios, and detects ambiguities
-- **🔄 Multi-Adapter**: Supports Selenium, Playwright, Cypress, Robot Framework, and APIs (REST/GraphQL)
-- **📊 Complete Traceability**: Automatic RTM (Requirement Traceability Matrix), bidirectional linkage between requirements and tests
-- **♿ Accessibility & WCAG**: Automatic validation (WCAG 2.1, Axe-core, Nielsen)
-- **🚀 Execution Pipeline**: Real-time streaming, dry-run, automatic retry
-- **📦 Modular & Extensible**: Layered architecture with customizable plugins
-
----
-
-## 🏗️ Architecture
+O LKDF transforma requisitos em linguagem natural em testes executáveis, com rastreabilidade bidirecional e conformidade WCAG — sem configuração manual de locators, sem scripts frágeis.
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        LKDF Frontend (Next.js)                  │
-│                    UI for DSL, Flows, RTM, etc                  │
-└────────────────────────────┬────────────────────────────────────┘
-                             │ HTTP REST/WebSocket
-┌────────────────────────────▼────────────────────────────────────┐
-│                  FastAPI Runtime Core (Python)                  │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌──────────────┐  ┌────────────────────────┐  │
-│  │  DSL Parser │  │ Execution    │  │ Evidence Engine        │  │
-│  │  & Validator│  │ Engine       │  │ & Traceability (RTM)   │  │
-│  └─────────────┘  └──────────────┘  └────────────────────────┘  │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │           AI Engine (Cognitive Layer)                    │   │
-│  ├──────────────────────────────────────────────────────────┤   │
-│  │ • RequirementAgent (Claude)      — Requirement Analysis  │   │
-│  │ • ScenarioAgent (Claude)         — Scenario Generation   │   │
-│  │ • AmbiguityEngine (NLP)          — Ambiguity Detection   │   │
-│  │ • KnowledgeLayer (Qdrant+LLM)    — Context Aware         │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │         Adapter Layer (Multi-Framework Support)          │   │
-│  ├──────────────────────────────────────────────────────────┤   │
-│  │ • Robot Framework   • Selenium   • Playwright            │   │
-│  │ • Cypress          • REST API   • GraphQL                │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │    Accessibility Engine (WCAG, Axe, Nielsen)             │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                             │
-         ┌───────────────────┼───────────────────┐
-         │                   │                   │
-    Selenium/       Playwright/Robot      API Contracts
-    Chromium       Browser Automation
+Requisito → Cognitive Engine → Flow DSL → Execution → Evidências → RTM → Quality Gates
 ```
-
-### Key Components
-
-#### 1. **Parser Engine** (`runtime-core/parser`)
-- Tokenizer and validator of semantic DSL based on Gherkin
-- Extraction of metadata (requirements, adapters, tags, priorities)
-- Generation of Abstract Syntax Tree (AST) for execution
-
-#### 2. **Execution Engine** (`runtime-core/execution_engine`)
-- Test orchestrator (parallel/sequential)
-- Real-time result streaming (Server-Sent Events)
-- Automatic retry, timeouts, and state rollback
-- Dry-run support
-
-#### 3. **AI Engine** (`ai_engine`)
-- **RequirementAgent**: Analyzes requirements in natural language, generates test scenarios, and identifies gaps
-- **ScenarioAgent**: Automatic extension with edge cases, security, concurrency scenarios
-- **AmbiguityEngine**: Detection and resolution of ambiguities using NLP
-- **KnowledgeLayer**: Semantic storage with Qdrant + embeddings
-
-#### 4. **Adapters** (`runtime-core/adapters`)
-- **Selenium/Playwright/Cypress**: UI automation
-- **Robot Framework**: Integration with existing Robot suites
-- **REST/GraphQL APIs**: Backend testing
-
-#### 5. **Evidence & RTM** (`runtime-core/evidence_engine`)
-- Automatic evidence collection (screenshots, logs, requests)
-- Requirement Traceability Matrix (RTM) bidirectional
-- Requirements coverage tracking
-
-#### 6. **Accessibility Suite** (`runtime-core/accessibility`)
-- WCAG 2.1 validation (levels A, AA, AAA)
-- Axe-core integration for accessibility analysis
-- Nielsen heuristics for UX
 
 ---
 
-## 🚀 Quick Start
-
-### Requirements
-
-- **Python 3.12+**
-- **Node.js 18+** (for frontend)
-- **Docker** (optional, for infrastructure)
-
-### Backend Installation
+## Instalação rápida
 
 ```bash
-# Clone the repository
 git clone https://github.com/dufelizardo/aqua_qe_lkdf.git
 cd aqua_qe_lkdf
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -e ".[ai]"  # Install with AI (Claude, Qdrant)
-# or
-pip install -e .        # Core only
-
-# Run the server
-python -m runtime_core.api
-# or
-uvicorn runtime_core.api:app --reload --host 0.0.0.0 --port 8080
+pip install -e ".[dev]"
+playwright install chromium
+pytest tests/unit/        # 581 testes passando
+uvicorn runtime_core.api:app --port 8080 --reload
 ```
 
-**Server running at**: `http://localhost:8080`
-
-**Swagger Docs**: `http://localhost:8080/docs`
-
-### Frontend Installation
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Run in development
-npm run dev
+**Variáveis de ambiente** (`.env`):
 ```
-
-**Frontend running at**: `http://localhost:3000`
-
----
-
-## 📖 Usage Guide
-
-### 1. Create a Flow in DSL
-
-```gherkin
-@flow Buy Product
-@adapter playwright
-@requirement REQ-USER-001
-
-@scenario User successfully buys product
-@priority high
-@tags Smoke, E2E
-
-# Setup
-Given user is logged in as "customer@example.com"
-Given product "MacBook Pro" is in stock with price "2499.99"
-
-# Action
-When user searches for "MacBook Pro"
-And clicks "Add to Cart"
-And proceeds to checkout
-
-# Validation
-Then order is confirmed successfully
-And order appears in order history
-And confirmation email is sent
-And checkout page meets WCAG AA accessibility
-```
-
-### 2. Parse & Validation (REST API)
-
-```bash
-curl -X POST http://localhost:8080/flows/parse \
-  -H "Content-Type: application/json" \
-  -d '{
-    "source": "@flow Buy Product\n...",
-    "validate_only": false
-  }'
-```
-
-**Response**:
-```json
-{
-  "valid": true,
-  "flow_name": "Buy Product",
-  "scenarios": 1,
-  "steps": 6,
-  "warnings": [],
-  "flow": { /* AST */ }
-}
-```
-
-### 3. Execute a Flow
-
-```bash
-curl -X POST http://localhost:8080/flows/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "source": "@flow Buy Product\n...",
-    "context": {
-      "base_url": "https://ecommerce.example.com",
-      "adapter": "playwright"
-    }
-  }'
-```
-
-**Response**:
-```json
-{
-  "execution_id": "exec-uuid-12345",
-  "status": "running",
-  "message": "Execution started for 'Buy Product' — 1 scenarios."
-}
-```
-
-### 4. Get Execution Result
-
-```bash
-curl http://localhost:8080/flows/execute/exec-uuid-12345
-```
-
-**Response**:
-```json
-{
-  "execution_id": "exec-uuid-12345",
-  "status": "passed",
-  "flow_name": "Buy Product",
-  "scenarios": [
-    {
-      "name": "User successfully buys product",
-      "status": "passed",
-      "duration_ms": 4523,
-      "steps": [ /* step results */ ],
-      "evidence": [ /* screenshots, logs */ ]
-    }
-  ],
-  "total_duration_ms": 4523,
-  "passed": 1,
-  "failed": 0
-}
-```
-
-### 5. Analyze Requirement with AI
-
-```bash
-curl -X POST http://localhost:8080/requirements/analyze \
-  -H "Content-Type: application/json" \
-  -d '{
-    "requirement_text": "The system must allow users to login with email and password, with 2FA validation.",
-    "requirement_id": "REQ-AUTH-001"
-  }'
-```
-
-**Response**:
-```json
-{
-  "requirement_id": "REQ-AUTH-001",
-  "interpreted_intent": "Secure authentication with 2FA support",
-  "business_rules": [
-    {
-      "description": "Credential validation",
-      "entities": ["User", "Email", "Password"],
-      "conditions": ["Valid email", "Password > 8 chars"],
-      "outcomes": ["Token generated", "Session started"]
-    }
-  ],
-  "ambiguities": [
-    "Type of 2FA (SMS, Email, Authenticator App)?"
-  ],
-  "gaps": [
-    "Failed login handling (attempt limit)?",
-    "Account recovery?"
-  ],
-  "suggested_scenarios": [
-    "Login with valid email and password",
-    "Login with 2FA via SMS",
-    "Login with invalid email (should reject)",
-    "5 failed attempts limit"
-  ],
-  "risk_level": "high",
-  "generated_flow_dsl": "@flow Authentication with 2FA\n..."
-}
-```
-
-### 6. Access Requirements Traceability Matrix
-
-```bash
-curl http://localhost:8080/rtm
+ANTHROPIC_API_KEY=sk-ant-...     # Obrigatório para IA cognitiva
+LKDF_DB_URL=sqlite+aiosqlite:///./data/lkdf.db
 ```
 
 ---
 
-## 🔌 API Endpoints
+## Primeiro Flow
 
-### Health & Status
-- `GET /health` - Server health check
+Crie um arquivo `.lkdf` com DSL semântico em português:
 
-### DSL Parser
-- `POST /flows/parse` - Parse and validate DSL
-- `GET /flows/{id}` - Get Flow by ID
+```
+# Flow: LoginFlow
+# Requirement: REQ-001
+# Adapter: playwright
 
-### Execution
-- `POST /flows/execute` - Start execution (async)
-- `GET /flows/execute/{execution_id}` - Get execution report
-- `POST /flows/execute/stream` - Execution with SSE streaming
+@flow LoginFlow
+  @scenario ValidLogin
+    Dado que o usuário está na página de login
+    Quando o usuário insere "user@empresa.com" no campo email
+    E o usuário insere "senha123" no campo senha
+    Quando o usuário clica no botão "Entrar"
+    Então é esperado que seja redirecionado para o dashboard
+```
 
-### Cognitive Engine
-- `POST /requirements/analyze` - Requirement analysis with AI
-- `POST /scenarios/generate` - Automatic scenario generation
-
-### Traceability
-- `GET /rtm` - Requirement Traceability Matrix
-- `GET /rtm/coverage` - Coverage report
-
-### Configuration
-- `GET /config` - Get runtime configuration
-- `POST /config` - Update configuration
+Execute:
+```bash
+lkdf run --dsl flows/login.lkdf --adapter playwright
+```
 
 ---
 
-## 📁 Project Structure
+## Arquitetura
 
 ```
 aqua_qe_lkdf/
-├── ai_engine/                          # Cognitive engine
-│   ├── requirement_agent/              # Requirement analysis (Claude)
-│   ├── scenario_agent/                 # Scenario generation (Claude)
-│   ├── ambiguity_engine/               # Ambiguity detection (NLP)
-│   ├── knowledge/                      # Knowledge Layer (Qdrant)
-│   │   ├── facade.py
-│   │   ├── memory/                     # Memory store
-│   │   ├── learning/                   # Learning engine
-│   │   ├── ontology/                   # Domain ontologies
-│   │   └── suggestions/                # Suggestion engine
-│   └── gateway/                        # AI gateway (Claude API)
-│
-├── runtime-core/                       # Execution core
-│   ├── parser/                         # DSL Parser & Validator
-│   ├── execution_engine/               # Execution orchestrator
-│   ├── scenario_engine/                # Scenario composition
-│   ├── semantic_engine/                # Semantic resolution
-│   ├── context_engine/                 # Execution context
-│   ├── assertion_engine/               # Validations
-│   ├── evidence_engine/                # Evidence collection & RTM
-│   ├── adapters/                       # Multi-framework support
-│   │   ├── selenium/
-│   │   ├── playwright/
-│   │   ├── cypress/
-│   │   ├── robot/
-│   │   ├── api/
-│   │   └── factory.py
-│   ├── accessibility/                  # WCAG, Axe, Nielsen
-│   ├── quality_policy/                 # Quality gates & policies
-│   ├── persistence/                    # Database adapters
-│   ├── pom_layer/                      # POM registry
-│   ├── story_lifecycle/                # Story versioning & diffs
-│   ├── pipeline/                       # Fanout pipeline
-│   ├── api.py                          # FastAPI app
-│   ├── cli.py                          # CLI entrypoint
-│   └── execution_engine.py
-│
-├── frontend/                           # Next.js Frontend
-│   ├── src/
-│   │   ├── app/                        # Pages
-│   │   │   ├── page.tsx                # Dashboard
-│   │   │   ├── flows/                  # Flow management
-│   │   │   ├── executions/             # Execution history
-│   │   │   ├── rtm/                    # Requirements Traceability
-│   │   │   ├── accessibility/          # Accessibility reports
-│   │   │   ├── knowledge/              # Knowledge base
-│   │   │   └── settings/               # Configuration
-│   │   └── components/                 # Reusable components
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── shared/                             # Shared models
-│   └── models.py                       # Pydantic models
-│
-├── infrastructure/                     # Docker & deployment
-│   ├── Dockerfile.runtime
-│   └── docker-compose.yml
-│
-├── tests/                              # Test suite
-│   ├── unit/                           # Unit tests
-│   └── integration/                    # Integration tests
-│
-├── pyproject.toml                      # Python dependencies
-└── README.md                           # You are here!
+├── runtime_core/          # Runtime — DSL, Execution, Adapters, Persistence
+│   ├── parser/            # DSL Parser (Tokenizer → AST → Validator)
+│   ├── semantic_engine/   # Intent Resolver (30 padrões semânticos)
+│   ├── execution_engine/  # State Machine + Fan-Out Pipeline async
+│   ├── adapters/          # Playwright · Selenium · Cypress · API · Robot
+│   ├── persistence/       # GraphRepository (SQLite → Neo4j plug-in)
+│   ├── story_lifecycle/   # Versionamento DEF/IMP/REG · Diff · P0/P1/P2
+│   ├── quality_policy/    # 12 Quality Gates configuráveis
+│   ├── accessibility/     # WCAG 2.1/2.2 · axe-core · Nielsen
+│   ├── evidence_engine/   # RTM · Traceability · Screenshots
+│   └── api.py             # FastAPI gateway
+├── ai_engine/             # Camada cognitiva
+│   ├── gateway/           # AI Gateway: Claude · OpenAI · Gemini · Ollama
+│   ├── requirement_agent/ # Análise semântica de requisitos
+│   ├── scenario_agent/    # Geração cognitiva de cenários
+│   ├── ambiguity_engine/  # Detecção de ambiguidades (6 tipos)
+│   └── knowledge/         # Memória organizacional · Aprendizado
+├── shared/                # Contratos de domínio
+├── frontend/              # React/Next.js 14 · Dashboard · DSL Editor · RTM
+└── tests/                 # 581 testes unitários + integração + acceptance
+```
+
+### Camadas e responsabilidades
+
+| Camada | Responsabilidade | Tecnologia |
+|--------|-----------------|------------|
+| **DSL Layer** | Parseia texto semântico em Flow Python | Tokenizer próprio |
+| **Semantic Layer** | Mapeia steps para intent + action | IntentResolver |
+| **Execution Layer** | Orquestra execução via State Machine | Python async |
+| **Adapter Layer** | Traduz actions para browser/API/CLI | playwright-python, httpx |
+| **Persistence Layer** | Grafo de conhecimento (Node/Edge) | SQLAlchemy async |
+| **Cognitive Layer** | IA para análise, geração e aprendizado | Claude / AI Gateway |
+| **Quality Layer** | Gates P0/P1/P2, WCAG, RTM | Python puro |
+
+---
+
+## Adapters disponíveis
+
+| Adapter | Quando usar |
+|---------|-------------|
+| `playwright` | Testes E2E de UI — recomendado (auto-wait, trace, multi-browser) |
+| `selenium` | Selenium Grid, ambientes corporativos, browsers legacy |
+| `cypress` | Times que já usam Cypress — gera `.cy.ts` e executa via Node |
+| `api` | Testes REST/GraphQL sem browser — httpx + 18 assertion operators |
+| `robot-framework` | Compatibilidade com suítes Robot Framework existentes |
+
+---
+
+## AI Engine
+
+```python
+# Pipeline cognitivo completo
+pipeline = CognitivePipeline()
+result = await pipeline.run(
+    "Usuário bloqueado não deve acessar sistema",
+    requirement_id="REQ-007",
+)
+# result.flow           → Flow pronto para ExecutionEngine
+# result.all_scenarios  → original + IA + segurança
+# result.coverage_score → estimativa de cobertura
+
+# Detecção de ambiguidades
+analyzer = AmbiguityAnalyzer()
+report = await analyzer.analyze("O usuário deve ser redirecionado para o dashboard")
+# report.critical_count   → ambiguidades que bloqueiam implementação correta
+# report.business_rules   → regras extraídas implicitamente
 ```
 
 ---
 
-## 🔧 Configuration
+## Quality Gates
 
-### Environment Variables
+O Quality Policy Engine avalia 12 gates configuráveis por módulo. Gates mandatórios incluem:
 
-Create `.env` file:
+- **WCAG AA** — 100% de conformidade (bloqueia release)
+- **No P0 Defects** — zero defects críticos abertos
+- **Acceptance Criteria** — toda story com ≥1 critério definido
+- **Bidirectional Traceability** — Requirement ↔ Test ↔ Evidence
 
-```env
-# FastAPI
-FASTAPI_HOST=0.0.0.0
-FASTAPI_PORT=8080
-FASTAPI_LOG_LEVEL=INFO
-
-# AI Engine (Claude)
-ANTHROPIC_API_KEY=sk-ant-...
-CLAUDE_MODEL=claude-3-sonnet-20240229
-
-# Vector Database (Qdrant)
-QDRANT_URL=http://localhost:6333
-QDRANT_API_KEY=your-qdrant-key
-
-# Persistence (PostgreSQL)
-DATABASE_URL=postgresql://user:pass@localhost/lkdf
-
-# Adapters
-SELENIUM_GRID_URL=http://localhost:4444
-PLAYWRIGHT_HEADLESS=true
-ROBOT_RUNNER=robot
-
-# Accessibility
-WCAG_LEVEL=AA
-AXE_RUNNER_URL=http://localhost:8000
-
-# Logging & Monitoring
-LOG_FORMAT=json
-SENTRY_DSN=https://...
+```python
+engine = PolicyEngine(repository)
+report = await engine.evaluate_story("BFTG-127", context)
+# report.passed           → True/False
+# report.blocking_failures → gates que bloquearam
 ```
 
 ---
 
-## 🧪 Testing
+## CI/CD
+
+Pipeline GitHub Actions com 5 jobs sequenciais:
+
+```
+Lint (27s) → Unit Tests (34s) → Integration Tests (24s) → MVP Acceptance (21s) → Docker Build (38s)
+```
+
+**Requisitos do CI:**
+- `ANTHROPIC_API_KEY` como GitHub Secret (para integration tests)
+
+---
+
+## Frontend
 
 ```bash
-# Run all tests
-pytest
-
-# Unit tests only
-pytest tests/unit/
-
-# Integration tests only
-pytest tests/integration/
-
-# With coverage
-pytest --cov=runtime_core --cov=ai_engine --cov-report=html
-
-# Specific tests
-pytest tests/unit/test_dsl_parser.py -v
+cd frontend
+npm install
+npm run dev     # http://localhost:3000
 ```
+
+Páginas: Dashboard · Flows Editor (Monaco) · Executions · RTM · Cognitive Engine · Accessibility · Knowledge · Settings
 
 ---
 
-## 🚢 Deployment
-
-### Docker
+## Comandos úteis
 
 ```bash
-# Build image
-docker build -f infrastructure/Dockerfile.runtime -t aqua-qe-lkdf:latest .
+# Testes
+pytest tests/unit/ -v
+pytest tests/unit/ --cov=runtime_core --cov-report=term-missing
 
-# Run container
-docker run -p 8080:8080 \
-  -e ANTHROPIC_API_KEY=sk-ant-... \
-  -e QDRANT_URL=http://qdrant:6333 \
-  aqua-qe-lkdf:latest
-```
+# Lint
+ruff check runtime_core/ ai_engine/ shared/ tests/
+ruff check runtime_core/ ai_engine/ shared/ tests/ --fix
 
-### Docker Compose (with Qdrant)
+# Type check
+mypy -p runtime_core -p ai_engine -p shared --ignore-missing-imports
 
-```bash
-docker-compose -f infrastructure/docker-compose.yml up -d
-```
+# CLI
+lkdf run --dsl flows/login.lkdf --adapter playwright
+lkdf analyze "requisito em linguagem natural"
+lkdf validate --dsl flows/login.lkdf
+lkdf --help
 
----
-
-## 📚 Complete Examples
-
-### Example 1: User Login
-
-```gherkin
-@flow User Authentication
-@adapter playwright
-@requirement REQ-AUTH-001
-@tags smoke, authentication
-
-@scenario Login with valid credentials
-@priority high
-
-Given user accesses login page
-And form is visible and accessible (WCAG AA)
-
-When enters email "user@example.com"
-And enters password "SecurePassword123"
-And clicks "Sign In"
-
-Then home page is displayed
-And user name appears in menu
-And session is persisted in localStorage
-And all accessibility validations pass
-
-@scenario Login attempt limit
-@priority medium
-
-Given user is on login page
-
-When tries to login with wrong password 5 times
-And waits 1 second between attempts
-
-Then account is temporarily blocked
-And warning message is displayed
-```
-
-### Example 2: E2E Flow with Dynamic Data
-
-```gherkin
-@flow Shopping Cart
-@adapter playwright
-@requirement REQ-CART-001, REQ-CART-002
-@tags critical, e2e
-
-@scenario Add multiple products and proceed to payment
-@priority high
-@data-source inventory-api
-
-Given user is logged in as premium
-And has a delivery address registered
-
-When iterates over [3] products in stock
-  And clicks "Add to Cart" for each
-  And validates product appears in cart
-
-Then subtotal is correct
-And shipping is automatically calculated
-And checkout page is accessible
-And clicks "Complete Purchase"
-
-Then payment is processed
-And confirmation email is sent
-And order appears in history
+# Docker
+docker build -f infrastructure/Dockerfile.runtime -t lkdf-runtime .
+docker run -p 8080:8080 lkdf-runtime
 ```
 
 ---
 
-## 🤝 Contributing
+## Documentação completa
 
-```bash
-# 1. Fork the repository
-# 2. Create a feature branch
-git checkout -b feature/my-feature
+O documento Word `AQuA_QE_LKDF_README.docx` contém a documentação completa de onboarding e arquitetura, incluindo:
 
-# 3. Commit your changes
-git commit -m "feat: clear description of the change"
-
-# 4. Push to branch
-git push origin feature/my-feature
-
-# 5. Open a Pull Request
-```
-
-### Code Standards
-
-- Python: PEP 8 + type hints (validated with `mypy`)
-- Ruff for linting: `ruff check .`
-- Formatting: Ruff + Black
-- TypeScript: ESLint + Prettier
-
-```bash
-# Validate and format code
-ruff check . --fix
-mypy runtime_core ai_engine
-```
+- Guia de instalação passo a passo
+- Referência completa do DSL semântico
+- Arquitetura detalhada de cada módulo
+- ADRs (Architecture Decision Records)
+- Referência de todos os endpoints FastAPI
+- Guia para adicionar novos adapters
 
 ---
 
-## 📊 Roadmap
-
-- [ ] v1.2: Persistent database (PostgreSQL)
-- [ ] v1.3: Advanced analytics dashboard
-- [ ] v1.4: Mobile automation support (Appium)
-- [ ] v2.0: Multi-LLM support (GPT-4, Llama, etc.)
-- [ ] v2.1: CI/CD integrations (GitHub Actions, Jenkins)
-- [ ] v2.2: Performance testing engine
-- [ ] v3.0: Distributed execution (Kubernetes)
-
----
-
-## 📞 Support & Community
-
-- **Issues**: [GitHub Issues](https://github.com/dufelizardo/aqua_qe_lkdf/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/dufelizardo/aqua_qe_lkdf/discussions)
-- **Email**: support@aqua-qe.com
-
----
-
-## 📜 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-## 🙏 Acknowledgments
-
-- Claude AI for cognitive analysis capability
-- FastAPI for excellent framework
-- Next.js for modern UI
-- Qdrant for vector storage
-- Open-source testing community
-
----
-
-**Made with ❤️ for QA Engineers who want to work smarter.**
-
-*AQuA-QE LKDF © 2024-2026 | Adaptive Quality Automation*
-
+*AQuA-QE LKDF v1.4 — Cognitive Enterprise Blueprint · Maio 2026*
