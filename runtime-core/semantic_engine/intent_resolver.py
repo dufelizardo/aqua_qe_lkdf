@@ -14,7 +14,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from shared.models import SemanticStep, StepType
+from shared.models import SemanticStep
 
 
 # ---------------------------------------------------------------------------

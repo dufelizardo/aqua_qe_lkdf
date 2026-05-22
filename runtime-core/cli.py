@@ -12,7 +12,6 @@ Uso:
 from __future__ import annotations
 
 import asyncio
-import json
 from pathlib import Path
 
 import typer
@@ -144,7 +143,7 @@ def run_cmd(
             TextColumn("[progress.description]{task.description}"),
             console=console,
         ) as progress:
-            task = progress.add_task("Executando pipeline semântico...", total=None)
+            progress.add_task("Executando pipeline semântico...", total=None)
 
             report = await engine.execute_flow(flow, context)
             evidence_paths = collector.collect_from_report(report)
@@ -205,7 +204,7 @@ def analyze(
             for a in analysis.ambiguities:
                 rprint(f"  • {a}")
 
-        rprint(f"\n[bold]DSL Gerado:[/bold]")
+        rprint("\n[bold]DSL Gerado:[/bold]")
         console.print(Syntax(analysis.generated_flow_dsl, "gherkin", theme="monokai"))
 
         if save_flow:

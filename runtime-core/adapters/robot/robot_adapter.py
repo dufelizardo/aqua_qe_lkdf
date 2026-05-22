@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
-import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -19,7 +17,7 @@ from typing import Any
 import structlog
 
 from shared.models import AdapterType, RuntimeContext
-from runtime_core.adapters.base import BaseAdapter, AdapterError
+from runtime_core.adapters.base import BaseAdapter
 
 log = structlog.get_logger(__name__)
 

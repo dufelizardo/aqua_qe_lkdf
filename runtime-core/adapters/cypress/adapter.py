@@ -16,7 +16,6 @@ from __future__ import annotations
 import asyncio
 import json
 import tempfile
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -198,12 +197,12 @@ class CypressAdapter(BaseAdapter):
     def _generate_spec(self) -> Path:
         """Gera arquivo .cy.ts com todos os it() blocks coletados."""
         ts_lines = [
-            f"/// <reference types='cypress' />",
+            "/// <reference types='cypress' />",
             "",
             f"describe('LKDF Generated — {self._current_describe or 'Flow'}', () => {{",
-            f"  beforeEach(() => {{",
+            "  beforeEach(() => {",
             f"    cy.visit('{self._base_url}');",
-            f"  }});",
+            "  });",
             "",
         ]
 

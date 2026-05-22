@@ -13,10 +13,8 @@ Endpoints principais:
 """
 from __future__ import annotations
 
-import asyncio
 from contextlib import asynccontextmanager
 from typing import Any
-from uuid import UUID
 
 import structlog
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -34,7 +32,7 @@ from runtime_core.parser.dsl_parser import DSLParser, validate_dsl
 from runtime_core.execution_engine.engine import ExecutionEngine
 from runtime_core.adapters.robot.robot_adapter import RobotAdapter
 from runtime_core.evidence_engine.collector import EvidenceCollector, TraceabilityEngine
-from ai_engine.requirement_agent.agent import RequirementAgent, RequirementAnalysis
+from ai_engine.requirement_agent.agent import RequirementAgent
 
 log = structlog.get_logger(__name__)
 
@@ -293,3 +291,69 @@ async def _run_execution(
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("runtime_core.api:app", host="0.0.0.0", port=8080, reload=True)
+
+
+@app.post("/cognitive/pipeline")
+async def cognitive_pipeline(req: AnalyzeRequest) -> dict[str, Any]:
+    """Pipeline cognitivo completo: Requirement Agent + Scenario Agent (Fase 2)."""
+    from ai_engine.scenario_agent.pipeline import CognitivePipeline
+    pipeline = CognitivePipeline()
+    result = await pipeline.run(
+        requirement_text=req.requirement_text,
+        requirement_id=req.requirement_id or "REQ-AUTO",
+    )
+    return result.summary()
+
+
+@app.post("/requirements/ambiguity")
+async def analyze_ambiguity(req: AnalyzeRequest) -> dict[str, Any]:
+    """
+    Ambiguity Engine — analisa um requisito e retorna todas as ambiguidades,
+    regras de negócio implícitas, gaps e perguntas de clarificação.
+    """
+    from ai_engine.ambiguity_engine.analyzer import AmbiguityAnalyzer
+    analyzer = AmbiguityAnalyzer(mode="rules_only")   # rules_only p/ demo; "full" usa Claude
+    report   = await analyzer.analyze(
+        requirement_text=req.requirement_text,
+        requirement_id=req.requirement_id or "REQ-AUTO",
+        domain_context=str(req.context or ""),
+    )
+    return report.summary()
+
+
+@app.post("/requirements/ambiguity/full")
+async def analyze_ambiguity_full(req: AnalyzeRequest) -> dict[str, Any]:
+    """
+    Ambiguity Engine com Claude — análise profunda via IA.
+    """
+    from ai_engine.ambiguity_engine.analyzer import AmbiguityAnalyzer
+    analyzer = AmbiguityAnalyzer(mode="full")
+    report   = await analyzer.analyze(
+        requirement_text=req.requirement_text,
+        requirement_id=req.requirement_id or "REQ-AUTO",
+        domain_context=str(req.context or ""),
+    )
+    # Return full report (not just summary)
+    return {
+        **report.summary(),
+        "ambiguities": [
+            {
+                "id": a.id, "type": a.type, "severity": a.severity,
+                "text": a.text, "question": a.question,
+                "excerpt": a.excerpt, "options": a.options,
+                "impact": a.impact, "scenario_hint": a.scenario_hint,
+            }
+            for a in report.ambiguities
+        ],
+        "business_rules": [
+            {"id": r.id, "description": r.description,
+             "source": r.source, "confidence": r.confidence}
+            for r in report.business_rules
+        ],
+        "gaps": [
+            {"id": g.id, "description": g.description,
+             "gap_type": g.gap_type, "priority": g.priority,
+             "suggested_scenario": g.suggested_scenario}
+            for g in report.gaps
+        ],
+    }

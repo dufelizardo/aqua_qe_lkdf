@@ -10,7 +10,6 @@ Responsável por:
 """
 from __future__ import annotations
 
-import asyncio
 import time
 from enum import Enum, auto
 from typing import AsyncIterator, Callable
@@ -21,7 +20,6 @@ from shared.models import (
     ExecutionReport,
     ExecutionStatus,
     Flow,
-    ProjectContext,
     RuntimeContext,
     Scenario,
     ScenarioResult,
@@ -268,6 +266,10 @@ class ExecutionEngine:
         )
         start = time.perf_counter()
 
+        # Adapter lifecycle hook (optional — só se o adapter suportar)
+        if hasattr(self.adapter, "begin_scenario"):
+            await self.adapter.begin_scenario(scenario.name)
+
         for step in scenario.steps:
             step_result = await self._execute_step(step, context)
             result.step_results.append(step_result)
@@ -281,6 +283,12 @@ class ExecutionEngine:
             result.status = ExecutionStatus.PASSED
 
         result.duration_ms = int((time.perf_counter() - start) * 1000)
+
+        # Adapter lifecycle hook (optional)
+        if hasattr(self.adapter, "end_scenario"):
+            passed = result.status == ExecutionStatus.PASSED
+            await self.adapter.end_scenario(scenario.name, passed)
+
         log.info("scenario_done", name=scenario.name, status=result.status)
         return result
 

@@ -15,7 +15,7 @@ from typing import Any
 
 import structlog
 
-from shared.models import AdapterType, Flow, ProjectContext, RuntimeContext
+from shared.models import AdapterType, Flow, ProjectContext
 from runtime_core.adapters.base import BaseAdapter
 
 log = structlog.get_logger(__name__)
@@ -56,6 +56,15 @@ class AdapterFactory:
         if adapter_type == AdapterType.ROBOT:
             return AdapterFactory._create_robot(url, extra)
 
+        if adapter_type == AdapterType.API:
+            return AdapterFactory._create_api(url, extra)
+
+        if adapter_type == AdapterType.CYPRESS:
+            return AdapterFactory._create_cypress(url, extra)
+
+        if adapter_type == AdapterType.SELENIUM:
+            return AdapterFactory._create_selenium(url, extra)
+
         if adapter_type == AdapterType.AUTO:
             # Heurística: usa Playwright se disponível, senão Robot
             return AdapterFactory._create_auto(url, extra)
@@ -94,6 +103,52 @@ class AdapterFactory:
         from runtime_core.adapters.robot.robot_adapter import RobotAdapter
         return RobotAdapter(
             base_url=url,
+            headless=extra.get("headless", True),
+        )
+
+    @staticmethod
+    def _create_api(url: str, extra: dict) -> BaseAdapter:
+        from runtime_core.adapters.api.contracts.models import AuthConfig, AuthStrategy
+        auth = None
+        if extra.get("token"):
+            auth = AuthConfig(strategy=AuthStrategy.BEARER, token=extra["token"])
+        elif extra.get("api_key"):
+            auth = AuthConfig(strategy=AuthStrategy.API_KEY,
+                              api_key=extra["api_key"],
+                              header_name=extra.get("api_key_header", "X-API-Key"))
+
+        if extra.get("graphql"):
+            from runtime_core.adapters.api.graphql.adapter import GraphQLAdapter
+            return GraphQLAdapter(
+                base_url=url,
+                graphql_path=extra.get("graphql_path", "/graphql"),
+                auth=auth,
+                timeout_s=extra.get("timeout_s", 30),
+            )
+
+        from runtime_core.adapters.api.rest.adapter import RestAdapter
+        return RestAdapter(
+            base_url=url,
+            auth=auth,
+            timeout_s=extra.get("timeout_s", 30),
+            max_retries=extra.get("max_retries", 3),
+        )
+
+    @staticmethod
+    def _create_cypress(url: str, extra: dict) -> BaseAdapter:
+        from runtime_core.adapters.cypress.adapter import CypressAdapter
+        return CypressAdapter(
+            base_url=url,
+            headless=extra.get("headless", True),
+            browser=extra.get("browser", "chrome"),
+        )
+
+    @staticmethod
+    def _create_selenium(url: str, extra: dict) -> BaseAdapter:
+        from runtime_core.adapters.selenium.adapter import SeleniumAdapter
+        return SeleniumAdapter(
+            base_url=url,
+            browser=extra.get("browser", "chrome"),
             headless=extra.get("headless", True),
         )
 

@@ -199,7 +199,7 @@ class NoOpenP0DefectsEvaluator:
             ),
             details=[] if passed else [
                 "Todos os defects P0 devem ser resolvidos antes da release.",
-                f"SLA P0: 4 horas.",
+                "SLA P0: 4 horas.",
             ],
         )
 

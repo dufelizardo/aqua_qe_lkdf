@@ -18,7 +18,6 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from uuid import UUID
 
 import structlog
 
@@ -32,7 +31,6 @@ from runtime_core.adapters.api.contracts.models import (
     AuthStrategy,
     ContentType,
     HttpMethod,
-    _json_path,
 )
 from runtime_core.adapters.base import BaseAdapter, AdapterError
 from shared.models import AdapterType, RuntimeContext

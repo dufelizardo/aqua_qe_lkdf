@@ -13,16 +13,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
-from uuid import UUID
 
 import structlog
 
-from runtime_core.persistence.graph.models import Node, RelationType
+from runtime_core.persistence.graph.models import Node
 from runtime_core.persistence.graph.repository import GraphRepository
 from runtime_core.quality_policy.evaluators import EvaluationContext, get_evaluator
 from runtime_core.quality_policy.models import (
     GateResult,
-    GateType,
     PolicyAction,
     PolicyReport,
     QualityPolicy,

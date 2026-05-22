@@ -12,8 +12,6 @@ Responsável por:
 from __future__ import annotations
 
 import difflib
-from dataclasses import dataclass, field
-from typing import Any
 
 import structlog
 
@@ -174,7 +172,7 @@ class DiffEngine:
         for crit in added:
             entries.append(DiffEntry(
                 category=DiffCategory.CRITERIA_ADD,
-                field_path=f"acceptance_criteria[+]",
+                field_path="acceptance_criteria[+]",
                 new_value=crit,
                 description=f"Critério adicionado: '{crit[:80]}'",
             ))
@@ -182,7 +180,7 @@ class DiffEngine:
         for crit in removed:
             entries.append(DiffEntry(
                 category=DiffCategory.CRITERIA_DEL,
-                field_path=f"acceptance_criteria[-]",
+                field_path="acceptance_criteria[-]",
                 old_value=crit,
                 description=f"Critério removido: '{crit[:80]}'",
             ))
@@ -190,7 +188,7 @@ class DiffEngine:
         for old_c, new_c in modified_pairs:
             entries.append(DiffEntry(
                 category=DiffCategory.CRITERIA_MOD,
-                field_path=f"acceptance_criteria[~]",
+                field_path="acceptance_criteria[~]",
                 old_value=old_c,
                 new_value=new_c,
                 description=f"Critério modificado: '{old_c[:60]}' → '{new_c[:60]}'",

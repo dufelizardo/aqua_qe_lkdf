@@ -19,7 +19,6 @@ from typing import Any
 import structlog
 
 from runtime_core.adapters.playwright.locator_healing import LocatorHealingMiddleware
-from runtime_core.pom_layer.registry import POMRegistry
 
 log = structlog.get_logger(__name__)
 
