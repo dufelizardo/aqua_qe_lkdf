@@ -1,0 +1,124 @@
+version: "3.9"
+
+# AQuA-QE LKDF — Docker Compose (Fase 1 MVP)
+# Stack: Runtime Core (Python) + PostgreSQL + Redis + Qdrant + Observabilidade
+
+services:
+
+  # ─── Runtime Core ────────────────────────────────────────────────────────
+  lkdf-runtime:
+    build:
+      context: .
+      dockerfile: infrastructure/Dockerfile.runtime
+    container_name: lkdf-runtime
+    ports:
+      - "8080:8080"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DATABASE_URL=postgresql://lkdf:lkdf@postgres:5432/lkdf
+      - REDIS_URL=redis://redis:6379/0
+      - QDRANT_URL=http://qdrant:6333
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
+    volumes:
+      - ./runtime-core:/app/runtime-core
+      - ./ai_engine:/app/ai_engine
+      - ./shared:/app/shared
+      - lkdf-evidence:/tmp/lkdf/evidence
+    networks:
+      - lkdf-net
+    restart: unless-stopped
+
+  # ─── PostgreSQL ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: lkdf-postgres
+    environment:
+      POSTGRES_USER:     lkdf
+      POSTGRES_PASSWORD: lkdf
+      POSTGRES_DB:       lkdf
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lkdf"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lkdf-net
+
+  # ─── Redis ───────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: lkdf-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - lkdf-net
+
+  # ─── Qdrant (Vector DB para RAG) ─────────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:v1.9.2
+    container_name: lkdf-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - lkdf-net
+
+  # ─── Prometheus ──────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: lkdf-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - lkdf-net
+
+  # ─── Grafana ─────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: lkdf-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=lkdf2025
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infrastructure/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - lkdf-net
+
+# ─── Volumes ─────────────────────────────────────────────────────────────────
+volumes:
+  postgres-data:
+  redis-data:
+  qdrant-data:
+  prometheus-data:
+  grafana-data:
+  lkdf-evidence:
+
+# ─── Networks ────────────────────────────────────────────────────────────────
+networks:
+  lkdf-net:
+    driver: bridge
