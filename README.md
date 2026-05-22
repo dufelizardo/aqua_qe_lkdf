@@ -8,7 +8,7 @@
 
 <!-- Visitor badges: unique visitors & page views -->
 [![Visitor Count](https://visitor-badge.laobi.icu/badge?page_id=dufelizardo.aqua_qe_lkdf)](https://github.com/dufelizardo/aqua_qe_lkdf)
-[![Page Views](https://hits.seeyoufarm.com/api/count/incr?url=https%3A%2F%2Fgithub.com%2Fdufelizardo%2Faqua_qe_lkdf&title=visitors)](https://github.com/dufelizardo/aqua_qe_lkdf)
+
 
 **AQuA-QE LKDF** is a cognitive quality and testing platform that combines **Keyword-Driven Testing**, **Semantic DSL**, **Generative AI**, and **Requirements Traceability** in a single ecosystem.
 
