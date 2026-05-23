@@ -1,6 +1,3 @@
-// frontend/src/app/layout.tsx
-// AQuA-QE LKDF v1.4 — Root Layout
-
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
@@ -16,12 +13,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="dark">
-      <body className={`${inter.className} bg-[#0a0c10] text-[#e8eaf0] antialiased`}>
+    <html lang="pt-BR">
+      <body className={inter.className}>
         <Providers>
-          <div className="flex h-screen overflow-hidden">
+          <div className="app-shell">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto p-6">
+            <main className="main-content">
               {children}
             </main>
           </div>
