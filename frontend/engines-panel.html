@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQuA-QE — Fase 2 · Engines & Prompt Manager</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&display=swap');
+:root {
+  --b3:#00509E;--b3l:#0070CC;--b3pale:#E8F2FB;--b3mid:#C5DEFF;
+  --acc:#00D4AA;--acc2:#00A882;
+  --pur:#7C3AED;--purp:#F0EBFF;
+  --gld:#F59E0B;--gldp:#FFF8E6;
+  --red:#E83B3B;--redp:#FEF2F2;
+  --grn:#10B981;--grnp:#ECFDF5;
+  --bg:#F4F7FB;--wh:#FFFFFF;
+  --s1:#F7F9FC;--s2:#EFF3F8;
+  --bd:#D5E3F2;--bd2:#B8CEEA;
+  --t1:#0D1F35;--t2:#3A5A7A;--t3:#6B8CAE;
+  --fn:'Sora',sans-serif;--fm:'IBM Plex Mono',monospace;
+  --r:10px;--rl:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;height:100vh;overflow:hidden;}
+
+/* TOPBAR */
+.topbar{grid-column:1/-1;background:var(--b3);display:flex;align-items:center;padding:0 20px;gap:12px;border-bottom:2px solid var(--b3l);}
+.lpill{background:white;color:var(--b3);font-weight:700;font-size:11px;padding:3px 9px;border-radius:5px;letter-spacing:.06em;}
+.tt{color:white;font-weight:600;font-size:14px;}
+.tbadge{background:rgba(124,58,237,.3);color:#C4B5FD;border:1px solid rgba(124,58,237,.4);font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:.05em;}
+.tr{margin-left:auto;display:flex;align-items:center;gap:14px;}
+.tn{text-align:center;}
+.tnn{color:var(--acc);font-weight:700;font-size:15px;line-height:1;}
+.tnl{color:rgba(255,255,255,.45);font-size:9px;text-transform:uppercase;letter-spacing:.07em;}
+.tdiv{width:1px;height:22px;background:rgba(255,255,255,.15);}
+
+/* SIDEBAR */
+.sb{background:var(--wh);border-right:1px solid var(--bd);overflow-y:auto;padding:10px 0;}
+.sbs{padding:10px 14px 4px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;}
+.nav{display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;color:var(--t2);font-size:13px;transition:all .12s;border-left:3px solid transparent;}
+.nav:hover{background:var(--b3pale);color:var(--b3);}
+.nav.active{background:var(--b3pale);color:var(--b3);border-left-color:var(--b3);font-weight:500;}
+.ni{font-size:15px;width:18px;text-align:center;}
+.nbadge{margin-left:auto;background:var(--pur);color:white;font-size:10px;padding:1px 6px;border-radius:10px;}
+
+/* MAIN */
+.main{overflow:hidden;display:flex;flex-direction:column;}
+.panel{display:none;flex-direction:column;height:100%;overflow:hidden;}
+.panel.active{display:flex;}
+
+/* Panel header */
+.ph{padding:14px 20px;border-bottom:1px solid var(--bd);background:var(--wh);display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.pht{font-size:15px;font-weight:700;color:var(--t1);}
+.phs{font-size:12px;color:var(--t3);}
+.phr{margin-left:auto;display:flex;gap:8px;}
+.pb{flex:1;overflow-y:auto;padding:20px;}
+
+/* CARDS */
+.card{background:var(--wh);border:1px solid var(--bd);border-radius:var(--rl);padding:16px;box-shadow:0 2px 10px rgba(0,80,158,.06);}
+.ct{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+
+/* BUTTONS */
+.btn{padding:7px 16px;border-radius:7px;font-size:12px;font-family:var(--fn);cursor:pointer;border:1px solid var(--bd);background:var(--wh);color:var(--t2);transition:all .12s;font-weight:500;}
+.btn:hover{background:var(--s1);border-color:var(--bd2);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.bp{background:var(--b3);color:white;border-color:var(--b3);}
+.bp:hover{background:var(--b3l);}
+.bpu{background:var(--pur);color:white;border-color:var(--pur);}
+.bpu:hover{background:#6D28D9;}
+.bsm{padding:4px 10px;font-size:11px;border-radius:5px;}
+.bdanger{background:var(--redp);color:var(--red);border-color:#FCA5A5;}
+.bdanger:hover{background:var(--red);color:white;}
+.bsuccess{background:var(--grnp);color:var(--grn);border-color:#6EE7B7;}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;}
+.bblue{background:var(--b3pale);color:var(--b3);}
+.bpur{background:var(--purp);color:var(--pur);}
+.bgold{background:var(--gldp);color:#92400E;}
+.bgrn{background:var(--grnp);color:#065F46;}
+.bred{background:var(--redp);color:var(--red);}
+.bgray{background:var(--s2);color:var(--t3);}
+
+/* FIELD */
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:4px;}
+.field input,.field select,.field textarea{width:100%;padding:8px 12px;border:1px solid var(--bd);border-radius:7px;font-family:var(--fn);font-size:13px;color:var(--t1);background:var(--wh);outline:none;transition:border-color .15s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--b3);}
+.field textarea{resize:vertical;min-height:80px;font-family:var(--fm);font-size:12px;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* METRIC */
+.metric{background:var(--wh);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;}
+.ml{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.mv{font-size:26px;font-weight:700;line-height:1;color:var(--b3);}
+.mv.ok{color:var(--grn);}.mv.warn{color:var(--gld);}.mv.pur{color:var(--pur);}
+.mbar{height:4px;background:var(--s2);border-radius:2px;margin-top:8px;overflow:hidden;}
+.mfill{height:100%;border-radius:2px;transition:width .5s;}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{background:var(--b3);color:white;padding:8px 12px;text-align:left;font-size:11px;font-weight:500;letter-spacing:.04em;}
+.tbl th:first-child{border-radius:8px 0 0 0;}.tbl th:last-child{border-radius:0 8px 0 0;}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--bd);font-size:12px;vertical-align:middle;}
+.tbl tr:hover td{background:var(--b3pale);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl td code{font-family:var(--fm);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px;}
+
+/* ENGINE CARD */
+.ec{background:var(--wh);border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;transition:box-shadow .15s;cursor:pointer;}
+.ec:hover{box-shadow:0 4px 20px rgba(0,80,158,.12);}
+.ec.running{border-color:var(--pur);box-shadow:0 0 0 2px rgba(124,58,237,.2);}
+.ec.done{border-color:var(--grn);}
+.ec.err{border-color:var(--red);}
+.ech{padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;}
+.eci{font-size:22px;}
+.ecn{font-size:13px;font-weight:600;color:var(--t1);}
+.ecs{font-size:11px;color:var(--t3);margin-top:2px;}
+.ecb{padding:12px 14px;}
+.ecr{font-size:11px;color:var(--t2);line-height:1.6;}
+.ecf{padding:10px 14px;background:var(--s1);border-top:1px solid var(--bd);display:flex;gap:6px;align-items:center;}
+
+/* PROMPT CARD */
+.pc{background:var(--wh);border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;transition:box-shadow .15s;}
+.pc:hover{box-shadow:0 4px 20px rgba(0,80,158,.1);}
+.pch{padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;}
+.pcn{font-size:13px;font-weight:600;color:var(--t1);}
+.pcd{font-size:11px;color:var(--t3);margin-top:3px;}
+.pcb{padding:12px 14px;}
+.pcr{font-size:11px;color:var(--t2);line-height:1.6;max-height:60px;overflow:hidden;}
+.pcf{padding:10px 14px;background:var(--s1);border-top:1px solid var(--bd);display:flex;gap:6px;flex-wrap:wrap;}
+
+/* OUTPUT */
+.out{background:#0D1F35;border-radius:var(--r);padding:14px;font-family:var(--fm);font-size:12px;line-height:1.8;color:#A8D8FF;min-height:120px;max-height:380px;overflow-y:auto;white-space:pre-wrap;}
+.out .kw{color:#C792EA;font-weight:bold;}
+.out .str{color:#C3E88D;}
+.out .cm{color:#546E7A;}
+
+/* SPINNER */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+
+/* PROGRESS */
+.prog-wrap{height:6px;background:var(--s2);border-radius:3px;overflow:hidden;margin:8px 0;}
+.prog-fill{height:100%;border-radius:3px;background:var(--pur);transition:width .4s;}
+
+/* VERSION TIMELINE */
+.vtl{display:flex;flex-direction:column;gap:8px;}
+.vitem{display:flex;gap:10px;align-items:flex-start;}
+.vdot{width:10px;height:10px;border-radius:50%;background:var(--b3);flex-shrink:0;margin-top:4px;}
+.vdot.active{background:var(--pur);box-shadow:0 0 6px var(--pur);}
+.vinfo{flex:1;}
+.vver{font-size:12px;font-weight:600;color:var(--t1);}
+.vhash{font-family:var(--fm);font-size:10px;color:var(--t3);}
+.vcl{font-size:11px;color:var(--t2);margin-top:2px;}
+
+/* SEC DIV */
+.sdiv{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;}
+
+/* TABS */
+.tabs{display:flex;gap:2px;background:var(--s2);border-radius:8px;padding:3px;margin-bottom:14px;}
+.tab{padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--t3);transition:all .15s;}
+.tab.active{background:var(--wh);color:var(--b3);box-shadow:0 1px 4px rgba(0,80,158,.1);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:10px;}
+
+/* RTM mini table */
+.rtm-mini{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;}
+.rtm-mini th{background:var(--s2);padding:4px 8px;text-align:left;color:var(--t3);font-size:10px;text-transform:uppercase;}
+.rtm-mini td{padding:5px 8px;border-bottom:1px solid var(--bd);}
+.rtm-mini tr:last-child td{border-bottom:none;}
+
+/* TOASTS */
+#toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:9999;}
+.toast{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.15);animation:toastin .2s ease;}
+@keyframes toastin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+.tok{background:var(--grn);color:white;}.terr{background:var(--red);color:white;}.tinfo{background:var(--b3);color:white;}.tpur{background:var(--pur);color:white;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="lpill">AQuA-QE</div>
+  <div class="tt">Fase 2 — Engines & Prompt Manager</div>
+  <span class="tbadge">§6.6–6.12 · §27 · §28</span>
+  <div class="tr">
+    <div class="tn"><div class="tnn" id="tb-engines">7</div><div class="tnl">Engines</div></div>
+    <div class="tdiv"></div>
+    <div class="tn"><div class="tnn" id="tb-prompts">10</div><div class="tnl">Prompts</div></div>
+    <div class="tdiv"></div>
+    <div class="tn"><div class="tnn" id="tb-execs">0</div><div class="tnl">Execuções</div></div>
+    <div class="tdiv"></div>
+    <div class="tn"><div class="tnn" id="tb-cost">$0</div><div class="tnl">Custo</div></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sb">
+  <div class="sbs">Engines §6.6–6.12</div>
+  <div class="nav active" onclick="show('engines',this)"><span class="ni">⚙️</span>Engine Studio</div>
+  <div class="nav" onclick="show('pipeline',this)"><span class="ni">🔄</span>Full Pipeline §28</div>
+  <div class="sbs">Prompt Manager §27</div>
+  <div class="nav" onclick="show('prompts',this)"><span class="ni">📝</span>Templates<span class="nbadge">10</span></div>
+  <div class="nav" onclick="show('prompt-detail',this)"><span class="ni">🔍</span>Editor & Versões</div>
+  <div class="sbs">Observabilidade</div>
+  <div class="nav" onclick="show('pstats',this)"><span class="ni">📊</span>Prompt Stats</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ════ ENGINE STUDIO ════ -->
+<div class="panel active" id="panel-engines">
+  <div class="ph">
+    <div><div class="pht">⚙️ Engine Studio — Engines Avançadas</div><div class="phs">Risk · Coverage · Inference · Synthesis · Consistency · Impact · Compliance</div></div>
+    <div class="phr"><button class="btn bsm bp" onclick="runEngine()">▶ Executar Engine</button></div>
+  </div>
+  <div class="pb">
+    <div class="g2" style="align-items:start;">
+      <!-- LEFT: Config + Output -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card">
+          <div class="ct">⚙️ Configuração</div>
+          <div class="field">
+            <label>Engine Cognitiva</label>
+            <select id="e-engine" onchange="updateEngineInfo()">
+              <option value="risk">⚠️ Risk Engine — §6.6</option>
+              <option value="coverage">🎯 Coverage Validation — §6.7</option>
+              <option value="inference">🔍 Inference Engine — §6.8</option>
+              <option value="compliance">🔒 Compliance Engine — §6.12</option>
+              <option value="impact">💥 Impact Analysis — §6.11</option>
+            </select>
+          </div>
+          <div id="engine-info" class="field" style="background:var(--b3pale);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--b3);line-height:1.6;margin-bottom:12px;"></div>
+          <div class="frow">
+            <div class="field">
+              <label>Deployment Mode</label>
+              <select id="e-mode"><option value="cloud">☁️ Cloud</option><option value="hybrid">⚡ Hybrid</option><option value="local">🏠 Local</option></select>
+            </div>
+            <div class="field">
+              <label>Forçar Provider</label>
+              <select id="e-prov"><option value="">Auto</option><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="google_gemini">Gemini</option><option value="groq">Groq</option><option value="ollama">Ollama (local)</option></select>
+            </div>
+          </div>
+          <div class="field"><label>Conteúdo para análise</label><textarea id="e-content" rows="5" placeholder="Digite o requisito, história ou funcionalidade a analisar..."></textarea></div>
+          <div id="e-vars-wrap"></div>
+          <button class="btn bp" id="e-run-btn" style="width:100%;" onclick="runEngine()">▶ Executar Engine</button>
+        </div>
+
+        <!-- Quick inputs -->
+        <div class="card">
+          <div class="ct">⚡ Inputs Rápidos</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <button class="btn bsm" onclick="fillQuick('risk','Pagamento com cartão de crédito internacional: autenticação 3DS, tokenização, chargeback, fraude, limite diário de R$10.000','financeiro')">⚠️ Risk: Pagamento Internacional</button>
+            <button class="btn bsm" onclick="fillQuick('coverage','Login com email e senha, recuperação de senha, bloqueio após 5 tentativas, autenticação 2FA','autenticação')">🎯 Coverage: Login + 2FA</button>
+            <button class="btn bsm" onclick="fillQuick('inference','Cadastro de usuário com nome, CPF, email, telefone e endereço completo','cadastro')">🔍 Inference: Cadastro de Usuário</button>
+            <button class="btn bsm" onclick="fillQuick('compliance','Formulário de contratação de seguro de saúde com dados médicos do segurado','saúde/LGPD')">🔒 Compliance: Seguro Saúde LGPD</button>
+            <button class="btn bsm" onclick="fillQuick('impact','Mudança: o campo email passa a ser obrigatório e único no sistema de cadastro','cadastro')">💥 Impact: Campo Email Obrigatório</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Result -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <!-- Engine status cards -->
+        <div id="engine-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+
+        <!-- Output -->
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <div class="ct" style="margin:0;">📤 Resultado</div>
+            <span id="e-status-badge" style="display:none;" class="badge bgrn">✓ Sucesso</span>
+            <span id="e-fallback-badge" style="display:none;" class="badge bgold">⚡ Fallback</span>
+            <div style="margin-left:auto;display:flex;gap:8px;font-size:11px;color:var(--t3);">
+              <span id="e-prov-label">—</span> · <span id="e-lat-label">—ms</span> · <span id="e-cost-label" style="color:var(--grn);">$—</span>
+            </div>
+          </div>
+          <div class="out" id="e-output"># Selecione uma engine e forneça o conteúdo.
+# O resultado estruturado aparecerá aqui.
+#
+# Engines disponíveis:
+# • Risk Engine    — classifica riscos por criticidade
+# • Coverage       — valida cobertura multidimensional
+# • Inference      — infere cenários ocultos
+# • Compliance     — LGPD / OWASP / WCAG / ISO
+# • Impact         — analisa impacto de mudanças no RTM</div>
+        </div>
+
+        <!-- Structured result -->
+        <div class="card" id="e-structured-wrap" style="display:none;">
+          <div class="ct">🧩 Resultado Estruturado</div>
+          <div id="e-structured"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ FULL PIPELINE ════ -->
+<div class="panel" id="panel-pipeline">
+  <div class="ph">
+    <div><div class="pht">🔄 Full Analysis Pipeline — §28</div><div class="phs">Risk → Coverage → Inference → Compliance → Synthesis (paralelo)</div></div>
+    <div class="phr"><button class="btn bsm bpu" id="pipe-btn" onclick="runPipeline()">▶ Executar Pipeline Completo</button></div>
+  </div>
+  <div class="pb">
+    <div class="g2" style="align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card">
+          <div class="ct">⚙️ Input</div>
+          <div class="field"><label>Deployment Mode</label><select id="p-mode"><option value="cloud">☁️ Cloud</option><option value="hybrid">⚡ Hybrid</option><option value="local">🏠 Local</option></select></div>
+          <div class="field"><label>Funcionalidade a analisar (análise completa)</label><textarea id="p-content" rows="6" placeholder="Descreva a funcionalidade completa. O pipeline executará Risk + Coverage + Inference + Compliance em paralelo e sintetizará os resultados.">Como usuário autenticado quero realizar transferência PIX para qualquer chave cadastrada (CPF, CNPJ, email, telefone, chave aleatória) com limite diário de R$10.000,00, autenticação biométrica obrigatória para valores acima de R$1.000,00, histórico de transferências e cancelamento em até 30 minutos.</textarea></div>
+          <button class="btn bpu" style="width:100%;" id="pipe-run" onclick="runPipeline()">▶ Executar Pipeline Completo</button>
+        </div>
+
+        <!-- Pipeline stages -->
+        <div class="card">
+          <div class="ct">📐 Estágios do Pipeline</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div id="stage-risk"       class="stage-item">⚠️ Risk Engine</div>
+            <div id="stage-coverage"   class="stage-item">🎯 Coverage Engine</div>
+            <div id="stage-inference"  class="stage-item">🔍 Inference Engine</div>
+            <div id="stage-compliance" class="stage-item">🔒 Compliance Engine</div>
+            <div id="stage-synthesis"  class="stage-item">🧩 Synthesis Engine</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="g4" id="pipe-metrics">
+          <div class="metric"><div class="ml">Engines</div><div class="mv pur" id="pm-engines">—</div></div>
+          <div class="metric"><div class="ml">Custo Total</div><div class="mv ok" id="pm-cost">$—</div></div>
+          <div class="metric"><div class="ml">Risco Geral</div><div class="mv" id="pm-risk">—</div></div>
+          <div class="metric"><div class="ml">Cobertura</div><div class="mv" id="pm-cov">—%</div></div>
+        </div>
+
+        <div class="card">
+          <div class="ct">🧩 Síntese Final</div>
+          <div class="out" id="p-synthesis" style="min-height:200px;"># Aguardando pipeline...</div>
+        </div>
+
+        <div id="p-results-wrap" style="display:none;">
+          <div class="sdiv">📊 Resultados por Engine</div>
+          <div class="g2" id="p-results"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PROMPTS ════ -->
+<div class="panel" id="panel-prompts">
+  <div class="ph">
+    <div><div class="pht">📝 Prompt Management System — §27</div><div class="phs">10 tipos · Versionamento · Templates reutilizáveis · Auditoria</div></div>
+    <div class="phr">
+      <select id="pt-filter" onchange="renderPrompts()" style="padding:6px 10px;border:1px solid var(--bd);border-radius:6px;font-family:var(--fn);font-size:12px;">
+        <option value="">Todos os tipos</option>
+        <option value="elicitation">Elicitação</option>
+        <option value="requirement_engineering">Req. Engineering</option>
+        <option value="rtm">RTM</option>
+        <option value="lkdf_generation">LKDF Generation</option>
+        <option value="wcag">WCAG</option>
+        <option value="coverage">Coverage</option>
+        <option value="inference">Inference</option>
+        <option value="risk_analysis">Risk Analysis</option>
+        <option value="artifact_generation">Artifact Gen</option>
+        <option value="compliance">Compliance</option>
+      </select>
+      <button class="btn bsm bp" onclick="show('prompt-detail', document.querySelectorAll('.nav')[3])">+ Novo Template</button>
+    </div>
+  </div>
+  <div class="pb">
+    <div class="g4" style="margin-bottom:16px;">
+      <div class="metric"><div class="ml">Templates</div><div class="mv" id="ps-total">10</div></div>
+      <div class="metric"><div class="ml">Execuções</div><div class="mv pur" id="ps-execs">0</div></div>
+      <div class="metric"><div class="ml">Tipos Cobertos</div><div class="mv ok" id="ps-types">10</div></div>
+      <div class="metric"><div class="ml">Custo Total</div><div class="mv" id="ps-cost">$0</div></div>
+    </div>
+    <div class="g3" id="prompts-grid"></div>
+  </div>
+</div>
+
+<!-- ════ PROMPT DETAIL ════ -->
+<div class="panel" id="panel-prompt-detail">
+  <div class="ph">
+    <div><div class="pht">🔍 Editor de Template</div><div class="phs">Edição · Versionamento · Renderização · Variáveis</div></div>
+    <div class="phr">
+      <button class="btn bsm" onclick="show('prompts',document.querySelectorAll('.nav')[2])">← Voltar</button>
+      <button class="btn bsm bp" onclick="saveVersion()">💾 Salvar Nova Versão</button>
+    </div>
+  </div>
+  <div class="pb">
+    <div class="g2" style="align-items:start;">
+      <!-- Editor -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card">
+          <div class="ct">✏️ Editor</div>
+          <div class="frow">
+            <div class="field"><label>Nome do Template</label><input type="text" id="pd-name" placeholder="Ex: Elicitação Guiada v2"></div>
+            <div class="field"><label>Tipo</label>
+              <select id="pd-type">
+                <option value="elicitation">Elicitação</option>
+                <option value="requirement_engineering">Req. Engineering</option>
+                <option value="rtm">RTM</option>
+                <option value="lkdf_generation">LKDF Generation</option>
+                <option value="wcag">WCAG</option>
+                <option value="coverage">Coverage</option>
+                <option value="inference">Inference</option>
+                <option value="risk_analysis">Risk Analysis</option>
+                <option value="artifact_generation">Artifact Gen</option>
+                <option value="compliance">Compliance</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>Descrição</label><input type="text" id="pd-desc" placeholder="Descrição do template"></div>
+          <div class="field"><label>System Prompt</label><textarea id="pd-system" rows="3" placeholder="Instruções do sistema para o LLM..."></textarea></div>
+          <div class="field"><label>Conteúdo do Prompt (use {{variavel}} para variáveis)</label><textarea id="pd-content" rows="10" placeholder="Escreva o prompt aqui...&#10;Use {{input}}, {{context}}, {{feature}} para variáveis dinâmicas."></textarea></div>
+          <div class="field"><label>Changelog desta versão</label><input type="text" id="pd-changelog" placeholder="Ex: Adicionado suporte a WCAG 2.2"></div>
+        </div>
+
+        <!-- Render test -->
+        <div class="card">
+          <div class="ct">🧪 Testar Renderização</div>
+          <div class="frow">
+            <div class="field"><label>{{input}}</label><input type="text" id="rv-input" placeholder="valor da variável input"></div>
+            <div class="field"><label>{{context}}</label><input type="text" id="rv-context" placeholder="valor do context"></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>{{feature}}</label><input type="text" id="rv-feature" placeholder="nome da feature"></div>
+            <div class="field"><label>{{domain}}</label><input type="text" id="rv-domain" placeholder="domínio do sistema"></div>
+          </div>
+          <button class="btn bsm" onclick="renderPrompt()" style="margin-bottom:8px;">👁 Renderizar</button>
+          <div class="out" id="pd-rendered" style="min-height:80px;font-size:11px;"># Preview do prompt renderizado aparecerá aqui</div>
+        </div>
+      </div>
+
+      <!-- Versions + Info -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card" id="pd-template-info" style="display:none;">
+          <div class="ct">📋 Template Atual</div>
+          <div id="pd-info-content"></div>
+        </div>
+
+        <div class="card">
+          <div class="ct">🕐 Histórico de Versões</div>
+          <div class="vtl" id="pd-versions">
+            <div style="color:var(--t3);font-size:12px;">Selecione um template na lista de prompts.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ct">📊 Performance</div>
+          <div id="pd-perf" style="color:var(--t3);font-size:12px;">Sem dados de execução ainda.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PROMPT STATS ════ -->
+<div class="panel" id="panel-pstats">
+  <div class="ph">
+    <div><div class="pht">📊 Estatísticas — Prompt Manager</div><div class="phs">Uso por tipo · Performance · Custo · Histórico de execução</div></div>
+    <div class="phr"><button class="btn bsm" onclick="loadPromptStats()">↻ Atualizar</button></div>
+  </div>
+  <div class="pb">
+    <div class="g4" style="margin-bottom:20px;">
+      <div class="metric"><div class="ml">Total Execuções</div><div class="mv pur" id="st-texec">0</div></div>
+      <div class="metric"><div class="ml">Templates Ativos</div><div class="mv" id="st-tmpl">10</div></div>
+      <div class="metric"><div class="ml">Tipos Cobertos</div><div class="mv ok">10</div></div>
+      <div class="metric"><div class="ml">Mais usado</div><div class="mv" id="st-top" style="font-size:12px;margin-top:4px;">—</div></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ct">📈 Execuções por Tipo</div><div id="stat-bytype"></div></div>
+      <div class="card"><div class="ct">🏆 Templates Mais Usados</div><div id="stat-topused"></div></div>
+    </div>
+    <div class="sdiv" style="margin-top:20px;">📋 Log de Execuções</div>
+    <table class="tbl" id="exec-log-table">
+      <thead><tr><th>Template</th><th>Tipo</th><th>Versão</th><th>Provider</th><th>Latência</th><th>Custo</th><th>Status</th><th>Timestamp</th></tr></thead>
+      <tbody id="exec-log-body"><tr><td colspan="8" style="text-align:center;padding:20px;color:var(--t3);">Nenhuma execução ainda.</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+<div id="toasts"></div>
+
+<style>
+.stage-item{padding:8px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--s1);font-size:12px;font-weight:500;color:var(--t3);display:flex;align-items:center;gap:8px;transition:all .3s;}
+.stage-item.running{border-color:var(--pur);color:var(--pur);background:var(--purp);}
+.stage-item.done{border-color:var(--grn);color:var(--grn);background:var(--grnp);}
+.stage-item.err{border-color:var(--red);color:var(--red);background:var(--redp);}
+</style>
+
+<script>
+// ════════════════════════════════════
+// STATE
+// ════════════════════════════════════
+const API2 = 'http://localhost:8080/api/v2';
+const S = {
+  prompts: [], selectedPromptId: null, totalCost: 0, totalExecs: 0,
+  execLogs: [],
+};
+
+const ENGINE_META = {
+  risk:       { icon:'⚠️', name:'Risk Engine',       section:'§6.6', desc:'Classifica riscos por probabilidade, impacto e criticidade. Gera matriz de risco e prioriza casos de teste.', color:'var(--red)' },
+  coverage:   { icon:'🎯', name:'Coverage Engine',   section:'§6.7', desc:'Valida cobertura funcional, técnica, de risco e compliance. Caixa preta, branca e cinza.', color:'var(--b3)' },
+  inference:  { icon:'🔍', name:'Inference Engine',  section:'§6.8', desc:'Infere cenários ocultos, fluxos alternativos e testes implícitos não documentados.', color:'var(--pur)' },
+  compliance: { icon:'🔒', name:'Compliance Engine', section:'§6.12',desc:'WCAG 2.1 AA · OWASP Top 10 · LGPD · ISO 27001. Gera casos de teste de conformidade.', color:'var(--grn)' },
+  impact:     { icon:'💥', name:'Impact Engine',     section:'§6.11',desc:'Analisa impacto de mudanças em requisitos. Identifica regressão necessária e atualiza RTM.', color:'var(--gld)' },
+};
+
+const PROMPT_TYPES = {
+  elicitation:'Elicitação', requirement_engineering:'Req. Eng', rtm:'RTM',
+  lkdf_generation:'LKDF', wcag:'WCAG', coverage:'Coverage',
+  inference:'Inference', risk_analysis:'Risk', artifact_generation:'Artifact', compliance:'Compliance'
+};
+const PT_COLORS = {
+  elicitation:'bblue', requirement_engineering:'bblue', rtm:'bblue',
+  lkdf_generation:'bpur', wcag:'bred', coverage:'bgrn',
+  inference:'bpur', risk_analysis:'bred', artifact_generation:'bgold', compliance:'bred'
+};
+
+// ════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════
+function show(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'prompts')       loadPrompts();
+  if (id === 'pstats')        loadPromptStats();
+  if (id === 'prompt-detail') newTemplateMode();
+}
+
+// ════════════════════════════════════
+// ENGINE STUDIO
+// ════════════════════════════════════
+function updateEngineInfo() {
+  const name = document.getElementById('e-engine').value;
+  const m = ENGINE_META[name];
+  if (!m) return;
+  document.getElementById('engine-info').innerHTML =
+    `<strong>${m.icon} ${m.name}</strong> <span style="font-size:10px;opacity:.7;">${m.section}</span><br>${m.desc}`;
+  renderEngineCards(name);
+}
+
+function renderEngineCards(active) {
+  const wrap = document.getElementById('engine-cards');
+  wrap.innerHTML = Object.entries(ENGINE_META).map(([k, m]) => `
+    <div class="ec ${k === active ? 'running' : ''}" id="ecard-${k}" onclick="selectEngine('${k}')">
+      <div class="ech"><span class="eci">${m.icon}</span>
+        <div><div class="ecn" style="font-size:12px;">${m.name}</div><div class="ecs">${m.section}</div></div>
+        <span class="badge bgray" id="ecard-status-${k}" style="margin-left:auto;">idle</span>
+      </div>
+    </div>`).join('');
+}
+
+function selectEngine(name) {
+  document.getElementById('e-engine').value = name;
+  updateEngineInfo();
+}
+
+function fillQuick(engine, content, domain) {
+  document.getElementById('e-engine').value = engine;
+  document.getElementById('e-content').value = content;
+  updateEngineInfo();
+}
+
+async function runEngine() {
+  const engine  = document.getElementById('e-engine').value;
+  const mode    = document.getElementById('e-mode').value;
+  const prov    = document.getElementById('e-prov').value;
+  const content = document.getElementById('e-content').value.trim();
+  if (!content) { toast('Digite o conteúdo para análise', 'err'); return; }
+
+  const btn = document.getElementById('e-run-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Executando…';
+
+  const card = document.getElementById('ecard-' + engine);
+  if (card) card.className = 'ec running';
+  const statusEl = document.getElementById('ecard-status-' + engine);
+  if (statusEl) statusEl.textContent = '⏳';
+
+  document.getElementById('e-output').textContent = `# ${ENGINE_META[engine]?.name || engine}\n# Mode: ${mode} | Provider: ${prov || 'auto'}\n\nProcessando…`;
+  document.getElementById('e-structured-wrap').style.display = 'none';
+
+  const payload = { content, deployment_mode: mode };
+  if (prov) payload.force_provider = prov;
+
+  try {
+    const data = await apiPost(API2 + '/engines/' + engine + '/run', payload);
+    showEngineResult(data, engine);
+    S.totalCost += data.cost_usd || 0;
+    S.totalExecs++;
+    updateTopbar();
+    addExecLog({ engine, ...data });
+  } catch(e) {
+    const sim = simulateEngineResult(engine, content, prov || 'anthropic');
+    showEngineResult(sim, engine);
+    S.totalCost += sim.cost_usd || 0;
+    S.totalExecs++;
+    updateTopbar();
+    toast('Backend offline — simulado', 'info');
+  } finally {
+    btn.disabled = false; btn.textContent = '▶ Executar Engine';
+    if (card) card.className = 'ec done';
+    if (statusEl) statusEl.textContent = '✓';
+  }
+}
+
+function showEngineResult(data, engine) {
+  document.getElementById('e-output').textContent = data.content || data.error || '(sem conteúdo)';
+  document.getElementById('e-prov-label').textContent = data.provider_used || '—';
+  document.getElementById('e-lat-label').textContent = Math.round(data.latency_ms || 0) + 'ms';
+  document.getElementById('e-cost-label').textContent = '$' + (data.cost_usd || 0).toFixed(6);
+
+  const sb = document.getElementById('e-status-badge');
+  sb.style.display = 'inline-flex';
+  sb.className = 'badge ' + (data.success ? 'bgrn' : 'bred');
+  sb.textContent = data.success ? '✓ Sucesso' : '✗ Falha';
+  document.getElementById('e-fallback-badge').style.display = data.fallback_used ? 'inline-flex' : 'none';
+
+  // Structured
+  const str = data.structured || {};
+  if (Object.keys(str).length > 1) {
+    renderStructured(str, engine);
+    document.getElementById('e-structured-wrap').style.display = 'block';
+  }
+}
+
+function renderStructured(s, engine) {
+  let html = '';
+  if (engine === 'risk') {
+    html = `<div class="g3" style="margin-bottom:12px;">
+      <div class="metric"><div class="ml">Risco Geral</div><div class="mv ${s.overall_risk==='Alto'?'warn':s.overall_risk==='Médio'?'warn':'ok'}">${s.overall_risk||'—'}</div></div>
+      <div class="metric"><div class="ml">Críticos</div><div class="mv warn">${s.critical||0}</div></div>
+      <div class="metric"><div class="ml">Total Riscos</div><div class="mv">${s.total_risks||0}</div></div>
+    </div>`;
+  } else if (engine === 'coverage') {
+    html = `<div class="g3" style="margin-bottom:12px;">
+      <div class="metric"><div class="ml">Funcional</div><div class="mv">${s.functional_coverage||0}%</div><div class="mbar"><div class="mfill" style="width:${s.functional_coverage||0}%;background:var(--b3)"></div></div></div>
+      <div class="metric"><div class="ml">Risco</div><div class="mv">${s.risk_coverage||0}%</div><div class="mbar"><div class="mfill" style="width:${s.risk_coverage||0}%;background:var(--gld)"></div></div></div>
+      <div class="metric"><div class="ml">Geral</div><div class="mv ok">${s.overall_coverage||0}%</div><div class="mbar ok"><div class="mfill ok" style="width:${s.overall_coverage||0}%"></div></div></div>
+    </div>`;
+  } else if (engine === 'compliance') {
+    html = `<div class="g2" style="margin-bottom:12px;">
+      <div class="metric"><div class="ml">Score Compliance</div><div class="mv ${(s.compliance_score||0)>=80?'ok':'warn'}">${s.compliance_score||0}%</div></div>
+      <div class="metric"><div class="ml">Issues Encontrados</div><div class="mv ${(s.total_issues||0)>0?'warn':'ok'}">${s.total_issues||0}</div></div>
+    </div>`;
+  } else if (engine === 'inference') {
+    html = `<div class="metric" style="margin-bottom:12px;"><div class="ml">Cenários Inferidos</div><div class="mv pur">${s.inferred_count||0}</div></div>`;
+  } else if (engine === 'impact') {
+    html = `<div class="g2" style="margin-bottom:12px;">
+      <div class="metric"><div class="ml">CTs Afetados</div><div class="mv warn">${s.affected_count||0}</div></div>
+      <div class="metric"><div class="ml">Regressão</div><div class="mv ${s.regression_needed?'warn':'ok'}">${s.regression_needed?'Necessária':'Não'}</div></div>
+    </div>`;
+  }
+
+  // RTM rows
+  const rows = s.rtm_rows || [];
+  if (rows.length) {
+    html += `<div style="margin-top:4px;font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px;">📊 ${rows.length} Caso(s) de Teste Gerados</div>
+    <table class="rtm-mini">
+      <thead><tr><th>ID</th><th>RN</th><th>CA</th><th>Descrição</th><th>Risco</th><th>Prio</th></tr></thead>
+      <tbody>${rows.slice(0,6).map(r=>`<tr>
+        <td><code>${r.id}</code></td><td>${r.rn}</td><td>${r.ca}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.description}</td>
+        <td><span class="badge ${r.risk?.toLowerCase().includes('alto')?'bred':r.risk?.toLowerCase().includes('médio')?'bgold':'bgrn'}">${r.risk}</span></td>
+        <td>${r.priority}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+  document.getElementById('e-structured').innerHTML = html;
+}
+
+function simulateEngineResult(engine, content, provider) {
+  const lat = 900 + Math.random() * 1800;
+  const cost = (lat / 1000) * 0.003;
+  const riskLevels = ['Alto','Médio','Baixo'];
+  const prios = ['Alta','Média','Baixa'];
+  const rows = [1,2,3].map(i => ({
+    id: `CT-${String(i).padStart(3,'0')}`, rn: `RN-0${i}`, ca: `CA-0${i}`,
+    description: `Cenário ${i} inferido para: ${content.substring(0,40)}...`,
+    risk: riskLevels[i-1], priority: prios[i-1], automatable: 'Sim',
+  }));
+  const simContent = `[SIMULADO]\n\n🔄 ${ENGINE_META[engine]?.name || engine}\nProvider: ${provider}\n\n` +
+    `Análise de: "${content.substring(0,60)}..."\n\n` +
+    rows.map(r => `${r.id}: ${r.description}\nRisco: ${r.risk} | Prioridade: ${r.priority}`).join('\n\n');
+  const cov = 60 + Math.floor(Math.random()*30);
+  return {
+    engine, success: true, content: simContent,
+    provider_used: provider, model_used: 'claude-sonnet-4-5',
+    latency_ms: lat, cost_usd: cost, fallback_used: false,
+    structured: {
+      rtm_rows: rows, total_risks: rows.length,
+      overall_risk: 'Médio', critical: 1, medium: 1, low: 1,
+      functional_coverage: cov, risk_coverage: cov-10, overall_coverage: cov-5,
+      compliance_score: cov+5, total_issues: Math.floor(Math.random()*4),
+      inferred_count: rows.length, affected_count: 2, regression_needed: true,
+    },
+  };
+}
+
+// ════════════════════════════════════
+// PIPELINE §28
+// ════════════════════════════════════
+const STAGES = ['risk','coverage','inference','compliance','synthesis'];
+
+function setStage(name, state) {
+  const el = document.getElementById('stage-' + name);
+  if (!el) return;
+  el.className = 'stage-item ' + state;
+  if (state === 'running') el.innerHTML = `<span class="spin" style="border-color:rgba(124,58,237,.3);border-top-color:var(--pur);"></span>` + el.textContent;
+  else if (state === 'done') el.innerHTML = '✓ ' + el.textContent.replace(/^[✓⏳]/,'').trim();
+}
+
+async function runPipeline() {
+  const content = document.getElementById('p-content').value.trim();
+  const mode    = document.getElementById('p-mode').value;
+  if (!content) { toast('Digite o conteúdo para análise', 'err'); return; }
+
+  const btn = document.getElementById('pipe-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Pipeline em execução…';
+  document.getElementById('p-synthesis').textContent = '# Executando pipeline...\n# Etapas: Risk → Coverage → Inference → Compliance → Synthesis';
+  document.getElementById('p-results-wrap').style.display = 'none';
+
+  STAGES.forEach(s => setStage(s, ''));
+
+  // Simula etapas progressivas visualmente
+  for (const s of STAGES.slice(0,4)) {
+    setStage(s, 'running');
+    await sleep(400);
+  }
+
+  try {
+    const data = await apiPost(API2 + '/engines/full-analysis', { content, deployment_mode: mode });
+    processPipelineResult(data);
+  } catch(e) {
+    const sim = simulatePipeline(content);
+    processPipelineResult(sim);
+    toast('Backend offline — pipeline simulado', 'info');
+  } finally {
+    STAGES.forEach(s => setStage(s, 'done'));
+    setStage('synthesis', 'done');
+    btn.disabled = false; btn.innerHTML = '▶ Executar Pipeline Completo';
+  }
+}
+
+function processPipelineResult(data) {
+  const engines = data.engines || {};
+  const synth   = engines.synthesis;
+  document.getElementById('p-synthesis').textContent = synth?.content || '(sem síntese)';
+  document.getElementById('pm-engines').textContent  = data.engines_executed || Object.keys(engines).length;
+  document.getElementById('pm-cost').textContent     = '$' + (data.total_cost_usd || 0).toFixed(6);
+
+  const risk = engines.risk?.structured;
+  const cov  = engines.coverage?.structured;
+  document.getElementById('pm-risk').textContent = risk?.overall_risk || '—';
+  document.getElementById('pm-cov').textContent  = (cov?.overall_coverage || 0) + '%';
+
+  // Results grid
+  const valid = Object.entries(engines).filter(([k,v]) => v && k !== 'synthesis');
+  if (valid.length) {
+    document.getElementById('p-results').innerHTML = valid.map(([k,v]) => {
+      const m = ENGINE_META[k] || { icon:'⚙️', name: k };
+      const rows = v?.structured?.rtm_rows || [];
+      return `<div class="card">
+        <div class="ct">${m.icon} ${m.name}</div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:8px;">${v?.provider_used||'—'} · ${Math.round(v?.latency_ms||0)}ms · $${(v?.cost_usd||0).toFixed(6)}</div>
+        ${rows.length ? `<div style="font-size:11px;font-weight:600;color:var(--b3);margin-bottom:6px;">📊 ${rows.length} CTs</div>
+        <table class="rtm-mini"><thead><tr><th>ID</th><th>Risco</th><th>Prio</th></tr></thead>
+        <tbody>${rows.slice(0,3).map(r=>`<tr><td><code>${r.id}</code></td><td>${r.risk}</td><td>${r.priority}</td></tr>`).join('')}</tbody></table>` : ''}
+      </div>`;
+    }).join('');
+    document.getElementById('p-results-wrap').style.display = 'block';
+  }
+
+  S.totalCost += data.total_cost_usd || 0;
+  S.totalExecs += data.engines_executed || 1;
+  updateTopbar();
+}
+
+function simulatePipeline(content) {
+  const base = t => ({
+    success: true, content: `[SIMULADO] ${t}: ${content.substring(0,60)}...`,
+    provider_used:'anthropic', model_used:'claude-sonnet-4-5',
+    latency_ms: 800+Math.random()*1200, cost_usd: 0.004+Math.random()*0.008,
+    structured: { rtm_rows:[{id:'CT-001',rn:'RN-01',ca:'CA-01',description:'Caso simulado',risk:'Alto',priority:'Alta'}], overall_risk:'Médio', overall_coverage:72, compliance_score:68, inferred_count:3, total_risks:4, critical:1, medium:2, low:1 }
+  });
+  return {
+    engines: { risk:base('Risk'), coverage:base('Coverage'), inference:base('Inference'), compliance:base('Compliance'),
+      synthesis:{ content:`## Síntese [SIMULADO]\n\n**Resumo:** Análise completa de "${content.substring(0,50)}..."\n\n**Risco geral:** Médio\n**Cobertura:** 72%\n\n**Pontos críticos:**\n- Autenticação requer reforço\n- LGPD: base legal deve ser documentada\n\n**Próximos passos:**\n- Implementar testes dos ${3} cenários inferidos\n- Executar pentest OWASP Top 10\n- Validar conformidade LGPD com DPO`, success:true, cost_usd:0.002 } },
+    total_cost_usd: 0.02, engines_executed: 5
+  };
+}
+
+// ════════════════════════════════════
+// PROMPT MANAGER
+// ════════════════════════════════════
+async function loadPrompts() {
+  try { S.prompts = (await apiGet(API2 + '/prompts')).templates || []; }
+  catch(e) { S.prompts = buildLocalPrompts(); }
+  renderPrompts();
+}
+
+function buildLocalPrompts() {
+  const types = Object.keys(PROMPT_TYPES);
+  const names = ['Elicitação Guiada','Req. Engineering Completo','RTM Automático','LKDF Generator','WCAG 2.1 AA','Coverage Multidimensional','Inference de Cenários','Risk Classification','Artifact Multi-Framework','Compliance LGPD/OWASP'];
+  return types.map((t,i) => ({
+    id: 'local-' + i, name: names[i], prompt_type: t,
+    description: `Template padrão para ${PROMPT_TYPES[t]}`,
+    tags: [t, 'aqua-qe'], active_version: 1, versions_count: 1,
+    usage_count: Math.floor(Math.random()*20),
+    avg_latency_ms: 900+Math.random()*600,
+    avg_cost_usd: 0.003+Math.random()*0.01,
+    variables: { input:'conteúdo principal', context:'contexto adicional' },
+  }));
+}
+
+function renderPrompts() {
+  const filter = document.getElementById('pt-filter').value;
+  let list = S.prompts;
+  if (filter) list = list.filter(p => p.prompt_type === filter);
+  document.getElementById('prompts-grid').innerHTML = list.map(p => `
+    <div class="pc">
+      <div class="pch">
+        <div style="flex:1;">
+          <div class="pcn">${p.name}</div>
+          <div class="pcd">${p.description}</div>
+        </div>
+        <span class="badge ${PT_COLORS[p.prompt_type]||'bblue'}">${PROMPT_TYPES[p.prompt_type]||p.prompt_type}</span>
+      </div>
+      <div class="pcb">
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--t3);">
+          <span>📌 v${p.active_version} (${p.versions_count} versões)</span>
+          <span>🔁 ${p.usage_count}x usado</span>
+          <span>⏱ ${Math.round(p.avg_latency_ms)}ms</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+          ${(p.tags||[]).map(t=>`<span class="badge bgray">${t}</span>`).join('')}
+        </div>
+      </div>
+      <div class="pcf">
+        <button class="btn bsm" onclick="editPrompt('${p.id}')">✏️ Editar</button>
+        <button class="btn bsm bpu" onclick="testPrompt('${p.id}')">▶ Testar</button>
+        <button class="btn bsm" onclick="copyPrompt('${p.id}')">📋 Copiar</button>
+      </div>
+    </div>`).join('');
+  document.getElementById('ps-total').textContent  = S.prompts.length;
+  document.getElementById('ps-types').textContent  = new Set(S.prompts.map(p=>p.prompt_type)).size;
+  document.getElementById('nb-prompts').textContent = S.prompts.length;
+}
+
+function editPrompt(id) {
+  const p = S.prompts.find(x => x.id === id);
+  if (!p) return;
+  S.selectedPromptId = id;
+  document.getElementById('pd-name').value = p.name;
+  document.getElementById('pd-type').value = p.prompt_type;
+  document.getElementById('pd-desc').value = p.description;
+  document.getElementById('pd-content').value = p.content || '';
+
+  // Versions
+  const versions = p.versions || [{ version: p.active_version, hash: '—', changelog: 'Versão inicial', created_at: new Date().toISOString() }];
+  document.getElementById('pd-versions').innerHTML = versions.map(v => `
+    <div class="vitem">
+      <div class="vdot ${v.version === p.active_version ? 'active' : ''}"></div>
+      <div class="vinfo">
+        <div class="vver">v${v.version} ${v.version === p.active_version ? '<span class="badge bpur" style="font-size:9px;">ATIVO</span>' : ''}</div>
+        <div class="vhash">${v.hash}</div>
+        <div class="vcl">${v.changelog || '—'}</div>
+      </div>
+    </div>`).join('');
+
+  // Info
+  document.getElementById('pd-template-info').style.display = 'block';
+  document.getElementById('pd-info-content').innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--t2);line-height:2;">
+      <span>Tipo: <strong>${PROMPT_TYPES[p.prompt_type]||p.prompt_type}</strong></span>
+      <span>Versão ativa: <strong>v${p.active_version}</strong></span>
+      <span>Uso: <strong>${p.usage_count}x</strong></span>
+      <span>Latência média: <strong>${Math.round(p.avg_latency_ms)}ms</strong></span>
+      <span>Custo médio: <strong>$${(p.avg_cost_usd||0).toFixed(6)}</strong></span>
+    </div>`;
+
+  show('prompt-detail', document.querySelectorAll('.nav')[3]);
+  toast('Template "' + p.name + '" carregado', 'info');
+}
+
+function newTemplateMode() {
+  if (S.selectedPromptId) return;
+  document.getElementById('pd-name').value = '';
+  document.getElementById('pd-content').value = '';
+  document.getElementById('pd-changelog').value = '';
+  document.getElementById('pd-template-info').style.display = 'none';
+  document.getElementById('pd-versions').innerHTML = '<div style="color:var(--t3);font-size:12px;">Novo template — sem versões ainda.</div>';
+}
+
+async function saveVersion() {
+  const name    = document.getElementById('pd-name').value.trim();
+  const type    = document.getElementById('pd-type').value;
+  const desc    = document.getElementById('pd-desc').value.trim();
+  const content = document.getElementById('pd-content').value.trim();
+  const system  = document.getElementById('pd-system').value.trim();
+  const chlog   = document.getElementById('pd-changelog').value.trim();
+  if (!name || !content) { toast('Nome e conteúdo são obrigatórios', 'err'); return; }
+
+  try {
+    if (S.selectedPromptId) {
+      await apiPost(API2 + '/prompts/' + S.selectedPromptId + '/versions',
+        { content, changelog: chlog });
+      toast('Nova versão salva ✓', 'ok');
+    } else {
+      const res = await apiPost(API2 + '/prompts',
+        { name, prompt_type: type, description: desc, content, system, tags: [type], variables: {} });
+      S.selectedPromptId = res.id;
+      toast('Template criado: v' + res.version, 'ok');
+    }
+    await loadPrompts();
+  } catch(e) {
+    toast('Salvo localmente (backend offline)', 'info');
+  }
+}
+
+function testPrompt(id) {
+  const p = S.prompts.find(x => x.id === id);
+  if (!p) return;
+  toast('Testando "' + p.name + '" no Engine Studio…', 'pur');
+  show('engines', document.querySelectorAll('.nav')[0]);
+}
+
+function copyPrompt(id) {
+  const p = S.prompts.find(x => x.id === id);
+  if (!p) { toast('Prompt não encontrado', 'err'); return; }
+  navigator.clipboard?.writeText(p.content || p.name || '').then(
+    () => toast('Copiado!', 'ok'),
+    () => toast('Copie manualmente do editor', 'info')
+  );
+}
+
+function renderPrompt() {
+  const content = document.getElementById('pd-content').value;
+  const vars = {
+    input:   document.getElementById('rv-input').value,
+    context: document.getElementById('rv-context').value,
+    feature: document.getElementById('rv-feature').value,
+    domain:  document.getElementById('rv-domain').value,
+  };
+  let rendered = content;
+  for (const [k,v] of Object.entries(vars)) {
+    rendered = rendered.replaceAll('{{' + k + '}}', v || `[${k}]`);
+  }
+  document.getElementById('pd-rendered').textContent = rendered;
+}
+
+// ════════════════════════════════════
+// PROMPT STATS
+// ════════════════════════════════════
+async function loadPromptStats() {
+  let stats = { total_executions: S.totalExecs, total_templates: S.prompts.length, by_type: {}, most_used: [] };
+  try { stats = await apiGet(API2 + '/prompts/stats/summary'); } catch(e) {}
+
+  document.getElementById('st-texec').textContent = stats.total_executions || S.totalExecs;
+  document.getElementById('st-tmpl').textContent  = stats.total_templates  || S.prompts.length;
+  if (stats.most_used?.length) {
+    document.getElementById('st-top').textContent = stats.most_used[0]?.name || '—';
+  }
+
+  const byType = stats.by_type || {};
+  const typeWrap = document.getElementById('stat-bytype');
+  const max = Math.max(...Object.values(byType), 1);
+  const colors = ['var(--b3)','var(--pur)','var(--grn)','var(--red)','var(--gld)'];
+  typeWrap.innerHTML = Object.entries(byType).length
+    ? Object.entries(byType).map(([k,v],i) => `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="font-size:12px;color:var(--t2);width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${PROMPT_TYPES[k]||k}</div>
+        <div style="flex:1;height:8px;background:var(--s2);border-radius:4px;overflow:hidden;"><div style="height:100%;width:${(v/max*100).toFixed(0)}%;background:${colors[i%5]};border-radius:4px;transition:width .5s;"></div></div>
+        <div style="font-size:11px;font-weight:600;color:var(--t2);width:24px;text-align:right;">${v}</div>
+      </div>`).join('')
+    : '<div style="color:var(--t3);font-size:12px;padding:8px 0;">Sem execuções ainda.</div>';
+
+  const topUsed = document.getElementById('stat-topused');
+  const sorted  = S.prompts.sort((a,b) => (b.usage_count||0)-(a.usage_count||0));
+  topUsed.innerHTML = sorted.length
+    ? sorted.slice(0,5).map((p,i) => `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span style="font-size:16px;">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]}</span>
+        <div style="flex:1;font-size:12px;color:var(--t2);">${p.name}</div>
+        <span class="badge bblue">${p.usage_count||0}x</span>
+      </div>`).join('')
+    : '<div style="color:var(--t3);font-size:12px;">Nenhum dado ainda.</div>';
+
+  // Exec log
+  const tbody = document.getElementById('exec-log-body');
+  tbody.innerHTML = S.execLogs.length
+    ? S.execLogs.slice(0,20).map(l => `<tr>
+        <td>${l.template_name||l.engine||'—'}</td>
+        <td><span class="badge ${PT_COLORS[l.prompt_type]||'bgray'}">${PROMPT_TYPES[l.prompt_type]||l.engine||'—'}</span></td>
+        <td>v${l.version_used||1}</td>
+        <td><code>${l.provider||l.provider_used||'—'}</code></td>
+        <td>${Math.round(l.latency_ms||0)}ms</td>
+        <td style="color:var(--grn);">$${(l.cost_usd||0).toFixed(6)}</td>
+        <td><span class="badge ${l.success!==false?'bgrn':'bred'}">${l.success!==false?'✓':'✗'}</span></td>
+        <td style="font-size:10px;color:var(--t3);">${(l.timestamp||'').substring(11,19)}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--t3);">Nenhuma execução registrada ainda.</td></tr>';
+}
+
+function addExecLog(data) {
+  S.execLogs.unshift({
+    template_name: data.engine || '—', engine: data.engine,
+    prompt_type: null, version_used: 1,
+    provider: data.provider_used, latency_ms: data.latency_ms,
+    cost_usd: data.cost_usd, success: data.success,
+    timestamp: new Date().toISOString(),
+  });
+  if (S.execLogs.length > 50) S.execLogs.pop();
+}
+
+// ════════════════════════════════════
+// TOPBAR
+// ════════════════════════════════════
+function updateTopbar() {
+  document.getElementById('tb-execs').textContent = S.totalExecs;
+  document.getElementById('tb-cost').textContent  = '$' + S.totalCost.toFixed(4);
+  document.getElementById('ps-cost').textContent  = '$' + S.totalCost.toFixed(4);
+  document.getElementById('ps-execs').textContent = S.totalExecs;
+}
+
+// ════════════════════════════════════
+// API
+// ════════════════════════════════════
+async function apiGet(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+async function apiPost(url, body) {
+  const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+// ════════════════════════════════════
+// UTILS
+// ════════════════════════════════════
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function toast(msg, type='info') {
+  const map = { ok:'tok', err:'terr', info:'tinfo', pur:'tpur' };
+  const el = document.createElement('div');
+  el.className = 'toast ' + (map[type]||'tinfo');
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ════════════════════════════════════
+// INIT
+// ════════════════════════════════════
+updateEngineInfo();
+loadPrompts();
+</script>
+</body>
+</html>

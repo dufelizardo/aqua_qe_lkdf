@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQuA-QE — AI Gateway Control Panel</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --b3: #00509E; --b3l: #0070CC; --b3pale: #E8F2FB; --b3mid: #C5DEFF;
+  --accent: #00D4AA; --accent2: #00A882;
+  --purple: #7C3AED; --purpale: #F0EBFF;
+  --gold: #F59E0B; --goldpale: #FFF8E6;
+  --danger: #E83B3B; --dangerpale: #FEF2F2;
+  --success: #10B981; --successpale: #ECFDF5;
+  --warn: #F59E0B;
+  --bg: #F4F7FB; --white: #FFFFFF;
+  --surf: #F7F9FC; --surf2: #EFF3F8;
+  --bdr: #D5E3F2; --bdr2: #B8CEEA;
+  --txt: #0D1F35; --txt2: #3A5A7A; --txt3: #6B8CAE;
+  --sans: 'Sora', sans-serif; --mono: 'IBM Plex Mono', monospace;
+  --r: 10px; --rl: 14px;
+  --sh: 0 2px 12px rgba(0,80,158,0.08);
+  --sh2: 0 6px 28px rgba(0,80,158,0.13);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--sans); background: var(--bg); color: var(--txt); font-size: 14px; }
+
+/* ── LAYOUT ── */
+.app { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: 52px 1fr; height: 100vh; overflow: hidden; }
+
+/* ── TOPBAR ── */
+.topbar { grid-column: 1/-1; background: var(--b3); display: flex; align-items: center; padding: 0 20px; gap: 14px; border-bottom: 2px solid var(--b3l); }
+.logo-pill { background: white; color: var(--b3); font-weight: 700; font-size: 11px; padding: 3px 9px; border-radius: 5px; letter-spacing: .06em; }
+.topbar-title { color: white; font-weight: 600; font-size: 14px; }
+.topbar-badge { background: rgba(0,212,170,.2); color: var(--accent); border: 1px solid rgba(0,212,170,.3); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: .05em; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.top-stat { text-align: center; }
+.top-stat-n { color: var(--accent); font-weight: 700; font-size: 15px; line-height: 1; }
+.top-stat-l { color: rgba(255,255,255,.45); font-size: 9px; text-transform: uppercase; letter-spacing: .07em; }
+.tdiv { width: 1px; height: 24px; background: rgba(255,255,255,.15); }
+.mode-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; font-family: var(--sans); }
+.mode-cloud  { background: var(--b3pale); color: var(--b3); }
+.mode-hybrid { background: var(--goldpale); color: #92400E; }
+.mode-local  { background: var(--successpale); color: #065F46; }
+.tb-status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: rgba(255,255,255,.6); }
+.sdot { width: 7px; height: 7px; border-radius: 50%; }
+.sdot.ok  { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+.sdot.err { background: var(--danger); }
+.sdot.warn{ background: var(--warn); }
+
+/* ── SIDEBAR ── */
+.sidebar { background: var(--white); border-right: 1px solid var(--bdr); overflow-y: auto; padding: 10px 0; }
+.sb-section { padding: 10px 14px 4px; font-size: 10px; font-weight: 700; color: var(--txt3); text-transform: uppercase; letter-spacing: .08em; }
+.nav { display: flex; align-items: center; gap: 9px; padding: 9px 14px; cursor: pointer; color: var(--txt2); font-size: 13px; transition: all .12s; border-left: 3px solid transparent; }
+.nav:hover { background: var(--b3pale); color: var(--b3); }
+.nav.active { background: var(--b3pale); color: var(--b3); border-left-color: var(--b3); font-weight: 500; }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--b3); color: white; font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+.nav-badge.danger { background: var(--danger); }
+.nav-badge.ok { background: var(--success); }
+
+/* ── MAIN ── */
+.main { overflow: hidden; display: flex; flex-direction: column; }
+.panel { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+.panel.active { display: flex; }
+
+/* Panel header */
+.ph { padding: 14px 20px; border-bottom: 1px solid var(--bdr); background: var(--white); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.ph-title { font-size: 15px; font-weight: 700; color: var(--txt); }
+.ph-sub { font-size: 12px; color: var(--txt3); }
+.ph-right { margin-left: auto; display: flex; gap: 8px; }
+
+/* Panel body */
+.pb { flex: 1; overflow-y: auto; padding: 20px; }
+
+/* ── CARDS ── */
+.card { background: var(--white); border: 1px solid var(--bdr); border-radius: var(--rl); padding: 16px; box-shadow: var(--sh); }
+.card-title { font-size: 13px; font-weight: 600; color: var(--txt); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+/* ── BUTTONS ── */
+.btn { padding: 7px 16px; border-radius: 7px; font-size: 12px; font-family: var(--sans); cursor: pointer; border: 1px solid var(--bdr); background: var(--white); color: var(--txt2); transition: all .12s; font-weight: 500; }
+.btn:hover { background: var(--surf); border-color: var(--bdr2); }
+.btn-primary { background: var(--b3); color: white; border-color: var(--b3); }
+.btn-primary:hover { background: var(--b3l); }
+.btn-sm { padding: 4px 10px; font-size: 11px; border-radius: 5px; }
+.btn-danger { background: var(--dangerpale); color: var(--danger); border-color: #FCA5A5; }
+.btn-danger:hover { background: var(--danger); color: white; }
+.btn-success { background: var(--successpale); color: var(--success); border-color: #6EE7B7; }
+.btn-success:hover { background: var(--success); color: white; }
+
+/* ── BADGES ── */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; }
+.badge-cloud  { background: var(--b3pale); color: var(--b3); }
+.badge-local  { background: var(--successpale); color: #065F46; }
+.badge-ok     { background: var(--successpale); color: #065F46; }
+.badge-err    { background: var(--dangerpale); color: var(--danger); }
+.badge-warn   { background: var(--goldpale); color: #92400E; }
+.badge-fallback { background: var(--goldpale); color: #92400E; }
+.badge-success  { background: var(--successpale); color: #065F46; }
+.badge-failed   { background: var(--dangerpale); color: var(--danger); }
+.badge-processing { background: var(--purpale); color: var(--purple); }
+
+/* ── GRID UTILS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+/* ── METRIC CARDS ── */
+.metric { background: var(--white); border: 1px solid var(--bdr); border-radius: var(--r); padding: 14px 16px; }
+.metric-label { font-size: 11px; color: var(--txt3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+.metric-value { font-size: 26px; font-weight: 700; line-height: 1; color: var(--b3); }
+.metric-value.ok  { color: var(--success); }
+.metric-value.warn{ color: var(--warn); }
+.metric-value.bad { color: var(--danger); }
+.metric-sub { font-size: 11px; color: var(--txt3); margin-top: 5px; }
+.metric-bar { height: 4px; background: var(--surf2); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.metric-fill { height: 100%; border-radius: 2px; background: var(--b3); transition: width .5s; }
+.metric-fill.ok  { background: var(--success); }
+.metric-fill.warn{ background: var(--warn); }
+.metric-fill.bad { background: var(--danger); }
+
+/* ── PROVIDER CARD ── */
+.prov-card { background: var(--white); border: 1px solid var(--bdr); border-radius: var(--rl); padding: 0; overflow: hidden; transition: box-shadow .15s; }
+.prov-card:hover { box-shadow: var(--sh2); }
+.prov-card.disabled { opacity: .6; }
+.prov-header { padding: 14px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--bdr); }
+.prov-icon { font-size: 22px; }
+.prov-name { font-size: 13px; font-weight: 600; color: var(--txt); }
+.prov-model { font-size: 11px; color: var(--txt3); font-family: var(--mono); margin-top: 2px; }
+.prov-health { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.health-dot { width: 10px; height: 10px; border-radius: 50%; }
+.health-dot.ok   { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.health-dot.err  { background: var(--danger); }
+.health-dot.unk  { background: var(--bdr2); }
+.health-dot.checking { background: var(--warn); animation: pulse .8s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.prov-body { padding: 12px 16px; }
+.prov-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px; }
+.prov-row-label { color: var(--txt3); }
+.prov-row-val { font-weight: 500; color: var(--txt); font-family: var(--mono); font-size: 11px; }
+.prov-footer { padding: 10px 16px; background: var(--surf); display: flex; gap: 6px; border-top: 1px solid var(--bdr); }
+
+/* ── TOGGLE ── */
+.toggle-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.toggle { position: relative; width: 32px; height: 18px; }
+.toggle input { display: none; }
+.toggle-track { width: 100%; height: 100%; background: var(--bdr2); border-radius: 9px; transition: background .2s; display: block; cursor: pointer; }
+.toggle input:checked + .toggle-track { background: var(--b3); }
+.toggle-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: white; border-radius: 50%; transition: transform .2s; pointer-events: none; }
+.toggle input:checked ~ .toggle-thumb { transform: translateX(14px); }
+
+/* ── TABLE ── */
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { background: var(--b3); color: white; padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 500; letter-spacing: .04em; }
+.tbl th:first-child { border-radius: 8px 0 0 0; }
+.tbl th:last-child { border-radius: 0 8px 0 0; }
+.tbl td { padding: 9px 12px; border-bottom: 1px solid var(--bdr); font-size: 12px; vertical-align: middle; }
+.tbl tr:hover td { background: var(--b3pale); }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl td code { font-family: var(--mono); font-size: 11px; background: var(--surf2); padding: 1px 5px; border-radius: 3px; }
+
+/* ── ROUTING TABLE ── */
+.rt-engine { font-weight: 600; color: var(--txt); font-size: 12px; }
+.rt-prov { display: flex; align-items: center; gap: 6px; }
+.rt-pill { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; background: var(--b3pale); color: var(--b3); }
+.rt-fallback { padding: 2px 6px; border-radius: 4px; font-size: 10px; background: var(--surf2); color: var(--txt3); margin-left: 2px; }
+.rt-strategy { font-size: 11px; color: var(--txt3); font-style: italic; }
+
+/* ── LOG TABLE ── */
+.log-status { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
+.log-latency { font-family: var(--mono); font-size: 11px; }
+.log-cost { font-family: var(--mono); font-size: 11px; color: var(--success); }
+
+/* ── INPUT ── */
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; font-weight: 500; color: var(--txt2); margin-bottom: 5px; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 8px 12px; border: 1px solid var(--bdr); border-radius: 7px;
+  font-family: var(--sans); font-size: 13px; color: var(--txt); background: var(--white);
+  outline: none; transition: border-color .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--b3); }
+.field textarea { resize: vertical; min-height: 80px; }
+.field-hint { font-size: 11px; color: var(--txt3); margin-top: 4px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ── TEST PANEL ── */
+.test-output { background: #0D1F35; border-radius: var(--r); padding: 16px; font-family: var(--mono); font-size: 12px; line-height: 1.7; color: #A8D8FF; min-height: 160px; max-height: 320px; overflow-y: auto; white-space: pre-wrap; }
+.test-meta { display: flex; gap: 16px; margin-top: 10px; font-size: 12px; }
+.test-meta-item { display: flex; gap: 5px; align-items: center; }
+.test-meta-label { color: var(--txt3); }
+.test-meta-val { font-weight: 600; font-family: var(--mono); }
+
+/* ── BAR CHART ── */
+.bar-chart { display: flex; flex-direction: column; gap: 8px; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-label { font-size: 12px; color: var(--txt2); width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-wrap { flex: 1; height: 10px; background: var(--surf2); border-radius: 5px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 5px; transition: width .6s; }
+.bar-val { font-size: 11px; font-weight: 600; width: 40px; text-align: right; color: var(--txt2); font-family: var(--mono); }
+
+/* ── ROUTING DRAWER ── */
+.rt-row-active > td { background: var(--b3pale) !important; }
+.rt-drawer-row > td { padding: 0 !important; }
+.rt-drawer {
+  background: var(--surf); border: 1.5px solid var(--b3mid);
+  border-radius: var(--rl); padding: 18px 20px; margin: 4px 0;
+  animation: drawerIn .18s ease;
+}
+@keyframes drawerIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+.rt-dg3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+.rt-dg2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.rt-drawer label { display:block; font-size:11px; font-weight:700; color:var(--txt3); margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em; }
+.rt-drawer input, .rt-drawer select { width:100%; padding:7px 10px; border:1px solid var(--bdr); border-radius:7px; font-family:var(--sans); font-size:12px; color:var(--txt); outline:none; transition:border-color .15s; background:white; }
+.rt-drawer input:focus, .rt-drawer select:focus { border-color:var(--b3); }
+.rt-drawer-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+.fb-chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; min-height:28px; }
+.fb-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; background:var(--surf2); color:var(--txt2); border:1px solid var(--bdr); }
+.fb-rm { cursor:pointer; color:var(--danger); font-size:14px; line-height:1; margin-left:2px; }
+.fb-rm:hover { color:var(--danger); opacity:.7; }
+.strat-pill { font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; cursor:pointer; }
+.changed-badge { font-size:9px; font-weight:700; background:var(--goldpale); color:#92400E; padding:1px 5px; border-radius:3px; margin-left:4px; }
+
+/* ── LOG ENHANCEMENTS ── */
+.log-row-fallback > td { background: rgba(245,158,11,.035) !important; }
+.log-row-failed > td   { background: rgba(232,59,59,.04)  !important; }
+.log-ts  { font-family:var(--mono); font-size:11px; color:var(--txt3); white-space:nowrap; }
+.log-lat { font-family:var(--mono); font-size:11px; }
+.log-cost-cell { font-family:var(--mono); font-size:11px; color:var(--success); }
+.sort-active { color:var(--accent) !important; }
+.tbl th { user-select:none; }
+.tbl th:not(:last-child) { cursor:pointer; }
+.tbl th:not(:last-child):hover { background:#003D80; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--bdr2); border-radius: 10px; }
+
+/* Divider */
+.sec-div { font-size: 11px; font-weight: 700; color: var(--txt3); text-transform: uppercase; letter-spacing: .08em; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--bdr); display: flex; align-items: center; gap: 8px; }
+
+/* Toasts */
+#toasts { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
+.toast { padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; box-shadow: var(--sh2); animation: slideIn .25s ease; }
+@keyframes slideIn { from { opacity:0; transform: translateX(30px); } to { opacity:1; transform: translateX(0); } }
+.toast-ok  { background: var(--success); color: white; }
+.toast-err { background: var(--danger); color: white; }
+.toast-info { background: var(--b3); color: white; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-pill">AQuA-QE</div>
+  <div class="topbar-title">AI Gateway Control Panel</div>
+  <span class="topbar-badge">FASE 2 — §22–26</span>
+  <div class="topbar-right">
+    <div class="top-stat"><div class="top-stat-n" id="tb-providers">10</div><div class="top-stat-l">Providers</div></div>
+    <div class="tdiv"></div>
+    <div class="top-stat"><div class="top-stat-n" id="tb-healthy" style="color:var(--accent)">—</div><div class="top-stat-l">Healthy</div></div>
+    <div class="tdiv"></div>
+    <div class="top-stat"><div class="top-stat-n" id="tb-reqs">0</div><div class="top-stat-l">Requests</div></div>
+    <div class="tdiv"></div>
+    <div class="top-stat"><div class="top-stat-n" id="tb-cost">$0</div><div class="top-stat-l">Custo</div></div>
+    <div class="tdiv"></div>
+    <button class="mode-badge mode-cloud" id="mode-btn" onclick="cycleMode()">☁️ CLOUD</button>
+    <div class="tb-status"><div class="sdot ok" id="gw-dot"></div><span id="gw-status">Gateway conectado</span></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-section">Gateway</div>
+  <div class="nav active" onclick="show('overview', this)"><span class="nav-icon">📊</span>Overview</div>
+  <div class="nav" onclick="show('providers', this)"><span class="nav-icon">🔌</span>Providers<span class="nav-badge" id="nb-prov">10</span></div>
+  <div class="sb-section">Configuração</div>
+  <div class="nav" onclick="show('routing', this)"><span class="nav-icon">🗺️</span>Engine Routing</div>
+  <div class="nav" onclick="show('test', this)"><span class="nav-icon">🧪</span>Test & Debug</div>
+  <div class="sb-section">Observabilidade</div>
+  <div class="nav" onclick="show('logs', this)"><span class="nav-icon">📋</span>Execution Logs<span class="nav-badge" id="nb-logs">0</span></div>
+  <div class="nav" onclick="show('stats', this)"><span class="nav-icon">📈</span>Estatísticas</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ════ OVERVIEW ════ -->
+<div class="panel active" id="panel-overview">
+  <div class="ph">
+    <div><div class="ph-title">📊 Gateway Overview</div><div class="ph-sub">Status em tempo real · Multi-provider · Fallback automático</div></div>
+    <div class="ph-right">
+      <button class="btn btn-sm" onclick="refreshAll()">↻ Refresh</button>
+      <button class="btn btn-sm btn-primary" onclick="checkAllHealth()">🏥 Health Check</button>
+    </div>
+  </div>
+  <div class="pb">
+
+    <!-- Deployment mode -->
+    <div class="sec-div">⚡ Deployment Mode</div>
+    <div class="grid-3" style="margin-bottom:20px;">
+      <div class="card" style="cursor:pointer;border:2px solid transparent;" id="dm-cloud" onclick="setMode('cloud')">
+        <div style="font-size:28px;margin-bottom:8px;">☁️</div>
+        <div style="font-weight:700;font-size:13px;color:var(--b3);">Cloud Mode</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:4px;">OpenAI · Anthropic · Gemini · Groq · Mistral</div>
+        <div style="font-size:11px;color:var(--txt3);">Alta capacidade · Reasoning avançado</div>
+      </div>
+      <div class="card" style="cursor:pointer;border:2px solid transparent;" id="dm-hybrid" onclick="setMode('hybrid')">
+        <div style="font-size:28px;margin-bottom:8px;">⚡</div>
+        <div style="font-weight:700;font-size:13px;color:#92400E;">Hybrid Mode</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:4px;">Cloud + Local balanceado</div>
+        <div style="font-size:11px;color:var(--txt3);">Custo otimizado · Privacidade parcial</div>
+      </div>
+      <div class="card" style="cursor:pointer;border:2px solid transparent;" id="dm-local" onclick="setMode('local')">
+        <div style="font-size:28px;margin-bottom:8px;">🏠</div>
+        <div style="font-weight:700;font-size:13px;color:var(--success);">Local / On-Premise</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:4px;">Ollama · vLLM · LM Studio · llama.cpp</div>
+        <div style="font-size:11px;color:var(--txt3);">Privacidade total · Sem dependência externa</div>
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="sec-div">📈 Métricas</div>
+    <div class="grid-4" style="margin-bottom:20px;">
+      <div class="metric"><div class="metric-label">Total Requests</div><div class="metric-value" id="ov-reqs">0</div><div class="metric-bar"><div class="metric-fill" id="ov-reqs-bar" style="width:0%"></div></div></div>
+      <div class="metric"><div class="metric-label">Taxa de Sucesso</div><div class="metric-value ok" id="ov-success">—%</div><div class="metric-bar"><div class="metric-fill ok" id="ov-success-bar" style="width:0%"></div></div></div>
+      <div class="metric"><div class="metric-label">Latência Média</div><div class="metric-value" id="ov-latency">—ms</div><div class="metric-bar"><div class="metric-fill warn" id="ov-latency-bar" style="width:0%"></div></div></div>
+      <div class="metric"><div class="metric-label">Custo Total</div><div class="metric-value" id="ov-cost">$0</div><div class="metric-bar"><div class="metric-fill" style="width:0%"></div></div></div>
+    </div>
+
+    <!-- Provider health overview -->
+    <div class="sec-div">🏥 Provider Health</div>
+    <div class="grid-3" id="health-grid">
+      <!-- preenchido via JS -->
+    </div>
+
+  </div>
+</div>
+
+<!-- ════ PROVIDERS ════ -->
+<div class="panel" id="panel-providers">
+  <div class="ph">
+    <div><div class="ph-title">🔌 Providers</div><div class="ph-sub">Configuração de Cloud e Local providers</div></div>
+    <div class="ph-right">
+      <select id="prov-filter" onchange="renderProviders()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--sans);font-size:12px;">
+        <option value="all">Todos</option>
+        <option value="cloud">☁️ Cloud</option>
+        <option value="local">🏠 Local</option>
+      </select>
+      <button class="btn btn-sm btn-primary" onclick="checkAllHealth()">🏥 Health All</button>
+    </div>
+  </div>
+  <div class="pb">
+    <div class="sec-div">☁️ Cloud Providers</div>
+    <div class="grid-2" id="cloud-providers"></div>
+    <div class="sec-div" style="margin-top:24px;">🏠 Local Providers (On-Premise)</div>
+    <div class="grid-2" id="local-providers"></div>
+  </div>
+</div>
+
+<!-- ════ ROUTING ════ -->
+<div class="panel" id="panel-routing">
+  <div class="ph">
+    <div><div class="ph-title">🗺️ Engine Routing Table</div><div class="ph-sub">Roteamento inteligente por engine cognitiva — clique em qualquer linha para editar</div></div>
+    <div class="ph-right">
+      <button class="btn btn-sm" onclick="resetAllRouting()">↺ Padrão</button>
+      <button class="btn btn-sm" onclick="exportRouting()">⬇ Exportar JSON</button>
+      <button class="btn btn-sm btn-primary" onclick="applyAllRouting()">✓ Aplicar Todos</button>
+    </div>
+  </div>
+  <div class="pb">
+
+    <!-- Estratégias legenda -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+      <span style="font-size:11px;font-weight:700;color:var(--txt3);">Estratégias:</span>
+      <span class="strat-pill" data-s="capability_match"  style="background:var(--b3pale);color:var(--b3);">capability_match</span>
+      <span class="strat-pill" data-s="cost_optimized"    style="background:var(--goldpale);color:#92400E;">cost_optimized</span>
+      <span class="strat-pill" data-s="performance_first" style="background:var(--purpale);color:var(--purple);">performance_first</span>
+      <span class="strat-pill" data-s="privacy_first"     style="background:var(--successpale);color:#065F46;">privacy_first</span>
+      <span class="strat-pill" data-s="round_robin"       style="background:var(--surf2);color:var(--txt3);">round_robin</span>
+    </div>
+
+    <!-- Routing table -->
+    <table class="tbl" id="routing-table">
+      <thead>
+        <tr>
+          <th style="width:160px;">Engine</th>
+          <th style="width:140px;">Provider Primário</th>
+          <th style="width:200px;">Modelo</th>
+          <th>Fallbacks</th>
+          <th style="width:155px;">Estratégia</th>
+          <th style="width:80px;text-align:center;">Max $</th>
+          <th style="width:60px;"></th>
+        </tr>
+      </thead>
+      <tbody id="routing-body"></tbody>
+    </table>
+
+    <!-- Inline edit drawer (hidden, shown below clicked row) -->
+    <div id="routing-drawer" style="display:none;"></div>
+
+  </div>
+</div>
+
+<!-- ════ TEST ════ -->
+<div class="panel" id="panel-test">
+  <div class="ph">
+    <div><div class="ph-title">🧪 Test & Debug</div><div class="ph-sub">Teste chamadas ao gateway em tempo real</div></div>
+  </div>
+  <div class="pb">
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-title">⚙️ Configurar Request</div>
+          <div class="field">
+            <label>Engine Cognitiva</label>
+            <select id="t-engine">
+              <option value="normalize">Normalize Engine</option>
+              <option value="requirement" selected>Requirement Intelligence</option>
+              <option value="validation">Validation & Ambiguity</option>
+              <option value="business_rule">Business Rule Engine</option>
+              <option value="acceptance_criteria">Acceptance Criteria</option>
+              <option value="risk">Risk Engine</option>
+              <option value="coverage">Coverage Validation</option>
+              <option value="inference">Inference Engine</option>
+              <option value="compliance">Compliance Engine</option>
+              <option value="artifact">Artifact Generation</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Deployment Mode</label>
+              <select id="t-mode">
+                <option value="cloud" selected>Cloud</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="local">Local</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Provider</label>
+              <select id="t-provider" onchange="onProviderChange()">
+                <option value="">Auto (routing table)</option>
+                <option value="anthropic">Anthropic Claude</option>
+                <option value="openai">OpenAI GPT</option>
+                <option value="google_gemini">Google Gemini</option>
+                <option value="groq">Groq</option>
+                <option value="mistral">Mistral</option>
+                <option value="ollama">Ollama (local)</option>
+                <option value="vllm">vLLM (local)</option>
+                <option value="lm_studio">LM Studio (local)</option>
+                <option value="llamacpp">llama.cpp (local)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- MODEL SELECTOR — dinâmico por provider -->
+          <div class="field" id="t-model-wrap">
+            <label style="display:flex;align-items:center;gap:8px;">
+              Modelo
+              <span id="t-model-badge" style="font-size:10px;padding:2px 8px;border-radius:20px;background:var(--b3pale);color:var(--b3);font-weight:600;">auto</span>
+              <span style="margin-left:auto;font-size:11px;color:var(--txt3);" id="t-model-cost"></span>
+            </label>
+            <div style="display:flex;gap:6px;">
+              <select id="t-model" onchange="onModelChange()" style="flex:1;">
+                <option value="">— padrão do provider —</option>
+              </select>
+              <input type="text" id="t-model-custom"
+                placeholder="ou digite um modelo..."
+                style="flex:1;padding:8px 10px;border:1px solid var(--bdr);border-radius:7px;font-family:var(--mono);font-size:12px;display:none;"
+                oninput="onModelCustomInput()">
+              <button class="btn btn-sm" id="t-model-toggle" onclick="toggleCustomModel()"
+                title="Digitar modelo manualmente"
+                style="flex-shrink:0;padding:0 10px;font-size:14px;">✏️</button>
+            </div>
+            <div id="t-model-info" style="margin-top:5px;font-size:11px;color:var(--txt3);min-height:16px;"></div>
+          </div>
+
+          <div class="field">
+            <label>Conteúdo / Prompt</label>
+            <textarea id="t-content" rows="4" placeholder="Ex: Como usuário quero fazer login com email e senha para acessar o sistema seguro. Analise os requisitos, identifique RN e CA, gere casos de teste."></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Max Tokens</label>
+              <input type="number" id="t-tokens" value="800" min="100" max="4000">
+            </div>
+            <div class="field">
+              <label>Temperature</label>
+              <input type="number" id="t-temp" value="0.3" min="0" max="1" step="0.1">
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;" id="t-run-btn" onclick="runTest()">▶ Executar via Gateway</button>
+        </div>
+
+        <!-- Quick tests -->
+        <div class="sec-div" style="margin-top:16px;">⚡ Quick Tests</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button class="btn btn-sm" onclick="quickTest('normalize', 'Normalizar: login usuário sistema email senha recuperação acesso dashboard perfil')">Normalize Engine</button>
+          <button class="btn btn-sm" onclick="quickTest('requirement', 'Como usuário premium quero ver meu extrato financeiro filtrado por período para controlar meus gastos mensais')">Requirement Engine</button>
+          <button class="btn btn-sm" onclick="quickTest('risk', 'Fluxo de pagamento com cartão de crédito internacional: identifique e classifique os principais riscos')">Risk Engine</button>
+          <button class="btn btn-sm" onclick="quickTest('compliance', 'Analise conformidade WCAG 2.1 AA e LGPD para formulário de cadastro com dados pessoais sensíveis')">Compliance Engine</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card-title">📤 Resposta do Gateway</div>
+        <div id="test-meta" class="test-meta" style="margin-bottom:10px;display:none;">
+          <div class="test-meta-item"><span class="test-meta-label">Provider:</span><span class="test-meta-val" id="tm-prov">—</span></div>
+          <div class="test-meta-item"><span class="test-meta-label">Modelo:</span><span class="test-meta-val" id="tm-model">—</span></div>
+          <div class="test-meta-item"><span class="test-meta-label">Latência:</span><span class="test-meta-val" id="tm-lat">—</span></div>
+          <div class="test-meta-item"><span class="test-meta-label">Tokens:</span><span class="test-meta-val" id="tm-tok">—</span></div>
+          <div class="test-meta-item"><span class="test-meta-label">Custo:</span><span class="test-meta-val" id="tm-cost" style="color:var(--success)">—</span></div>
+          <div id="tm-fallback" class="badge badge-fallback" style="display:none;">⚡ FALLBACK</div>
+        </div>
+        <div class="test-output" id="test-output"># Aguardando execução...
+# Configure um request e clique em Executar.
+#
+# O AI Gateway irá:
+# 1. Resolver o provider via routing table
+# 2. Executar com fallback automático se necessário
+# 3. Retornar resultado + métricas de observabilidade</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ LOGS ════ -->
+<div class="panel" id="panel-logs">
+  <div class="ph">
+    <div><div class="ph-title">📋 Execution Logs</div><div class="ph-sub">Histórico · Filtros · Exportação</div></div>
+    <div class="ph-right">
+      <button class="btn btn-sm" onclick="loadLogs()">↻ Refresh</button>
+      <button class="btn btn-sm" onclick="exportLogsCSV()">⬇ CSV</button>
+      <button class="btn btn-sm" onclick="exportLogsJSON()">⬇ JSON</button>
+      <button class="btn btn-sm" onclick="copyLogsClipboard()">📋 Copiar</button>
+      <button class="btn btn-sm btn-danger" onclick="clearLogs()">🗑 Limpar</button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div style="padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surf);display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex-shrink:0;">
+    <input type="text" id="log-search" placeholder="🔍 Buscar engine, provider, modelo..." oninput="filterLogs()"
+      style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--sans);font-size:12px;width:240px;outline:none;">
+
+    <select id="log-f-provider" onchange="filterLogs()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--sans);font-size:12px;">
+      <option value="">Todos os providers</option>
+      <option value="anthropic">Anthropic</option>
+      <option value="openai">OpenAI</option>
+      <option value="google_gemini">Gemini</option>
+      <option value="groq">Groq</option>
+      <option value="mistral">Mistral</option>
+      <option value="ollama">Ollama</option>
+      <option value="vllm">vLLM</option>
+      <option value="lm_studio">LM Studio</option>
+    </select>
+
+    <select id="log-f-engine" onchange="filterLogs()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--sans);font-size:12px;">
+      <option value="">Todas as engines</option>
+      <option value="normalize">normalize</option>
+      <option value="requirement">requirement</option>
+      <option value="validation">validation</option>
+      <option value="business_rule">business_rule</option>
+      <option value="acceptance_criteria">acceptance_criteria</option>
+      <option value="risk">risk</option>
+      <option value="coverage">coverage</option>
+      <option value="inference">inference</option>
+      <option value="compliance">compliance</option>
+      <option value="artifact">artifact</option>
+    </select>
+
+    <select id="log-f-status" onchange="filterLogs()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--sans);font-size:12px;">
+      <option value="">Todos os status</option>
+      <option value="success">✓ Success</option>
+      <option value="fallback">⚡ Fallback</option>
+      <option value="failed">✗ Failed</option>
+    </select>
+
+    <select id="log-f-period" onchange="filterLogs()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--sans);font-size:12px;">
+      <option value="">Todo período</option>
+      <option value="5">Últimos 5 min</option>
+      <option value="30">Últimos 30 min</option>
+      <option value="60">Última hora</option>
+    </select>
+
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;">
+      <input type="checkbox" id="log-f-fallback" onchange="filterLogs()"> Só fallbacks
+    </label>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;">
+      <input type="checkbox" id="log-f-custom-model" onchange="filterLogs()"> Modelo customizado
+    </label>
+
+    <span id="log-count" style="margin-left:auto;font-size:11px;font-weight:600;color:var(--txt3);white-space:nowrap;"></span>
+  </div>
+
+  <!-- Tabela -->
+  <div class="pb" style="padding:0;overflow-y:auto;">
+    <table class="tbl" id="log-tbl">
+      <thead>
+        <tr>
+          <th style="cursor:pointer;" onclick="sortLogs('timestamp')">Timestamp ↕</th>
+          <th style="cursor:pointer;" onclick="sortLogs('engine')">Engine ↕</th>
+          <th style="cursor:pointer;" onclick="sortLogs('provider')">Provider ↕</th>
+          <th>Modelo</th>
+          <th style="cursor:pointer;" onclick="sortLogs('status')">Status ↕</th>
+          <th style="cursor:pointer;" onclick="sortLogs('latency_ms')">Latência ↕</th>
+          <th>Tokens</th>
+          <th style="cursor:pointer;" onclick="sortLogs('cost_usd')">Custo ↕</th>
+          <th>Fallback</th>
+        </tr>
+      </thead>
+      <tbody id="logs-body">
+        <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--txt3);">Nenhum log ainda.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════ STATS ════ -->
+<div class="panel" id="panel-stats">
+  <div class="ph">
+    <div><div class="ph-title">📈 Estatísticas</div><div class="ph-sub">Observabilidade do gateway · Custo · Performance · Uso por provider</div></div>
+    <div class="ph-right"><button class="btn btn-sm" onclick="loadStats()">↻ Atualizar</button></div>
+  </div>
+  <div class="pb">
+    <div class="grid-4" style="margin-bottom:20px;">
+      <div class="metric"><div class="metric-label">Requests</div><div class="metric-value" id="st-reqs">0</div></div>
+      <div class="metric"><div class="metric-label">Taxa Sucesso</div><div class="metric-value ok" id="st-suc">—%</div></div>
+      <div class="metric"><div class="metric-label">Taxa Fallback</div><div class="metric-value warn" id="st-fb">—%</div></div>
+      <div class="metric"><div class="metric-label">Latência Média</div><div class="metric-value" id="st-lat">—ms</div></div>
+      <div class="metric"><div class="metric-label">Custo Total</div><div class="metric-value" id="st-cost">$0</div></div>
+      <div class="metric"><div class="metric-label">Tokens Input</div><div class="metric-value" id="st-tin">0</div></div>
+      <div class="metric"><div class="metric-label">Tokens Output</div><div class="metric-value" id="st-tout">0</div></div>
+      <div class="metric"><div class="metric-label">Engines Usadas</div><div class="metric-value" id="st-eng">0</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">🔌 Requests por Provider</div>
+        <div class="bar-chart" id="st-byprov"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚙️ Requests por Engine</div>
+        <div class="bar-chart" id="st-byeng"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">💰 Custo por Provider</div>
+        <div class="bar-chart" id="st-costprov"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">ℹ️ Informações do Gateway</div>
+        <div id="st-info" style="font-size:12px;color:var(--txt2);line-height:2;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+<div id="toasts"></div>
+
+<script>
+// ════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════
+const API = 'http://localhost:8080/api/v1';
+
+// Estado local (fallback quando backend offline)
+const LOCAL = {
+  mode: 'cloud',
+  logs: [],
+  stats: { total_requests:0, success_rate:0, fallback_rate:0, avg_latency_ms:0, total_cost_usd:0, total_input_tokens:0, total_output_tokens:0, requests_by_provider:{}, requests_by_engine:{}, cost_by_provider:{} },
+  providers: buildDefaultProviders(),
+  routing: buildDefaultRouting(),
+};
+
+let backendOnline = false;
+
+// ════════════════════════════════════
+// DEFAULT DATA
+// ════════════════════════════════════
+function buildDefaultProviders() {
+  return [
+    { name:'anthropic',   display_name:'Anthropic Claude',          type:'cloud', enabled:true,  priority:9, is_healthy:null, default_model:'claude-sonnet-4-5', available_models:['claude-opus-4-5','claude-sonnet-4-5','claude-haiku-4-5'], cost_input_per_1k:0.003, cost_output_per_1k:0.015, max_context_tokens:200000, has_api_key:false, base_url:'https://api.anthropic.com', supports_vision:true, supports_function_calling:true, timeout_seconds:60 },
+    { name:'openai',      display_name:'OpenAI GPT',                type:'cloud', enabled:true,  priority:8, is_healthy:null, default_model:'gpt-4o',             available_models:['gpt-4o','gpt-4o-mini','gpt-4-turbo','o1-mini'],          cost_input_per_1k:0.005, cost_output_per_1k:0.015, max_context_tokens:128000, has_api_key:false, base_url:'https://api.openai.com/v1',   supports_vision:true, supports_function_calling:true, timeout_seconds:60 },
+    { name:'azure_openai',display_name:'Azure OpenAI',              type:'cloud', enabled:false, priority:7, is_healthy:null, default_model:'gpt-4o',             available_models:['gpt-4o','gpt-4-turbo','gpt-35-turbo'],                    cost_input_per_1k:0.005, cost_output_per_1k:0.015, max_context_tokens:128000, has_api_key:false, base_url:'',                              supports_vision:true, supports_function_calling:true, timeout_seconds:60 },
+    { name:'google_gemini',display_name:'Google Gemini',            type:'cloud', enabled:true,  priority:7, is_healthy:null, default_model:'gemini-2.0-flash',   available_models:['gemini-2.5-flash-lite','gemini-2.5-flash-preview-04-17','gemini-2.5-pro-preview-05-06','gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-pro','gemini-1.5-flash','gemini-1.5-flash-8b'],  cost_input_per_1k:0.0001,cost_output_per_1k:0.0004,max_context_tokens:1000000,has_api_key:false, base_url:'https://generativelanguage.googleapis.com', supports_vision:true, supports_function_calling:true, timeout_seconds:60 },
+    { name:'groq',        display_name:'Groq (Ultra-fast)',         type:'cloud', enabled:true,  priority:6, is_healthy:null, default_model:'llama-3.1-70b-versatile', available_models:['llama-3.1-70b-versatile','mixtral-8x7b-32768'],  cost_input_per_1k:0.00059,cost_output_per_1k:0.00079,max_context_tokens:128000, has_api_key:false, base_url:'https://api.groq.com/openai/v1', supports_vision:false, supports_function_calling:true, timeout_seconds:30 },
+    { name:'mistral',     display_name:'Mistral AI',                type:'cloud', enabled:true,  priority:6, is_healthy:null, default_model:'mistral-large-latest',available_models:['mistral-large-latest','mistral-medium-latest'],        cost_input_per_1k:0.004, cost_output_per_1k:0.012, max_context_tokens:32000,  has_api_key:false, base_url:'https://api.mistral.ai/v1', supports_vision:false, supports_function_calling:true, timeout_seconds:60 },
+    { name:'ollama',      display_name:'Ollama (Local)',            type:'local', enabled:true,  priority:5, is_healthy:null, default_model:'llama3.1:8b',         available_models:['llama3.1:8b','llama3.1:70b','mistral:7b','deepseek-coder:6.7b','phi3:medium','qwen2:7b'], cost_input_per_1k:0, cost_output_per_1k:0, max_context_tokens:128000, has_api_key:false, base_url:'http://localhost:11434', supports_vision:false, supports_function_calling:false, timeout_seconds:120 },
+    { name:'vllm',        display_name:'vLLM (High Perf Local)',    type:'local', enabled:false, priority:5, is_healthy:null, default_model:'meta-llama/Llama-3.1-8B-Instruct', available_models:['meta-llama/Llama-3.1-8B-Instruct'], cost_input_per_1k:0, cost_output_per_1k:0, max_context_tokens:128000, has_api_key:false, base_url:'http://localhost:8000/v1', supports_vision:false, supports_function_calling:false, timeout_seconds:120 },
+    { name:'lm_studio',   display_name:'LM Studio',                 type:'local', enabled:false, priority:4, is_healthy:null, default_model:'local-model',          available_models:['local-model'],                                        cost_input_per_1k:0, cost_output_per_1k:0, max_context_tokens:32000, has_api_key:false, base_url:'http://localhost:1234/v1', supports_vision:false, supports_function_calling:false, timeout_seconds:180 },
+    { name:'llamacpp',    display_name:'llama.cpp (Lightweight)',   type:'local', enabled:false, priority:3, is_healthy:null, default_model:'phi-3-mini',           available_models:['phi-3-mini','qwen2-1.5b'],                            cost_input_per_1k:0, cost_output_per_1k:0, max_context_tokens:4096,  has_api_key:false, base_url:'http://localhost:8080', supports_vision:false, supports_function_calling:false, timeout_seconds:300 },
+  ];
+}
+
+function buildDefaultRouting() {
+  return [
+    { engine:'normalize',         primary:'anthropic',    model:'claude-haiku-4-5',         fallbacks:['groq','ollama'],             strategy:'cost_optimized' },
+    { engine:'requirement',       primary:'anthropic',    model:'claude-sonnet-4-5',        fallbacks:['openai','ollama'],           strategy:'capability_match' },
+    { engine:'validation',        primary:'anthropic',    model:'claude-sonnet-4-5',        fallbacks:['openai','mistral'],          strategy:'capability_match' },
+    { engine:'business_rule',     primary:'openai',       model:'gpt-4o',                   fallbacks:['anthropic','ollama'],        strategy:'capability_match' },
+    { engine:'acceptance_criteria',primary:'anthropic',  model:'claude-sonnet-4-5',        fallbacks:['openai','mistral'],          strategy:'capability_match' },
+    { engine:'risk',              primary:'anthropic',    model:'claude-sonnet-4-5',        fallbacks:['groq','ollama'],             strategy:'performance_first' },
+    { engine:'coverage',          primary:'google_gemini',model:'gemini-2.0-flash',           fallbacks:['anthropic','openai'],        strategy:'capability_match' },
+    { engine:'inference',         primary:'anthropic',    model:'claude-sonnet-4-5',        fallbacks:['openai','mistral'],          strategy:'performance_first' },
+    { engine:'synthesis',         primary:'google_gemini',model:'gemini-2.0-flash',           fallbacks:['anthropic','groq'],          strategy:'cost_optimized' },
+    { engine:'consistency',       primary:'anthropic',    model:'claude-sonnet-4-5',        fallbacks:['openai'],                   strategy:'capability_match' },
+    { engine:'impact',            primary:'openai',       model:'gpt-4o',                   fallbacks:['anthropic','mistral'],       strategy:'performance_first' },
+    { engine:'compliance',        primary:'anthropic',    model:'claude-sonnet-4-5',        fallbacks:['openai'],                   strategy:'privacy_first' },
+    { engine:'traceability',      primary:'google_gemini',model:'gemini-2.0-flash',           fallbacks:['anthropic','groq'],          strategy:'cost_optimized' },
+    { engine:'artifact',          primary:'openai',       model:'gpt-4o',                   fallbacks:['ollama','anthropic'],        strategy:'capability_match' },
+  ];
+}
+
+// ════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════
+function show(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'providers') renderProviders();
+  if (id === 'routing')   renderRouting();
+  if (id === 'logs')      loadLogs();
+  if (id === 'stats')     loadStats();
+  if (id === 'overview')  renderOverview();
+}
+
+// ════════════════════════════════════
+// DEPLOYMENT MODE
+// ════════════════════════════════════
+const modeLabels = { cloud:'☁️ CLOUD', hybrid:'⚡ HYBRID', local:'🏠 LOCAL' };
+const modeClasses = { cloud:'mode-cloud', hybrid:'mode-hybrid', local:'mode-local' };
+
+function setMode(m) {
+  LOCAL.mode = m;
+  const btn = document.getElementById('mode-btn');
+  btn.textContent = modeLabels[m];
+  btn.className = 'mode-badge ' + modeClasses[m];
+  ['cloud','hybrid','local'].forEach(k => {
+    const el = document.getElementById('dm-' + k);
+    if (el) el.style.borderColor = k === m ? 'var(--b3)' : 'transparent';
+  });
+  apiCall('PUT', '/deployment', { mode: m }).catch(() => {});
+  toast('Modo ' + m.toUpperCase() + ' ativado', 'ok');
+}
+
+function cycleMode() {
+  const modes = ['cloud','hybrid','local'];
+  const idx = modes.indexOf(LOCAL.mode);
+  setMode(modes[(idx + 1) % 3]);
+}
+
+// ════════════════════════════════════
+// OVERVIEW
+// ════════════════════════════════════
+async function renderOverview() {
+  setMode(LOCAL.mode);
+  await loadStats();
+  renderHealthGrid();
+}
+
+function renderHealthGrid() {
+  const provs = LOCAL.providers;
+  const icons = { anthropic:'🤖', openai:'🟢', azure_openai:'🔵', google_gemini:'🔴', groq:'⚡', mistral:'🌪️', ollama:'🦙', vllm:'🚀', lm_studio:'🖥️', llamacpp:'⚙️' };
+  const enabled = provs.filter(p => p.enabled);
+  document.getElementById('health-grid').innerHTML = enabled.map(p => {
+    const h = p.is_healthy;
+    const dot = h === null ? 'unk' : (h ? 'ok' : 'err');
+    const label = h === null ? 'Não verificado' : (h ? 'Saudável' : 'Offline');
+    return `<div class="card" style="padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">${icons[p.name]||'🔌'}</span>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:600;">${p.display_name}</div>
+          <div style="font-size:10px;color:var(--txt3);font-family:var(--mono);">${p.default_model}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="health-dot ${dot}" style="margin-left:auto;margin-bottom:4px;"></div>
+          <div style="font-size:10px;color:var(--txt3);">${label}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <span class="badge ${p.type === 'cloud' ? 'badge-cloud' : 'badge-local'}">${p.type}</span>
+        <span class="badge" style="background:var(--surf2);color:var(--txt3);">prio ${p.priority}</span>
+        ${p.cost_input_per_1k === 0 ? '<span class="badge badge-ok">Grátis</span>' : `<span class="badge" style="background:var(--purpale);color:var(--purple);">$${p.cost_input_per_1k}/1k</span>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════
+// PROVIDERS
+// ════════════════════════════════════
+function renderProviders() {
+  const filter = document.getElementById('prov-filter').value;
+  const icons = { anthropic:'🤖', openai:'🟢', azure_openai:'🔵', google_gemini:'🔴', groq:'⚡', mistral:'🌪️', ollama:'🦙', vllm:'🚀', lm_studio:'🖥️', llamacpp:'⚙️' };
+
+  function makeCard(p) {
+    const h = p.is_healthy;
+    const dotCls = h === null ? 'unk' : (h ? 'ok' : 'err');
+    const healthLabel = h === null ? 'Não verificado' : (h ? '✓ Saudável' : '✗ Offline');
+    return `<div class="prov-card ${p.enabled ? '' : 'disabled'}" id="pc-${p.name}">
+      <div class="prov-header">
+        <span class="prov-icon">${icons[p.name]||'🔌'}</span>
+        <div>
+          <div class="prov-name">${p.display_name}</div>
+          <div class="prov-model">${p.default_model}</div>
+        </div>
+        <div class="prov-health">
+          <div class="health-dot ${dotCls}" id="hd-${p.name}"></div>
+          <div style="font-size:10px;color:var(--txt3);" id="hl-${p.name}">${healthLabel}</div>
+        </div>
+      </div>
+      <div class="prov-body">
+        <div class="prov-row"><span class="prov-row-label">Tipo</span><span class="badge ${p.type==='cloud'?'badge-cloud':'badge-local'}">${p.type}</span></div>
+        <div class="prov-row"><span class="prov-row-label">Base URL</span><span class="prov-row-val">${(p.base_url||'').substring(0,35)}${(p.base_url||'').length>35?'…':''}</span></div>
+        <div class="prov-row"><span class="prov-row-label">Contexto</span><span class="prov-row-val">${(p.max_context_tokens/1000).toFixed(0)}K tokens</span></div>
+        <div class="prov-row"><span class="prov-row-label">Custo</span><span class="prov-row-val">${p.cost_input_per_1k===0?'Grátis (local)':'$'+p.cost_input_per_1k+' / $'+p.cost_output_per_1k+' /1k'}</span></div>
+        <div class="prov-row"><span class="prov-row-label">Prioridade</span><span class="prov-row-val">${p.priority}/10</span></div>
+        <div class="prov-row"><span class="prov-row-label">API Key</span>
+          <input type="password" placeholder="${p.has_api_key?'••••••••••':'Inserir API key...'}" 
+            style="border:1px solid var(--bdr);border-radius:5px;padding:3px 8px;font-size:11px;width:160px;font-family:var(--mono);"
+            id="key-${p.name}" onchange="saveKey('${p.name}', this.value)">
+        </div>
+        <div class="prov-row"><span class="prov-row-label">Habilitado</span>
+          <label class="toggle-wrap">
+            <label class="toggle">
+              <input type="checkbox" ${p.enabled?'checked':''} onchange="toggleProvider('${p.name}', this.checked)">
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+          </label>
+        </div>
+        <div class="prov-row"><span class="prov-row-label">Modelos</span><span class="prov-row-val" style="font-size:10px;">${p.available_models.slice(0,2).join(', ')}${p.available_models.length>2?'…':''}</span></div>
+      </div>
+      <div class="prov-footer">
+        <button class="btn btn-sm" onclick="checkHealth('${p.name}')">🏥 Health</button>
+        <button class="btn btn-sm btn-primary" onclick="testProvider('${p.name}')">▶ Testar</button>
+      </div>
+    </div>`;
+  }
+
+  const cloud = LOCAL.providers.filter(p => p.type === 'cloud' && (filter === 'all' || filter === 'cloud'));
+  const local = LOCAL.providers.filter(p => p.type === 'local' && (filter === 'all' || filter === 'local'));
+  document.getElementById('cloud-providers').innerHTML = cloud.map(makeCard).join('');
+  document.getElementById('local-providers').innerHTML = local.map(makeCard).join('');
+  document.getElementById('nb-prov').textContent = LOCAL.providers.filter(p=>p.enabled).length;
+  document.getElementById('tb-providers').textContent = LOCAL.providers.length;
+}
+
+function toggleProvider(name, enabled) {
+  const p = LOCAL.providers.find(x => x.name === name);
+  if (p) p.enabled = enabled;
+  apiCall('PATCH', '/providers/' + name, { enabled }).catch(()=>{});
+  toast(name + ' ' + (enabled ? 'habilitado' : 'desabilitado'), enabled ? 'ok' : 'info');
+}
+
+function saveKey(name, key) {
+  if (!key) return;
+  const p = LOCAL.providers.find(x => x.name === name);
+  if (p) p.has_api_key = true;
+  apiCall('PATCH', '/providers/' + name, { api_key: key }).catch(()=>{});
+  toast('API key salva para ' + name, 'ok');
+}
+
+async function checkHealth(name) {
+  const el = document.getElementById('hd-' + name);
+  const lb = document.getElementById('hl-' + name);
+  if (el) { el.className = 'health-dot checking'; }
+  if (lb) lb.textContent = 'Verificando…';
+  try {
+    const data = await apiCall('POST', '/providers/' + name + '/health');
+    const ok = data.healthy;
+    const p = LOCAL.providers.find(x => x.name === name);
+    if (p) p.is_healthy = ok;
+    if (el) el.className = 'health-dot ' + (ok ? 'ok' : 'err');
+    if (lb) lb.textContent = ok ? '✓ Saudável' : '✗ Offline';
+    toast(name + ': ' + (ok ? 'saudável ✓' : 'offline ✗'), ok ? 'ok' : 'err');
+  } catch(e) {
+    // offline mode
+    const p = LOCAL.providers.find(x => x.name === name);
+    if (p) p.is_healthy = false;
+    if (el) el.className = 'health-dot err';
+    if (lb) lb.textContent = '✗ Inacessível';
+    toast(name + ': backend offline (mock)', 'info');
+  }
+}
+
+async function checkAllHealth() {
+  toast('Verificando todos os providers…', 'info');
+  for (const p of LOCAL.providers.filter(x => x.enabled)) {
+    await checkHealth(p.name);
+    await sleep(100);
+  }
+  const healthy = LOCAL.providers.filter(p => p.is_healthy === true).length;
+  document.getElementById('tb-healthy').textContent = healthy;
+  renderHealthGrid();
+  toast(`Health check: ${healthy} saudáveis`, 'ok');
+}
+
+function testProvider(name) {
+  document.querySelector('[onclick="show(\'test\', this)"]')?.click();
+  show('test', document.querySelectorAll('.nav')[4]);
+  document.getElementById('t-provider').value = name;
+  toast('Provider ' + name + ' selecionado no Test', 'info');
+}
+
+// ════════════════════════════════════
+// ROUTING — EDITOR COMPLETO
+// ════════════════════════════════════
+const strategyColors = {
+  capability_match:  'background:var(--b3pale);color:var(--b3)',
+  cost_optimized:    'background:var(--goldpale);color:#92400E',
+  performance_first: 'background:var(--purpale);color:var(--purple)',
+  privacy_first:     'background:var(--successpale);color:#065F46',
+  round_robin:       'background:var(--surf2);color:var(--txt3)',
+};
+
+const ALL_PROVIDERS = ['anthropic','openai','azure_openai','google_gemini','groq','mistral','ollama','vllm','lm_studio','llamacpp'];
+const STRATEGIES    = ['capability_match','cost_optimized','performance_first','privacy_first','round_robin'];
+let openDrawerEngine = null;   // engine name with open drawer
+let changedEngines   = new Set();
+
+function renderRouting() {
+  const tbody = document.getElementById('routing-body');
+  tbody.innerHTML = LOCAL.routing.map(r => {
+    const changed = changedEngines.has(r.engine);
+    return `<tr id="rtrow-${r.engine}" class="${openDrawerEngine===r.engine?'rt-row-active':''}"
+              onclick="toggleDrawer('${r.engine}')" style="cursor:pointer;">
+      <td>
+        <span class="rt-engine">${r.engine}</span>
+        ${changed ? `<span class="changed-badge">EDITADO</span>` : ''}
+      </td>
+      <td><span class="rt-pill">${r.primary}</span></td>
+      <td><code style="font-size:11px;">${r.model||'—'}</code></td>
+      <td>${(r.fallbacks||[]).map(f=>`<span class="rt-fallback">${f}</span>`).join(' ')}</td>
+      <td><span style="font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;${strategyColors[r.strategy]||''}">${r.strategy||'—'}</span></td>
+      <td style="text-align:center;font-size:11px;color:var(--txt3);">${r.max_cost!=null?'$'+r.max_cost:'—'}</td>
+      <td style="text-align:center;"><span style="font-size:16px;color:var(--txt3);">${openDrawerEngine===r.engine?'▲':'▼'}</span></td>
+    </tr>
+    <tr id="drawer-row-${r.engine}" class="rt-drawer-row" style="${openDrawerEngine===r.engine?'':'display:none'}">
+      <td colspan="7">${buildDrawerHTML(r)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildDrawerHTML(r) {
+  const modelsForProv = (PROVIDER_MODELS[r.primary] || {}).models || [];
+  const modelOpts = modelsForProv.map(m => `<option value="${m}" ${m===r.model?'selected':''}>${m}</option>`).join('');
+
+  const fbChips = (r.fallbacks||[]).map(f =>
+    `<span class="fb-chip">${f}<span class="fb-rm" onclick="removeFallback('${r.engine}','${f}')">×</span></span>`
+  ).join('');
+
+  const provOpts = ALL_PROVIDERS
+    .filter(p => p !== r.primary && !(r.fallbacks||[]).includes(p))
+    .map(p => `<option value="${p}">${p}</option>`).join('');
+
+  const stratOpts = STRATEGIES.map(s =>
+    `<option value="${s}" ${s===r.strategy?'selected':''}>${s}</option>`
+  ).join('');
+
+  return `<div class="rt-drawer">
+    <div style="font-size:12px;font-weight:700;color:var(--b3);margin-bottom:12px;">
+      ✏️ Editando: <code style="background:var(--b3pale);padding:2px 8px;border-radius:4px;">${r.engine}</code>
+    </div>
+    <div class="rt-dg3">
+      <div>
+        <label>Provider Primário</label>
+        <select id="de-prov-${r.engine}" onchange="onDrawerProviderChange('${r.engine}')">
+          ${ALL_PROVIDERS.map(p=>`<option value="${p}" ${p===r.primary?'selected':''}>${p}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label>Modelo</label>
+        <select id="de-model-${r.engine}">
+          <option value="">— padrão —</option>
+          ${modelOpts}
+        </select>
+      </div>
+      <div>
+        <label>Estratégia</label>
+        <select id="de-strat-${r.engine}">${stratOpts}</select>
+      </div>
+    </div>
+    <div class="rt-dg2">
+      <div>
+        <label>Fallbacks (ordem de prioridade)</label>
+        <div class="fb-chips" id="fb-chips-${r.engine}">${fbChips}</div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <select id="fb-add-${r.engine}" style="flex:1;padding:6px 8px;border:1px solid var(--bdr);border-radius:6px;font-size:12px;font-family:var(--sans);">
+            <option value="">+ Adicionar fallback...</option>
+            ${provOpts}
+          </select>
+          <button class="btn btn-sm" onclick="addFallback('${r.engine}')">Adicionar</button>
+        </div>
+      </div>
+      <div>
+        <label>Custo máximo por chamada (USD, opcional)</label>
+        <input type="number" id="de-cost-${r.engine}" value="${r.max_cost||''}" placeholder="ex: 0.05" step="0.001" min="0">
+        <div style="margin-top:6px;">
+          <label style="display:inline;text-transform:none;font-size:11px;font-weight:400;color:var(--txt3);">Modelo customizado (override):</label>
+          <input type="text" id="de-model-custom-${r.engine}" value="${r.model_custom||''}"
+            placeholder="ex: claude-opus-4-5-20251101" style="margin-top:4px;font-family:var(--mono);font-size:11px;">
+        </div>
+      </div>
+    </div>
+    <div class="rt-drawer-actions">
+      <button class="btn btn-sm" onclick="closeDrawer()">Cancelar</button>
+      <button class="btn btn-sm btn-danger" onclick="resetRouting('${r.engine}')">↺ Padrão</button>
+      <button class="btn btn-sm btn-primary" onclick="saveRouting('${r.engine}')">✓ Salvar</button>
+    </div>
+  </div>`;
+}
+
+function toggleDrawer(engine) {
+  if (openDrawerEngine === engine) {
+    closeDrawer(); return;
+  }
+  openDrawerEngine = engine;
+  renderRouting();
+  // Scroll to drawer
+  setTimeout(() => {
+    const el = document.getElementById('drawer-row-' + engine);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 50);
+}
+
+function closeDrawer() {
+  openDrawerEngine = null;
+  renderRouting();
+}
+
+function onDrawerProviderChange(engine) {
+  const prov = document.getElementById('de-prov-' + engine)?.value;
+  const modelSel = document.getElementById('de-model-' + engine);
+  if (!modelSel || !prov) return;
+  const models = (PROVIDER_MODELS[prov] || {}).models || [];
+  modelSel.innerHTML = '<option value="">— padrão —</option>'
+    + models.map(m => `<option value="${m}">${m}</option>`).join('');
+}
+
+function addFallback(engine) {
+  const sel = document.getElementById('fb-add-' + engine);
+  const val = sel?.value;
+  if (!val) return;
+  const r = LOCAL.routing.find(x => x.engine === engine);
+  if (!r) return;
+  if (!r.fallbacks) r.fallbacks = [];
+  if (r.fallbacks.includes(val)) { toast(val + ' já é fallback', 'info'); return; }
+  r.fallbacks.push(val);
+  changedEngines.add(engine);
+  renderRouting();
+  openDrawerEngine = engine;
+  renderRouting();
+}
+
+function removeFallback(engine, prov) {
+  const r = LOCAL.routing.find(x => x.engine === engine);
+  if (!r) return;
+  r.fallbacks = (r.fallbacks || []).filter(f => f !== prov);
+  changedEngines.add(engine);
+  openDrawerEngine = engine;
+  renderRouting();
+}
+
+function saveRouting(engine) {
+  const r = LOCAL.routing.find(x => x.engine === engine);
+  if (!r) return;
+
+  const prov     = document.getElementById('de-prov-' + engine)?.value;
+  const strat    = document.getElementById('de-strat-' + engine)?.value;
+  const costVal  = document.getElementById('de-cost-' + engine)?.value;
+  const custom   = document.getElementById('de-model-custom-' + engine)?.value?.trim();
+  const modelSel = document.getElementById('de-model-' + engine)?.value;
+
+  r.primary    = prov    || r.primary;
+  r.strategy   = strat   || r.strategy;
+  r.model      = custom  || modelSel || r.model;
+  r.model_custom = custom || '';
+  r.max_cost   = costVal ? parseFloat(costVal) : null;
+
+  changedEngines.add(engine);
+  openDrawerEngine = null;
+  renderRouting();
+
+  // Push to backend
+  apiCall('PUT', '/routing/' + engine, {
+    primary_provider: r.primary,
+    primary_model: r.model,
+    fallback_providers: r.fallbacks || [],
+    strategy: r.strategy,
+  }).then(() => toast('✓ Routing de "' + engine + '" salvo', 'ok'))
+    .catch(() => toast('Salvo localmente (backend offline)', 'info'));
+}
+
+function resetRouting(engine) {
+  const defaults = buildDefaultRouting();
+  const def = defaults.find(x => x.engine === engine);
+  const r   = LOCAL.routing.find(x => x.engine === engine);
+  if (def && r) {
+    Object.assign(r, def);
+    changedEngines.delete(engine);
+    openDrawerEngine = null;
+    renderRouting();
+    toast('Routing de "' + engine + '" restaurado ao padrão', 'info');
+  }
+}
+
+function resetAllRouting() {
+  if (!confirm('Restaurar toda a routing table ao padrão?')) return;
+  LOCAL.routing = buildDefaultRouting();
+  changedEngines.clear();
+  openDrawerEngine = null;
+  renderRouting();
+  toast('Routing table restaurada ao padrão', 'info');
+}
+
+async function applyAllRouting() {
+  const changed = LOCAL.routing.filter(r => changedEngines.has(r.engine));
+  if (!changed.length) { toast('Nenhuma alteração pendente', 'info'); return; }
+  let ok = 0;
+  for (const r of changed) {
+    try {
+      await apiCall('PUT', '/routing/' + r.engine, {
+        primary_provider: r.primary,
+        primary_model: r.model,
+        fallback_providers: r.fallbacks || [],
+        strategy: r.strategy,
+      });
+      ok++;
+    } catch(e) { /* offline */ }
+  }
+  changedEngines.clear();
+  renderRouting();
+  toast(`✓ ${changed.length} rotas aplicadas${ok<changed.length?' (offline: salvas localmente)':''}`, 'ok');
+}
+
+function exportRouting() {
+  const data = LOCAL.routing.map(r => ({
+    engine: r.engine, primary_provider: r.primary, primary_model: r.model,
+    fallbacks: r.fallbacks, strategy: r.strategy, max_cost: r.max_cost || null,
+  }));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'aqua-qe-routing.json';
+  a.click();
+  toast('Routing exportada como JSON', 'ok');
+}
+
+// ════════════════════════════════════
+// MODEL SELECTOR
+// ════════════════════════════════════
+
+// Catálogo completo de modelos por provider
+const PROVIDER_MODELS = {
+  anthropic:     { models: ['claude-opus-4-5','claude-sonnet-4-5','claude-haiku-4-5'], costs: {'claude-opus-4-5':'$15/$75','claude-sonnet-4-5':'$3/$15','claude-haiku-4-5':'$0.25/$1.25'}, ctx: {'claude-opus-4-5':'200K','claude-sonnet-4-5':'200K','claude-haiku-4-5':'200K'} },
+  openai:        { models: ['gpt-4o','gpt-4o-mini','gpt-4-turbo','gpt-3.5-turbo','o1','o1-mini','o3-mini'], costs: {'gpt-4o':'$5/$15','gpt-4o-mini':'$0.15/$0.60','gpt-4-turbo':'$10/$30','gpt-3.5-turbo':'$0.5/$1.5','o1':'$15/$60','o1-mini':'$3/$12','o3-mini':'$1.1/$4.4'}, ctx: {'gpt-4o':'128K','gpt-4o-mini':'128K','gpt-4-turbo':'128K','o1':'200K','o1-mini':'128K'} },
+  azure_openai:  { models: ['gpt-4o','gpt-4-turbo','gpt-35-turbo'], costs: {}, ctx: {} },
+  google_gemini: {
+    models: [
+      'gemini-2.5-flash-lite',
+      'gemini-2.5-flash-preview-04-17',
+      'gemini-2.5-pro-preview-05-06',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-1.5-pro',
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-8b',
+    ],
+    costs: {
+      'gemini-2.5-flash-lite':             '$0.10/$0.40',
+      'gemini-2.5-flash-preview-04-17':    '$0.15/$0.60',
+      'gemini-2.5-pro-preview-05-06':      '$1.25/$10.00',
+      'gemini-2.0-flash':                  '$0.10/$0.40',
+      'gemini-2.0-flash-lite':             '$0.075/$0.30',
+      'gemini-1.5-pro':                    '$3.50/$10.50',
+      'gemini-1.5-flash':                  '$0.35/$1.05',
+      'gemini-1.5-flash-8b':               '$0.075/$0.30',
+    },
+    ctx: {
+      'gemini-2.5-flash-lite':             '1M',
+      'gemini-2.5-flash-preview-04-17':    '1M',
+      'gemini-2.5-pro-preview-05-06':      '1M',
+      'gemini-2.0-flash':                  '1M',
+      'gemini-2.0-flash-lite':             '1M',
+      'gemini-1.5-pro':                    '2M',
+      'gemini-1.5-flash':                  '1M',
+      'gemini-1.5-flash-8b':               '1M',
+    },
+  },
+  groq:          { models: ['llama-3.3-70b-versatile','llama-3.1-70b-versatile','llama-3.1-8b-instant','mixtral-8x7b-32768','gemma2-9b-it','deepseek-r1-distill-llama-70b'], costs: {'llama-3.3-70b-versatile':'$0.59/$0.79','llama-3.1-8b-instant':'$0.05/$0.08','deepseek-r1-distill-llama-70b':'$0.75/$0.99'}, ctx: {'llama-3.3-70b-versatile':'128K','llama-3.1-8b-instant':'128K'} },
+  mistral:       { models: ['mistral-large-latest','mistral-medium-latest','mistral-small-latest','open-mistral-nemo','codestral-latest'], costs: {'mistral-large-latest':'$4/$12','mistral-small-latest':'$1/$3','codestral-latest':'$1/$3'}, ctx: {'mistral-large-latest':'128K','codestral-latest':'200K'} },
+  ollama:        { models: ['llama3.3:latest','llama3.1:8b','llama3.1:70b','mistral:7b','deepseek-coder:6.7b','deepseek-r1:7b','phi4:latest','phi3:medium','qwen2.5:7b','qwen2.5-coder:7b','gemma3:12b','nomic-embed-text'], costs: {}, ctx: {} },
+  vllm:          { models: ['meta-llama/Llama-3.1-8B-Instruct','meta-llama/Llama-3.1-70B-Instruct','mistralai/Mistral-7B-Instruct-v0.3','Qwen/Qwen2.5-7B-Instruct'], costs: {}, ctx: {} },
+  lm_studio:     { models: ['local-model','lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF','lmstudio-community/Phi-4-mini-instruct-GGUF'], costs: {}, ctx: {} },
+  llamacpp:      { models: ['phi-3-mini','qwen2-1.5b','llama-3.2-3b','gemma-2-2b'], costs: {}, ctx: {} },
+};
+
+let modelCustomMode = false;
+
+function onProviderChange() {
+  const prov = document.getElementById('t-provider').value;
+  const sel  = document.getElementById('t-model');
+  const info = document.getElementById('t-model-info');
+  const badge = document.getElementById('t-model-badge');
+  const costEl = document.getElementById('t-model-cost');
+
+  // Reset custom mode
+  modelCustomMode = false;
+  document.getElementById('t-model-custom').style.display = 'none';
+  document.getElementById('t-model-custom').value = '';
+  sel.style.display = '';
+
+  if (!prov) {
+    sel.innerHTML = '<option value="">— padrão do provider (routing) —</option>';
+    badge.textContent = 'auto';
+    badge.style.background = 'var(--surf2)'; badge.style.color = 'var(--txt3)';
+    info.textContent = 'O provider e modelo serão resolvidos automaticamente pela routing table.';
+    costEl.textContent = '';
+    return;
+  }
+
+  const meta = PROVIDER_MODELS[prov];
+  if (!meta) {
+    sel.innerHTML = '<option value="">— padrão —</option>';
+    return;
+  }
+
+  const isLocal = ['ollama','vllm','lm_studio','llamacpp'].includes(prov);
+  badge.textContent = isLocal ? '🏠 local' : '☁️ cloud';
+  badge.style.background = isLocal ? 'var(--successpale)' : 'var(--b3pale)';
+  badge.style.color = isLocal ? '#065F46' : 'var(--b3)';
+
+  sel.innerHTML = '<option value="">— padrão do provider —</option>'
+    + meta.models.map(m => `<option value="${m}">${m}</option>`).join('');
+
+  // Auto-select default
+  const p = LOCAL.providers.find(x => x.name === prov);
+  if (p?.default_model) sel.value = p.default_model;
+
+  onModelChange();
+}
+
+function onModelChange() {
+  const prov  = document.getElementById('t-provider').value;
+  const model = document.getElementById('t-model').value;
+  const info  = document.getElementById('t-model-info');
+  const costEl = document.getElementById('t-model-cost');
+  if (!prov || !model) { info.textContent = ''; costEl.textContent = ''; return; }
+
+  const meta   = PROVIDER_MODELS[prov] || {};
+  const cost   = meta.costs?.[model];
+  const ctx    = meta.ctx?.[model];
+  const isLocal = ['ollama','vllm','lm_studio','llamacpp'].includes(prov);
+
+  let parts = [];
+  if (ctx)    parts.push(`Contexto: ${ctx}`);
+  if (cost)   parts.push(`Custo: ${cost} /1k tokens`);
+  if (isLocal) parts.push('💰 Gratuito (local)');
+
+  info.textContent = parts.join(' · ');
+  costEl.textContent = cost ? `${cost} /1k` : (isLocal ? '🆓 local' : '');
+}
+
+function onModelCustomInput() {
+  const val = document.getElementById('t-model-custom').value.trim();
+  const info = document.getElementById('t-model-info');
+  info.textContent = val ? `Modelo customizado: "${val}"` : 'Digite o nome exato do modelo.';
+}
+
+function toggleCustomModel() {
+  modelCustomMode = !modelCustomMode;
+  const sel    = document.getElementById('t-model');
+  const custom = document.getElementById('t-model-custom');
+  const btn    = document.getElementById('t-model-toggle');
+
+  if (modelCustomMode) {
+    sel.style.display = 'none';
+    custom.style.display = '';
+    custom.focus();
+    btn.textContent = '📋';
+    btn.title = 'Voltar para lista';
+    document.getElementById('t-model-info').textContent = 'Digite o ID exato do modelo (ex: gpt-4o-2024-11-20)';
+  } else {
+    sel.style.display = '';
+    custom.style.display = 'none';
+    custom.value = '';
+    btn.textContent = '✏️';
+    btn.title = 'Digitar modelo manualmente';
+    onModelChange();
+  }
+}
+
+function getSelectedModel() {
+  if (modelCustomMode) {
+    return document.getElementById('t-model-custom').value.trim() || null;
+  }
+  return document.getElementById('t-model').value || null;
+}
+
+// ════════════════════════════════════
+// TEST
+// ════════════════════════════════════
+async function runTest() {
+  const engine  = document.getElementById('t-engine').value;
+  const mode    = document.getElementById('t-mode').value;
+  const prov    = document.getElementById('t-provider').value;
+  const model   = getSelectedModel();
+  const content = document.getElementById('t-content').value.trim();
+  const tokens  = parseInt(document.getElementById('t-tokens').value);
+  const temp    = parseFloat(document.getElementById('t-temp').value);
+
+  if (!content) { toast('Digite o conteúdo do request', 'err'); return; }
+
+  const btn = document.getElementById('t-run-btn');
+  btn.disabled = true; btn.textContent = '⏳ Executando…';
+
+  const modelLabel = model || (prov ? (LOCAL.providers.find(x=>x.name===prov)?.default_model || 'padrão') : 'auto');
+  document.getElementById('test-output').textContent =
+    `# Processando via AI Gateway...\n# Engine:   ${engine}\n# Mode:     ${mode}\n# Provider: ${prov || 'auto (routing table)'}\n# Modelo:   ${modelLabel}\n\n...`;
+  document.getElementById('test-meta').style.display = 'none';
+
+  try {
+    const payload = { engine, content, deployment_mode: mode, max_tokens: tokens, temperature: temp };
+    if (prov)  payload.force_provider = prov;
+    if (model) payload.model_override = model;
+
+    const data = await apiCall('POST', '/analyze', payload);
+    showTestResult(data);
+    addLog(data);
+  } catch(e) {
+    // Modo offline: simula resposta
+    const simulated = simulateResponse(engine, content, prov || resolveProvider(engine), model);
+    showTestResult(simulated);
+    addLog(simulated);
+    toast('Backend offline — resposta simulada', 'info');
+  } finally {
+    btn.disabled = false; btn.textContent = '▶ Executar via Gateway';
+  }
+}
+
+function showTestResult(data) {
+  document.getElementById('test-output').textContent = data.content || data.error || '(sem resposta)';
+  document.getElementById('test-meta').style.display = 'flex';
+  document.getElementById('tm-prov').textContent  = data.provider || '—';
+  // Mostra modelo usado com destaque se foi forçado
+  const modelUsed = data.model || '—';
+  const modelOverride = getSelectedModel();
+  document.getElementById('tm-model').innerHTML = modelOverride
+    ? `<span style="color:var(--purple);font-weight:600;">${modelUsed}</span> <span style="font-size:9px;background:var(--purpale);color:var(--purple);padding:1px 5px;border-radius:3px;font-weight:700;">CUSTOM</span>`
+    : modelUsed;
+  document.getElementById('tm-lat').textContent   = (data.metrics?.latency_ms || 0).toFixed(0) + 'ms';
+  document.getElementById('tm-tok').textContent   = (data.metrics?.input_tokens||0) + ' + ' + (data.metrics?.output_tokens||0);
+  document.getElementById('tm-cost').textContent  = '$' + (data.metrics?.cost_usd || 0).toFixed(6);
+  const fbEl = document.getElementById('tm-fallback');
+  fbEl.style.display = data.fallback_used ? 'inline-flex' : 'none';
+}
+
+function quickTest(engine, content) {
+  document.getElementById('t-engine').value  = engine;
+  document.getElementById('t-content').value = content;
+  show('test', document.querySelectorAll('.nav')[3]);
+  runTest();
+}
+
+function resolveProvider(engine) {
+  const r = LOCAL.routing.find(x => x.engine === engine);
+  return r ? r.primary : 'anthropic';
+}
+
+function simulateResponse(engine, content, provider, modelOverride) {
+  const lat = 800 + Math.random() * 2000;
+  const inp = 150 + Math.floor(Math.random() * 200);
+  const out = 400 + Math.floor(Math.random() * 600);
+  const p = LOCAL.providers.find(x => x.name === provider) || LOCAL.providers[0];
+  const cost = ((inp/1000)*p.cost_input_per_1k + (out/1000)*p.cost_output_per_1k);
+  const usedModel = modelOverride || p.default_model || 'default';
+  const fallback = Math.random() < 0.1;
+  const simContent = `[SIMULADO — Backend offline]\n\n🔄 Engine: ${engine.toUpperCase()}\n🔌 Provider: ${provider}\n🤖 Modelo:   ${usedModel}\n\n` +
+    `Análise do conteúdo:\n"${content.substring(0,80)}..."\n\n` +
+    `✅ Resultado processado com sucesso.\n` +
+    `RN-01: Regra identificada no input\nCA-01: Critério extraído\n` +
+    `Risco: ${Math.random()<0.3?'Alto':'Médio'} | Prioridade: Alta\n\n` +
+    `CT-001 - RN-01 | CA-01: Caso de teste gerado pelo ${engine} engine\n\n` +
+    `Deseja continuar o refinamento ou avançar para análise final?`;
+
+  return {
+    request_id: 'sim-' + Date.now(),
+    engine, provider, model: usedModel,
+    content: simContent,
+    status: fallback ? 'fallback' : 'success',
+    fallback_used: fallback,
+    fallback_from: fallback ? 'openai' : null,
+    metrics: { latency_ms: lat, input_tokens: inp, output_tokens: out, cost_usd: cost }
+  };
+}
+
+// ════════════════════════════════════
+// LOGS — FILTRÁVEIS + EXPORTAÇÃO
+// ════════════════════════════════════
+let logSortField = 'timestamp';
+let logSortAsc   = false;
+
+function addLog(data) {
+  LOCAL.logs.unshift({
+    timestamp:     new Date().toISOString(),
+    engine:        data.engine    || '—',
+    provider:      data.provider  || data.provider_used || '—',
+    model:         data.model     || data.model_used    || '—',
+    status:        data.status    || 'success',
+    latency_ms:    data.metrics?.latency_ms   || data.latency_ms   || 0,
+    input_tokens:  data.metrics?.input_tokens  || data.input_tokens  || 0,
+    output_tokens: data.metrics?.output_tokens || data.output_tokens || 0,
+    cost_usd:      data.metrics?.cost_usd  || data.cost_usd  || 0,
+    fallback_used: !!data.fallback_used,
+    model_custom:  !!getSelectedModel(),
+  });
+  if (LOCAL.logs.length > 500) LOCAL.logs.pop();
+  document.getElementById('nb-logs').textContent = LOCAL.logs.length;
+  updateLocalStats(data);
+}
+
+async function loadLogs() {
+  try {
+    const data = await apiCall('GET', '/logs?limit=200');
+    LOCAL.logs = data.logs.map(l => ({
+      timestamp: l.timestamp, engine: l.engine, provider: l.provider,
+      model: l.model, status: l.status, latency_ms: l.latency_ms,
+      input_tokens: l.input_tokens, output_tokens: l.output_tokens,
+      cost_usd: l.cost_usd, fallback_used: l.fallback_used, model_custom: false,
+    }));
+  } catch(e) { /* use local */ }
+  renderLogs();
+}
+
+function getFilteredLogs() {
+  const search  = (document.getElementById('log-search')?.value  || '').toLowerCase();
+  const fProv   = document.getElementById('log-f-provider')?.value || '';
+  const fEngine = document.getElementById('log-f-engine')?.value   || '';
+  const fStatus = document.getElementById('log-f-status')?.value   || '';
+  const fPeriod = parseInt(document.getElementById('log-f-period')?.value || '0');
+  const fFb     = document.getElementById('log-f-fallback')?.checked      || false;
+  const fCustom = document.getElementById('log-f-custom-model')?.checked  || false;
+  const now = Date.now();
+  return LOCAL.logs.filter(l => {
+    if (fProv   && l.provider !== fProv)   return false;
+    if (fEngine && l.engine   !== fEngine) return false;
+    if (fStatus && l.status   !== fStatus) return false;
+    if (fFb     && !l.fallback_used)       return false;
+    if (fCustom && !l.model_custom)        return false;
+    if (fPeriod) {
+      const age = (now - new Date(l.timestamp).getTime()) / 60000;
+      if (age > fPeriod) return false;
+    }
+    if (search) {
+      const hay = [l.engine, l.provider, l.model, l.status].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+}
+
+function sortLogs(field) {
+  logSortAsc = logSortField === field ? !logSortAsc : false;
+  logSortField = field;
+  renderLogs();
+}
+
+function filterLogs() { renderLogs(); }
+
+function renderLogs() {
+  let logs = [...getFilteredLogs()].sort((a, b) => {
+    let va = a[logSortField], vb = b[logSortField];
+    if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+    const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+    return logSortAsc ? cmp : -cmp;
+  });
+
+  const tbody   = document.getElementById('logs-body');
+  const countEl = document.getElementById('log-count');
+  if (countEl) countEl.textContent = logs.length + ' de ' + LOCAL.logs.length + ' logs';
+
+  if (!logs.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--txt3);">
+      ${LOCAL.logs.length ? 'Nenhum log corresponde aos filtros.' : 'Nenhum log ainda. Execute requests no painel Test.'}</td></tr>`;
+    return;
+  }
+
+  const LOCAL_PROVS = ['ollama','vllm','lm_studio','llamacpp'];
+  const statusCls   = { success:'badge-success', fallback:'badge-fallback', failed:'badge-failed', processing:'badge-processing' };
+  tbody.innerHTML = logs.map(l => {
+    const isLocal  = LOCAL_PROVS.includes(l.provider);
+    const lat      = l.latency_ms || 0;
+    const latColor = lat < 1000 ? 'var(--success)' : lat < 3000 ? 'var(--warn)' : 'var(--danger)';
+    const ts       = l.timestamp ? l.timestamp.substring(11, 23) : '—';
+    return `<tr class="log-row-${l.status||'success'}">
+      <td class="log-ts">${ts}</td>
+      <td><code class="log-engine">${l.engine||'—'}</code></td>
+      <td><span class="badge ${isLocal?'badge-local':'badge-cloud'}" style="font-size:10px;">${l.provider||'—'}</span></td>
+      <td style="font-size:11px;font-family:var(--mono);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${l.model||''}">${l.model||'—'}${l.model_custom?'<span style="margin-left:4px;font-size:9px;background:var(--purpale);color:var(--purple);padding:1px 4px;border-radius:3px;font-weight:700;">CUSTOM</span>':''}</td>
+      <td><span class="log-status ${statusCls[l.status]||''}">${l.status||'—'}</span></td>
+      <td class="log-lat" style="color:${latColor};">${lat.toFixed(0)}ms</td>
+      <td style="font-size:11px;font-family:var(--mono);color:var(--txt3);">${l.input_tokens||0}+${l.output_tokens||0}</td>
+      <td class="log-cost-cell">${l.cost_usd?'$'+l.cost_usd.toFixed(6):(isLocal?'<span style="color:var(--success);">$0</span>':'—')}</td>
+      <td style="text-align:center;">${l.fallback_used?'<span class="badge badge-fallback" style="font-size:10px;">⚡ fb</span>':'<span style="color:var(--txt3);">—</span>'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('nb-logs').textContent = LOCAL.logs.length;
+}
+
+// ── Exportação
+function exportLogsCSV() {
+  const logs = getFilteredLogs();
+  if (!logs.length) { toast('Nenhum log para exportar', 'info'); return; }
+  const hdr  = 'Timestamp,Engine,Provider,Modelo,Status,Latencia_ms,Tokens_In,Tokens_Out,Custo_USD,Fallback\n';
+  const rows = logs.map(l =>
+    [l.timestamp, l.engine, l.provider, '"'+l.model+'"', l.status,
+     (l.latency_ms||0).toFixed(1), l.input_tokens||0, l.output_tokens||0,
+     (l.cost_usd||0).toFixed(8), l.fallback_used ? 'true' : 'false'].join(',')
+  ).join('\n');
+  _dlBlob(hdr + rows, 'aqua-qe-logs.csv', 'text/csv');
+  toast(logs.length + ' logs exportados (CSV)', 'ok');
+}
+
+function exportLogsJSON() {
+  const logs = getFilteredLogs();
+  if (!logs.length) { toast('Nenhum log para exportar', 'info'); return; }
+  _dlBlob(JSON.stringify(logs, null, 2), 'aqua-qe-logs.json', 'application/json');
+  toast(logs.length + ' logs exportados (JSON)', 'ok');
+}
+
+function copyLogsClipboard() {
+  const logs = getFilteredLogs();
+  if (!logs.length) { toast('Nenhum log para copiar', 'info'); return; }
+  const txt = logs.map(l =>
+    (l.timestamp||'').substring(11,23).padEnd(13) + '| ' +
+    (l.engine||'').padEnd(22) + '| ' + (l.provider||'').padEnd(16) +
+    '| ' + (l.model||'').substring(0,24).padEnd(26) +
+    '| ' + (l.status||'').padEnd(10) +
+    '| ' + ((l.latency_ms||0).toFixed(0)+'ms').padStart(8) +
+    ' | $' + (l.cost_usd||0).toFixed(6)
+  ).join('\n');
+  navigator.clipboard?.writeText(txt)
+    .then(() => toast(logs.length + ' logs copiados', 'ok'))
+    .catch(() => toast('Não foi possível copiar', 'err'));
+}
+
+function _dlBlob(content, name, mime) {
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([content], { type: mime })),
+    download: name,
+  });
+  a.click();
+}
+
+async function clearLogs() {
+  if (LOCAL.logs.length && !confirm('Limpar ' + LOCAL.logs.length + ' logs?')) return;
+  LOCAL.logs = [];
+  apiCall('DELETE', '/logs').catch(() => {});
+  renderLogs();
+  toast('Logs limpos', 'info');
+}
+
+// ════════════════════════════════════
+// STATS
+// ════════════════════════════════════
+function updateLocalStats(data) {
+  const s = LOCAL.stats;
+  s.total_requests++;
+  const old_total = s.total_requests - 1;
+  s.avg_latency_ms = (s.avg_latency_ms * old_total + (data.metrics?.latency_ms||0)) / s.total_requests;
+  s.total_cost_usd += data.metrics?.cost_usd || 0;
+  s.total_input_tokens  += data.metrics?.input_tokens  || 0;
+  s.total_output_tokens += data.metrics?.output_tokens || 0;
+  const successes = LOCAL.logs.filter(l => l.status === 'success' || l.status === 'fallback').length;
+  const fallbacks = LOCAL.logs.filter(l => l.status === 'fallback').length;
+  s.success_rate  = LOCAL.logs.length ? (successes / LOCAL.logs.length * 100) : 0;
+  s.fallback_rate = LOCAL.logs.length ? (fallbacks / LOCAL.logs.length * 100) : 0;
+  const prov = data.provider || 'unknown';
+  s.requests_by_provider[prov] = (s.requests_by_provider[prov]||0) + 1;
+  const eng = data.engine || 'unknown';
+  s.requests_by_engine[eng] = (s.requests_by_engine[eng]||0) + 1;
+  s.cost_by_provider[prov] = (s.cost_by_provider[prov]||0) + (data.metrics?.cost_usd||0);
+  renderTopbarStats();
+}
+
+function renderTopbarStats() {
+  const s = LOCAL.stats;
+  document.getElementById('tb-reqs').textContent = s.total_requests;
+  document.getElementById('tb-cost').textContent = '$' + s.total_cost_usd.toFixed(4);
+}
+
+async function loadStats() {
+  let s = LOCAL.stats;
+  try {
+    s = await apiCall('GET', '/stats');
+    LOCAL.stats = s;
+  } catch(e) { /* use local */ }
+  renderStats(s);
+  renderTopbarStats();
+}
+
+function renderStats(s) {
+  document.getElementById('st-reqs').textContent = s.total_requests || 0;
+  document.getElementById('st-suc').textContent  = (s.success_rate||0).toFixed(1) + '%';
+  document.getElementById('st-fb').textContent   = (s.fallback_rate||0).toFixed(1) + '%';
+  document.getElementById('st-lat').textContent  = (s.avg_latency_ms||0).toFixed(0) + 'ms';
+  document.getElementById('st-cost').textContent = '$' + (s.total_cost_usd||0).toFixed(6);
+  document.getElementById('st-tin').textContent  = (s.total_input_tokens||0).toLocaleString();
+  document.getElementById('st-tout').textContent = (s.total_output_tokens||0).toLocaleString();
+  document.getElementById('st-eng').textContent  = Object.keys(s.requests_by_engine||{}).length;
+
+  renderBarChart('st-byprov', s.requests_by_provider||{}, 'var(--b3)');
+  renderBarChart('st-byeng',  s.requests_by_engine||{},   'var(--purple)');
+  renderBarChart('st-costprov', Object.fromEntries(
+    Object.entries(s.cost_by_provider||{}).map(([k,v])=>[k, parseFloat(v.toFixed(6))])
+  ), 'var(--success)', '$');
+
+  const info = document.getElementById('st-info');
+  if (info) info.innerHTML = `
+    <div>Versão: <strong>2.0.0</strong></div>
+    <div>Providers ativos: <strong>${LOCAL.providers.filter(p=>p.enabled).length}</strong></div>
+    <div>Engines mapeadas: <strong>14</strong></div>
+    <div>Modo atual: <strong>${LOCAL.mode.toUpperCase()}</strong></div>
+    <div>Logs em buffer: <strong>${LOCAL.logs.length}</strong></div>
+    <div>Backend: <strong style="color:${backendOnline?'var(--success)':'var(--warn)'}">${backendOnline?'Online':'Offline (mock)'}</strong></div>`;
+}
+
+function renderBarChart(containerId, data, color, prefix='') {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const entries = Object.entries(data).sort((a,b) => b[1]-a[1]);
+  if (!entries.length) { el.innerHTML = '<div style="color:var(--txt3);font-size:12px;padding:8px 0;">Sem dados ainda</div>'; return; }
+  const max = entries[0][1] || 1;
+  el.innerHTML = entries.slice(0,6).map(([k,v]) => `
+    <div class="bar-row">
+      <div class="bar-label" title="${k}">${k}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${(v/max*100).toFixed(0)}%;background:${color}"></div></div>
+      <div class="bar-val">${prefix}${typeof v === 'number' ? v.toLocaleString() : v}</div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════
+// API CALLS
+// ════════════════════════════════════
+async function apiCall(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const resp = await fetch(API + path, opts);
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  backendOnline = true;
+  document.getElementById('gw-dot').className = 'sdot ok';
+  document.getElementById('gw-status').textContent = 'Gateway conectado';
+  return resp.json();
+}
+
+// ════════════════════════════════════
+// UTILS
+// ════════════════════════════════════
+function refreshAll() { renderOverview(); renderProviders(); loadStats(); }
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ════════════════════════════════════
+// INIT
+// ════════════════════════════════════
+async function init() {
+  // Tenta conectar ao backend
+  try {
+    await apiCall('GET', '/info');
+    const provData = await apiCall('GET', '/providers');
+    LOCAL.providers = provData.providers;
+    const routeData = await apiCall('GET', '/routing');
+    LOCAL.routing = Object.values(routeData.routing).map(r => ({
+      engine: r.engine, primary: r.primary_provider, model: r.primary_model,
+      fallbacks: r.fallback_providers, strategy: r.strategy
+    }));
+    toast('Gateway backend conectado ✓', 'ok');
+  } catch(e) {
+    document.getElementById('gw-dot').className = 'sdot warn';
+    document.getElementById('gw-status').textContent = 'Modo offline (mock)';
+    toast('Backend offline — usando dados locais', 'info');
+  }
+  renderOverview();
+  setMode('cloud');
+  setInterval(() => { loadStats(); }, 10000);
+}
+
+init();
+</script>
+</body>
+</html>

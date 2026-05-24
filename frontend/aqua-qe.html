@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQuA-QE LKDF — Plataforma Cognitiva de Qualidade</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap');
+
+  :root {
+    --b3-blue: #00509E;
+    --b3-blue-light: #0070CC;
+    --b3-blue-pale: #E8F2FB;
+    --b3-blue-mid: #C5DEFF;
+    --accent: #00D4AA;
+    --accent-dark: #00A882;
+    --danger: #E83B3B;
+    --warn: #F59E0B;
+    --success: #10B981;
+    --bg: #FFFFFF;
+    --surface: #F7F9FC;
+    --surface2: #EFF3F8;
+    --border: #D5E3F2;
+    --border-mid: #B8CEEA;
+    --text: #0D1F35;
+    --text2: #3A5A7A;
+    --text3: #6B8CAE;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Sora', sans-serif;
+    --radius: 10px;
+    --radius-lg: 16px;
+    --shadow: 0 2px 12px rgba(0,80,158,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,80,158,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* LAYOUT */
+  .app { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 52px 1fr; height: 100vh; overflow: hidden; }
+
+  /* TOPBAR */
+  .topbar {
+    grid-column: 1 / -1;
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 20px;
+    background: var(--b3-blue);
+    border-bottom: 2px solid var(--b3-blue-light);
+  }
+  .topbar-logo { display: flex; align-items: center; gap: 8px; }
+  .topbar-logo .logo-badge {
+    background: white; color: var(--b3-blue);
+    font-weight: 600; font-size: 11px; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.05em;
+  }
+  .topbar-title { color: white; font-weight: 500; font-size: 15px; }
+  .topbar-sub { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 1px; }
+  .topbar-spacer { flex: 1; }
+  .topbar-status { display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,0.7); font-size: 11px; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .topbar-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-family: var(--sans); transition: background 0.15s; }
+  .topbar-btn:hover { background: rgba(255,255,255,0.25); }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 12px 0;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .sidebar-section { padding: 8px 14px 4px; font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px; cursor: pointer; border-radius: 0;
+    color: var(--text2); font-size: 13px; transition: all 0.12s;
+    border-left: 3px solid transparent;
+  }
+  .nav-item:hover { background: var(--b3-blue-pale); color: var(--b3-blue); }
+  .nav-item.active { background: var(--b3-blue-pale); color: var(--b3-blue); border-left-color: var(--b3-blue); font-weight: 500; }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-badge { margin-left: auto; background: var(--b3-blue); color: white; font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+
+  /* MAIN */
+  .main { overflow: hidden; display: flex; flex-direction: column; background: var(--bg); }
+
+  /* PANELS */
+  .panel { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+  .panel.active { display: flex; }
+
+  /* CHAT PANEL */
+  .chat-wrapper { display: flex; flex-direction: column; height: 100%; }
+  .chat-header { padding: 14px 20px; border-bottom: 1px solid var(--border); background: white; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .chat-header-info { flex: 1; }
+  .chat-header-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .chat-header-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .engine-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .chip { padding: 3px 10px; border-radius: 20px; font-size: 11px; background: var(--b3-blue-pale); color: var(--b3-blue); border: 1px solid var(--b3-blue-mid); cursor: default; }
+  .chip.active-engine { background: var(--b3-blue); color: white; border-color: var(--b3-blue); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.75} }
+
+  .messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .msg { display: flex; gap: 10px; max-width: 100%; }
+  .msg.user { flex-direction: row-reverse; }
+  .msg-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .msg-avatar.ai { background: var(--b3-blue); color: white; font-weight: 600; font-size: 11px; }
+  .msg-avatar.user { background: var(--surface2); font-size: 14px; }
+  .msg-bubble { max-width: 78%; padding: 12px 16px; border-radius: var(--radius-lg); line-height: 1.6; font-size: 13.5px; }
+  .msg.user .msg-bubble { background: var(--b3-blue); color: white; border-bottom-right-radius: 4px; }
+  .msg.ai .msg-bubble { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; color: var(--text); }
+  .msg-bubble strong { font-weight: 600; }
+  .msg-bubble code { background: rgba(0,80,158,0.1); padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 12px; }
+  .msg.user .msg-bubble code { background: rgba(255,255,255,0.2); }
+  .msg-bubble pre { background: #0D1F35; color: #A8D8FF; padding: 12px; border-radius: 8px; overflow-x: auto; margin-top: 8px; font-family: var(--mono); font-size: 12px; line-height: 1.6; }
+
+  /* Artifact cards in chat */
+  .artifact-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); margin-top: 8px; overflow: hidden; }
+  .artifact-header { background: var(--surface); padding: 8px 12px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: var(--text2); border-bottom: 1px solid var(--border); }
+  .artifact-tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 600; }
+  .tag-rtm { background: #EEF6FF; color: #0052CC; }
+  .tag-ct { background: #EDFAF5; color: #006644; }
+  .tag-gherkin { background: #FFF8E6; color: #974F0C; }
+  .tag-risk { background: #FEECEC; color: #AE1414; }
+  .artifact-body { padding: 12px; font-family: var(--mono); font-size: 12px; line-height: 1.7; max-height: 260px; overflow-y: auto; }
+  .rtm-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .rtm-table th { background: var(--surface2); padding: 5px 8px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text3); border-bottom: 1px solid var(--border); }
+  .rtm-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .rtm-table tr:last-child td { border-bottom: none; }
+  .risk-alto { color: var(--danger); font-weight: 600; }
+  .risk-medio { color: var(--warn); font-weight: 600; }
+  .risk-baixo { color: var(--success); font-weight: 600; }
+  .badge-prio { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .prio-alta { background: #FEECEC; color: #AE1414; }
+  .prio-media { background: #FFF8E6; color: #974F0C; }
+  .prio-baixa { background: #EDFAF5; color: #006644; }
+
+  /* Thinking / streaming */
+  .thinking { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); border-bottom-left-radius: 4px; font-size: 13px; color: var(--text3); }
+  .thinking-dots span { display: inline-block; width: 6px; height: 6px; background: var(--b3-blue); border-radius: 50%; margin: 0 2px; animation: dot 1.2s infinite; }
+  .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dot { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+  .engine-log { font-family: var(--mono); font-size: 11px; color: var(--b3-blue); margin-top: 4px; }
+  .engine-log span { opacity: 0.6; }
+
+  /* Input area */
+  .input-area { padding: 14px 20px; border-top: 1px solid var(--border); background: white; flex-shrink: 0; }
+  .input-wrap { display: flex; gap: 8px; align-items: flex-end; }
+  .input-box { flex: 1; display: flex; gap: 8px; align-items: flex-end; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 10px 14px; transition: border-color 0.15s; }
+  .input-box:focus-within { border-color: var(--b3-blue); }
+  .chat-textarea { flex: 1; border: none; outline: none; background: transparent; resize: none; font-family: var(--sans); font-size: 13.5px; color: var(--text); min-height: 22px; max-height: 120px; line-height: 1.5; }
+  .chat-textarea::placeholder { color: var(--text3); }
+  .input-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-attach, .btn-send {
+    width: 36px; height: 36px; border-radius: 8px; border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; transition: all 0.15s;
+  }
+  .btn-attach { background: var(--surface2); color: var(--text3); }
+  .btn-attach:hover { background: var(--border); color: var(--text2); }
+  .btn-send { background: var(--b3-blue); color: white; }
+  .btn-send:hover { background: var(--b3-blue-light); }
+  .btn-send:disabled { background: var(--border); color: var(--text3); cursor: not-allowed; }
+  .input-hints { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .hint-chip { padding: 4px 10px; background: var(--b3-blue-pale); color: var(--b3-blue); border: 1px solid var(--b3-blue-mid); border-radius: 20px; font-size: 11px; cursor: pointer; transition: all 0.12s; }
+  .hint-chip:hover { background: var(--b3-blue); color: white; }
+
+  /* RTM PANEL */
+  .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--border); background: white; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .panel-title { font-size: 16px; font-weight: 600; color: var(--text); }
+  .panel-sub { font-size: 12px; color: var(--text3); margin-left: 4px; }
+  .panel-actions { margin-left: auto; display: flex; gap: 8px; }
+  .btn-sm { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-family: var(--sans); cursor: pointer; border: 1px solid var(--border); background: white; color: var(--text2); transition: all 0.12s; }
+  .btn-sm:hover { background: var(--surface); color: var(--b3-blue); border-color: var(--b3-blue-mid); }
+  .btn-primary { background: var(--b3-blue); color: white; border-color: var(--b3-blue); }
+  .btn-primary:hover { background: var(--b3-blue-light); border-color: var(--b3-blue-light); }
+
+  .panel-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+  /* Score widgets */
+  .score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .score-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  .score-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .score-value { font-size: 28px; font-weight: 600; color: var(--b3-blue); line-height: 1; }
+  .score-value.good { color: var(--success); }
+  .score-value.warn { color: var(--warn); }
+  .score-value.bad { color: var(--danger); }
+  .score-bar { height: 4px; background: var(--surface2); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 2px; background: var(--b3-blue); transition: width 0.5s; }
+  .score-fill.good { background: var(--success); }
+  .score-fill.warn { background: var(--warn); }
+
+  /* RTM graph */
+  .rtm-graph { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; overflow-x: auto; }
+  .rtm-flow { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; min-width: max-content; }
+  .rtm-node { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .rtm-box { padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; white-space: nowrap; border: 1.5px solid; }
+  .rtm-box.rn { background: #EEF6FF; color: #0052CC; border-color: #B8D7FF; }
+  .rtm-box.ca { background: #EDFAF5; color: #006644; border-color: #B7EDD8; }
+  .rtm-box.flow { background: #FFF8E6; color: #974F0C; border-color: #FDDBA2; }
+  .rtm-box.scenario { background: #F6EEFF; color: #5B21B6; border-color: #DDD6FE; }
+  .rtm-box.ct { background: #EEF6FF; color: #0052CC; border-color: #B8D7FF; }
+  .rtm-box.exec { background: #EDFAF5; color: #006644; border-color: #B7EDD8; }
+  .rtm-arrow { font-size: 18px; color: var(--text3); padding: 0 8px; align-self: center; }
+  .rtm-count { font-size: 10px; color: var(--text3); }
+
+  /* Big RTM table */
+  .rtm-full-table { width: 100%; border-collapse: collapse; }
+  .rtm-full-table th { background: var(--b3-blue); color: white; padding: 9px 12px; text-align: left; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; }
+  .rtm-full-table th:first-child { border-radius: 8px 0 0 0; }
+  .rtm-full-table th:last-child { border-radius: 0 8px 0 0; }
+  .rtm-full-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 12px; vertical-align: top; }
+  .rtm-full-table tr:hover td { background: var(--b3-blue-pale); }
+  .rtm-full-table tr:last-child td { border-bottom: none; }
+  .auto-chip { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .auto-sim { background: #EDFAF5; color: #006644; }
+  .auto-nao { background: var(--surface2); color: var(--text3); }
+
+  /* COVERAGE PANEL */
+  .coverage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cov-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .cov-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .cov-icon { font-size: 16px; }
+  .cov-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .cov-label { font-size: 12px; color: var(--text2); width: 130px; flex-shrink: 0; }
+  .cov-bar-wrap { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .cov-bar { height: 100%; border-radius: 4px; transition: width 0.6s; }
+  .cov-pct { font-size: 12px; font-weight: 600; width: 36px; text-align: right; color: var(--text2); }
+
+  /* ARTIFACT STUDIO */
+  .studio-grid { display: grid; grid-template-columns: 260px 1fr; gap: 16px; height: 100%; }
+  .studio-sidebar { display: flex; flex-direction: column; gap: 8px; }
+  .studio-item { padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: all 0.12s; background: white; }
+  .studio-item:hover { border-color: var(--b3-blue-mid); background: var(--b3-blue-pale); }
+  .studio-item.active { border-color: var(--b3-blue); background: var(--b3-blue-pale); }
+  .studio-item-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .studio-item-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .studio-preview { background: #0D1F35; border-radius: var(--radius); padding: 20px; overflow: auto; height: 100%; }
+  .studio-preview pre { color: #A8D8FF; font-family: var(--mono); font-size: 12.5px; line-height: 1.8; white-space: pre-wrap; }
+  .studio-preview .kw { color: #C792EA; }
+  .studio-preview .str { color: #C3E88D; }
+  .studio-preview .cm { color: #637777; }
+  .studio-preview .tag { color: #80CBC4; }
+  .studio-preview .val { color: #F78C6C; }
+
+  /* KNOWLEDGE PANEL */
+  .knowledge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .kn-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; cursor: pointer; transition: all 0.15s; }
+  .kn-card:hover { border-color: var(--b3-blue-mid); box-shadow: var(--shadow); }
+  .kn-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+  .kn-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .kn-sub { font-size: 11px; color: var(--text3); line-height: 1.5; }
+  .kn-meta { display: flex; gap: 12px; margin-top: 10px; font-size: 11px; color: var(--text3); }
+
+  /* ── GATEWAY BAR ── */
+  .gw-bar {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,0,0,0.18); border-radius: 8px;
+    padding: 4px 10px; font-size: 11px;
+  }
+  .gw-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .gw-dot.online  { background: #00D4AA; box-shadow: 0 0 5px #00D4AA; }
+  .gw-dot.offline { background: #F59E0B; }
+  .gw-dot.error   { background: #E83B3B; }
+  .gw-label { color: rgba(255,255,255,0.55); font-size: 10px; }
+  .gw-value { color: white; font-weight: 600; font-family: var(--mono); font-size: 10px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gw-sep { color: rgba(255,255,255,0.2); }
+  .gw-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.85); padding: 3px 9px; border-radius: 5px; cursor: pointer; font-size: 11px; font-family: var(--sans); transition: background .12s; }
+  .gw-btn:hover { background: rgba(255,255,255,0.22); }
+
+  /* ── GATEWAY MODAL ── */
+  .gw-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 9000;
+    align-items: center; justify-content: center;
+  }
+  .gw-modal-overlay.open { display: flex; }
+  .gw-modal {
+    background: white; border-radius: 16px; width: 560px; max-width: 96vw;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.25); overflow: hidden;
+    animation: modalIn .2s ease;
+  }
+  @keyframes modalIn { from { opacity:0; transform:scale(.96) translateY(-10px); } to { opacity:1; transform:none; } }
+  .gw-modal-header { padding: 18px 22px 14px; border-bottom: 1px solid #D5E3F2; display: flex; align-items: center; gap: 10px; }
+  .gw-modal-title { font-size: 15px; font-weight: 700; color: #0D1F35; }
+  .gw-modal-sub   { font-size: 11px; color: #6B8CAE; margin-top: 2px; }
+  .gw-modal-close { margin-left: auto; background: none; border: none; font-size: 20px; cursor: pointer; color: #6B8CAE; padding: 2px 6px; border-radius: 4px; }
+  .gw-modal-close:hover { background: #F7F9FC; }
+  .gw-modal-body  { padding: 18px 22px; display: flex; flex-direction: column; gap: 16px; max-height: 72vh; overflow-y: auto; }
+  .gw-modal-footer{ padding: 12px 22px 16px; display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid #D5E3F2; }
+
+  .gw-field label { display: block; font-size: 11px; font-weight: 700; color: #3A5A7A; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .05em; }
+  .gw-field input, .gw-field select { width: 100%; padding: 8px 12px; border: 1.5px solid #D5E3F2; border-radius: 8px; font-family: var(--sans); font-size: 13px; color: #0D1F35; outline: none; transition: border-color .15s; background: white; }
+  .gw-field input:focus, .gw-field select:focus { border-color: var(--b3-blue); }
+  .gw-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .gw-field-hint { font-size: 11px; color: #6B8CAE; margin-top: 4px; }
+  .gw-section-title { font-size: 11px; font-weight: 700; color: #6B8CAE; text-transform: uppercase; letter-spacing: .07em; padding-bottom: 8px; border-bottom: 1px solid #EFF3F8; }
+  .gw-mode-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .gw-mode-card { border: 1.5px solid #D5E3F2; border-radius: 10px; padding: 10px 12px; cursor: pointer; text-align: center; transition: all .12s; }
+  .gw-mode-card:hover { border-color: #C5DEFF; background: #F7F9FC; }
+  .gw-mode-card.active { border-color: var(--b3-blue); background: #E8F2FB; }
+  .gw-mode-card .icon { font-size: 20px; margin-bottom: 4px; }
+  .gw-mode-card .name { font-size: 12px; font-weight: 600; color: #0D1F35; }
+  .gw-mode-card .desc { font-size: 10px; color: #6B8CAE; margin-top: 2px; }
+  .gw-model-info { font-size: 11px; color: #6B8CAE; margin-top: 5px; min-height: 16px; }
+  .gw-test-result { font-size: 12px; padding: 8px 12px; border-radius: 7px; margin-top: 8px; display: none; }
+  .gw-test-result.ok  { background: #ECFDF5; color: #065F46; border: 1px solid #6EE7B7; }
+  .gw-test-result.err { background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; }
+  .gw-cost-badge { font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 4px; background: #ECFDF5; color: #065F46; font-weight: 600; }
+  .gw-cost-badge.warn { background: #FFF8E6; color: #92400E; }
+  .spin-sm { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(0,80,158,.2); border-top-color: var(--b3-blue); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 4px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+
+  ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* Responsive adjustments */
+  @media (max-width: 900px) {
+    .score-grid { grid-template-columns: repeat(2, 1fr); }
+    .coverage-grid { grid-template-columns: 1fr; }
+    .knowledge-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Gherkin highlight */
+  .gherkin-line { display: block; }
+  .gherkin-kw { color: #C792EA; font-weight: 600; }
+  .gherkin-text { color: #C3E88D; }
+  .gherkin-param { color: #F78C6C; }
+
+  /* Loader spinner */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--b3-blue); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-badge">AQuA-QE</div>
+      <div>
+        <div class="topbar-title">LKDF Platform</div>
+        <div class="topbar-sub">Cognitive Quality Engineering</div>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+
+    <!-- GATEWAY STATUS BAR -->
+    <div class="gw-bar">
+      <div class="gw-dot offline" id="gw-dot"></div>
+      <span class="gw-label">via</span>
+      <span class="gw-value" id="gw-provider-label">Direto (sem gateway)</span>
+      <span class="gw-sep">·</span>
+      <span class="gw-value" id="gw-model-label">claude-sonnet-4-20250514</span>
+      <span class="gw-sep">·</span>
+      <span class="gw-label">custo</span>
+      <span class="gw-value" id="gw-cost-label">$0.000000</span>
+    </div>
+
+    <div class="topbar-status">
+      <div class="status-dot"></div>
+      Engines ativos
+    </div>
+    <button class="gw-btn" onclick="openGatewayModal()">⚙️ Gateway</button>
+    <button class="topbar-btn" onclick="clearHistory()">🗑 Limpar sessão</button>
+  </div>
+
+  <!-- GATEWAY CONFIG MODAL -->
+  <div class="gw-modal-overlay" id="gw-modal-overlay" onclick="closeGatewayModal(event)">
+    <div class="gw-modal" onclick="event.stopPropagation()">
+      <div class="gw-modal-header">
+        <div>
+          <div class="gw-modal-title">⚙️ Configuração do Gateway</div>
+          <div class="gw-modal-sub">Conecte ao AI Gateway local ou use um provider diretamente</div>
+        </div>
+        <button class="gw-modal-close" onclick="closeGatewayModal()">×</button>
+      </div>
+
+      <div class="gw-modal-body">
+
+        <!-- Modo de conexão -->
+        <div>
+          <div class="gw-section-title">Modo de Conexão</div>
+          <div class="gw-mode-grid" style="margin-top:10px;">
+            <div class="gw-mode-card active" id="mode-card-gateway" onclick="setConnMode('gateway')">
+              <div class="icon">🔌</div>
+              <div class="name">AI Gateway</div>
+              <div class="desc">Usa o backend local com multi-provider, fallback e observabilidade</div>
+            </div>
+            <div class="gw-mode-card" id="mode-card-direct" onclick="setConnMode('direct')">
+              <div class="icon">⚡</div>
+              <div class="name">Direto</div>
+              <div class="desc">Chama o provider diretamente sem passar pelo gateway</div>
+            </div>
+            <div class="gw-mode-card" id="mode-card-mock" onclick="setConnMode('mock')">
+              <div class="icon">🎭</div>
+              <div class="name">Mock</div>
+              <div class="desc">Respostas simuladas offline, sem consumir tokens</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gateway config (mostrado só no modo gateway) -->
+        <div id="gw-section-gateway">
+          <div class="gw-section-title">AI Gateway Local</div>
+          <div class="gw-field" style="margin-top:10px;">
+            <label>URL do Gateway</label>
+            <input type="text" id="gw-url" value="http://localhost:8080" placeholder="http://localhost:8080">
+            <div class="gw-field-hint">Execute <code>python main.py</code> no diretório aqua-gateway</div>
+          </div>
+          <div class="gw-field-row" style="margin-top:10px;">
+            <div class="gw-field">
+              <label>Provider</label>
+              <select id="gw-gw-provider" onchange="onGwProviderChange()">
+                <option value="">Auto (routing table)</option>
+                <option value="anthropic">Anthropic Claude</option>
+                <option value="openai">OpenAI GPT</option>
+                <option value="google_gemini">Google Gemini</option>
+                <option value="groq">Groq</option>
+                <option value="mistral">Mistral AI</option>
+                <option value="ollama">Ollama (local)</option>
+                <option value="vllm">vLLM (local)</option>
+                <option value="lm_studio">LM Studio (local)</option>
+              </select>
+            </div>
+            <div class="gw-field">
+              <label>Modelo</label>
+              <select id="gw-gw-model">
+                <option value="">— padrão do provider —</option>
+              </select>
+            </div>
+          </div>
+          <div class="gw-field" style="margin-top:8px;">
+            <label>Modelo Customizado (override)</label>
+            <input type="text" id="gw-gw-model-custom" placeholder="ex: gemini-2.5-flash-lite" style="font-family:var(--mono);font-size:12px;">
+            <div class="gw-field-hint">Deixe vazio para usar o modelo do seletor acima</div>
+          </div>
+          <div class="gw-field-row" style="margin-top:8px;">
+            <div class="gw-field">
+              <label>Deployment Mode</label>
+              <select id="gw-deployment">
+                <option value="cloud">☁️ Cloud</option>
+                <option value="hybrid">⚡ Hybrid</option>
+                <option value="local">🏠 Local</option>
+              </select>
+            </div>
+            <div class="gw-field">
+              <label>Engine cognitiva</label>
+              <select id="gw-engine">
+                <option value="requirement">requirement</option>
+                <option value="validation">validation</option>
+                <option value="business_rule">business_rule</option>
+                <option value="risk">risk</option>
+                <option value="inference">inference</option>
+                <option value="compliance">compliance</option>
+                <option value="artifact">artifact</option>
+              </select>
+            </div>
+          </div>
+          <button class="topbar-btn" style="margin-top:10px;width:100%;background:var(--b3-blue);color:white;border:none;padding:9px;" onclick="testGatewayConn()" id="gw-test-btn">
+            🏥 Testar Conexão
+          </button>
+          <div class="gw-test-result" id="gw-test-result"></div>
+        </div>
+
+        <!-- Direct config (mostrado só no modo direto) -->
+        <div id="gw-section-direct" style="display:none;">
+          <div class="gw-section-title">Chamada Direta ao Provider</div>
+          <div class="gw-field" style="margin-top:10px;">
+            <label>Provider</label>
+            <select id="gw-direct-provider" onchange="onDirectProviderChange()">
+              <option value="anthropic">Anthropic Claude</option>
+              <option value="openai">OpenAI GPT</option>
+              <option value="google_gemini">Google Gemini</option>
+              <option value="groq">Groq</option>
+              <option value="mistral">Mistral AI</option>
+            </select>
+          </div>
+          <div class="gw-field" style="margin-top:10px;">
+            <label>Modelo</label>
+            <select id="gw-direct-model" onchange="onDirectModelChange()">
+              <option value="claude-sonnet-4-20250514">claude-sonnet-4-20250514</option>
+            </select>
+            <div class="gw-model-info" id="gw-direct-model-info"></div>
+          </div>
+          <div class="gw-field" style="margin-top:10px;">
+            <label>API Key</label>
+            <input type="password" id="gw-direct-key" placeholder="sk-... / AIza... / gsk_...">
+            <div class="gw-field-hint">A chave é armazenada apenas na memória desta sessão — não é enviada a nenhum servidor exceto o provider escolhido.</div>
+          </div>
+          <div class="gw-field-row" style="margin-top:8px;">
+            <div class="gw-field">
+              <label>Max Tokens</label>
+              <input type="number" id="gw-direct-tokens" value="4000" min="256" max="16000">
+            </div>
+            <div class="gw-field">
+              <label>Temperature</label>
+              <input type="number" id="gw-direct-temp" value="0.3" min="0" max="1" step="0.1">
+            </div>
+          </div>
+        </div>
+
+        <!-- Mock info -->
+        <div id="gw-section-mock" style="display:none;">
+          <div class="gw-section-title">Modo Mock</div>
+          <div style="margin-top:10px;font-size:13px;color:#3A5A7A;line-height:1.7;padding:12px;background:#F7F9FC;border-radius:8px;">
+            Respostas simuladas localmente. Nenhuma API key necessária, nenhum token consumido.<br>
+            Útil para testar a interface e o fluxo sem custos.
+          </div>
+        </div>
+
+      </div>
+
+      <div class="gw-modal-footer">
+        <div style="margin-right:auto;display:flex;gap:14px;font-size:11px;align-items:center;">
+          <div><span style="font-weight:700;color:#0D1F35;" id="stat-reqs">0</span> <span style="color:#6B8CAE;">requests</span></div>
+          <div><span style="font-weight:700;color:#10B981;" id="stat-cost">$0</span> <span style="color:#6B8CAE;">custo</span></div>
+          <div><span style="font-weight:700;color:#0D1F35;" id="stat-tokens">0</span> <span style="color:#6B8CAE;">tokens</span></div>
+        </div>
+        <button class="topbar-btn" onclick="closeGatewayModal()">Cancelar</button>
+        <button class="topbar-btn" style="background:var(--b3-blue);color:white;border-color:var(--b3-blue);" onclick="saveGatewayConfig()">✓ Salvar e Fechar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">Workbench</div>
+    <div class="nav-item active" onclick="showPanel('chat', this)">
+      <span class="nav-icon">🧠</span> Chat Cognitivo
+    </div>
+    <div class="sidebar-section">Análise</div>
+    <div class="nav-item" onclick="showPanel('rtm', this)">
+      <span class="nav-icon">📊</span> RTM Vivo
+      <span class="nav-badge" id="rtm-count">0</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('coverage', this)">
+      <span class="nav-icon">🎯</span> Cobertura & Risco
+    </div>
+    <div class="sidebar-section">Artefatos</div>
+    <div class="nav-item" onclick="showPanel('studio', this)">
+      <span class="nav-icon">⚙️</span> Artifact Studio
+    </div>
+    <div class="sidebar-section">Conhecimento</div>
+    <div class="nav-item" onclick="showPanel('knowledge', this)">
+      <span class="nav-icon">📚</span> Knowledge Layer
+    </div>
+  </div>
+
+  <!-- MAIN PANELS -->
+  <div class="main">
+
+    <!-- CHAT PANEL -->
+    <div class="panel active" id="panel-chat">
+      <div class="chat-wrapper">
+        <div class="chat-header">
+          <div class="chat-header-info">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="chat-header-title">Conversational Cognitive Engineering Core</div>
+              <span class="gw-cost-badge" id="session-cost-badge">$0.000000</span>
+            </div>
+            <div class="chat-header-sub" id="chat-header-sub-gw">
+              Entrada universal · Análise incremental · Versionamento automático
+              <span id="chat-gw-indicator" style="margin-left:8px;font-size:10px;padding:1px 7px;border-radius:3px;background:#E8F2FB;color:#00509E;font-weight:600;">SEM GATEWAY</span>
+            </div>
+            <div class="engine-chips">
+              <span class="chip" id="chip-norm">Normalize</span>
+              <span class="chip" id="chip-req">Requirements</span>
+              <span class="chip" id="chip-val">Validation</span>
+              <span class="chip" id="chip-rn">Business Rules</span>
+              <span class="chip" id="chip-ca">Acceptance Criteria</span>
+              <span class="chip" id="chip-risk">Risk</span>
+              <span class="chip" id="chip-cov">Coverage</span>
+              <span class="chip" id="chip-rtm">Traceability</span>
+              <span class="chip" id="chip-art">Artifacts</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="messages" id="messages">
+          <div class="msg ai">
+            <div class="msg-avatar ai">AQ</div>
+            <div class="msg-bubble">
+              <strong>Bem-vindo ao AQuA-QE LKDF! 🧠</strong><br><br>
+              Sou a plataforma cognitiva de engenharia de qualidade. Posso analisar:
+              <br>• <strong>Histórias de usuário</strong> — extraio RN, CA, riscos e gero cenários
+              <br>• <strong>Documentos</strong> — PDF, DOCX, requisitos, atas
+              <br>• <strong>Texto livre</strong> — ideias, problemas, observações
+              <br>• <strong>Conversas</strong> — refinamento incremental contínuo
+              <br><br>
+              Todos os resultados são rastreáveis via <strong>RTM Vivo</strong> seguindo a arquitetura <code>POM → FLOW → SCENARIO → TEST</code>.
+              <br><br>
+              <em>Como deseja começar?</em>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-area">
+          <div class="input-wrap">
+            <div class="input-box">
+              <textarea class="chat-textarea" id="user-input" placeholder="Digite sua história, requisito, problema ou observação..." rows="1"
+                onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            </div>
+            <button class="btn-attach" title="Anexar documento" onclick="showAttachNote()">📎</button>
+            <button class="btn-send" id="send-btn" onclick="sendMessage()">➤</button>
+          </div>
+          <div class="input-hints">
+            <span class="hint-chip" onclick="fillHint('Como usuário quero fazer login com email e senha para acessar o sistema seguro')">💡 US: Login</span>
+            <span class="hint-chip" onclick="fillHint('Analise os riscos de um fluxo de pagamento com cartão de crédito')">⚠️ Risco Pagamento</span>
+            <span class="hint-chip" onclick="fillHint('Gere cenários de teste para recuperação de senha via email')">🧪 Cenários Senha</span>
+            <span class="hint-chip" onclick="fillHint('Como usuário premium quero ver meu extrato financeiro filtrado por período para controlar meus gastos')">📊 US: Extrato</span>
+            <span class="hint-chip" onclick="fillHint('Quais são os critérios de aceite para WCAG AA em formulários?')">♿ WCAG</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RTM PANEL -->
+    <div class="panel" id="panel-rtm">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">📊 RTM Vivo — Requirement Traceability Matrix</div>
+          <div class="panel-sub">Rastreabilidade ponta a ponta | RN → CA → Flow → Scenario → CT → Execução</div>
+        </div>
+        <div class="panel-actions">
+          <button class="btn-sm" onclick="exportRTM()">⬇ Exportar CSV</button>
+          <button class="btn-sm btn-primary" onclick="showPanel('chat', document.querySelector('.nav-item'))">+ Nova análise</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="score-grid" id="rtm-scores">
+          <div class="score-card"><div class="score-label">Casos de Teste</div><div class="score-value" id="sc-ct">0</div><div class="score-bar"><div class="score-fill" style="width:0%"></div></div></div>
+          <div class="score-card"><div class="score-label">Regras de Negócio</div><div class="score-value good" id="sc-rn">0</div><div class="score-bar"><div class="score-fill good" style="width:0%"></div></div></div>
+          <div class="score-card"><div class="score-label">Cobertura</div><div class="score-value" id="sc-cov">0%</div><div class="score-bar"><div class="score-fill warn" style="width:0%"></div></div></div>
+          <div class="score-card"><div class="score-label">Automatizáveis</div><div class="score-value good" id="sc-auto">0%</div><div class="score-bar"><div class="score-fill good" style="width:0%"></div></div></div>
+        </div>
+
+        <div class="rtm-graph">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:12px;">🔗 Fluxo LKDF</div>
+          <div class="rtm-flow">
+            <div class="rtm-node"><div class="rtm-box rn">RN</div><div class="rtm-count" id="cnt-rn">0 regras</div></div>
+            <div class="rtm-arrow">→</div>
+            <div class="rtm-node"><div class="rtm-box ca">CA</div><div class="rtm-count" id="cnt-ca">0 critérios</div></div>
+            <div class="rtm-arrow">→</div>
+            <div class="rtm-node"><div class="rtm-box flow">FLOW</div><div class="rtm-count" id="cnt-flow">0 flows</div></div>
+            <div class="rtm-arrow">→</div>
+            <div class="rtm-node"><div class="rtm-box scenario">SCENARIO</div><div class="rtm-count" id="cnt-scen">0 cenários</div></div>
+            <div class="rtm-arrow">→</div>
+            <div class="rtm-node"><div class="rtm-box ct">CT</div><div class="rtm-count" id="cnt-ct">0 casos</div></div>
+            <div class="rtm-arrow">→</div>
+            <div class="rtm-node"><div class="rtm-box exec">EXEC</div><div class="rtm-count">pendente</div></div>
+          </div>
+        </div>
+
+        <div id="rtm-table-wrap">
+          <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">
+            <div style="font-size:40px;margin-bottom:12px;">📋</div>
+            Nenhuma análise ainda. Use o Chat Cognitivo para gerar a RTM.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COVERAGE PANEL -->
+    <div class="panel" id="panel-coverage">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">🎯 Cobertura & Risco</div>
+          <div class="panel-sub">Análise multidimensional de cobertura e criticidade</div>
+        </div>
+        <div class="panel-actions">
+          <button class="btn-sm btn-primary" onclick="recalcCoverage()">↻ Recalcular</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="coverage-grid" id="coverage-content">
+          <div class="cov-card">
+            <div class="cov-title"><span class="cov-icon">⬛</span> Cobertura Funcional</div>
+            <div id="cov-func">
+              <div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Realize uma análise para ver cobertura</div>
+            </div>
+          </div>
+          <div class="cov-card">
+            <div class="cov-title"><span class="cov-icon">⚠️</span> Mapa de Risco</div>
+            <div id="cov-risk">
+              <div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Realize uma análise para ver riscos</div>
+            </div>
+          </div>
+          <div class="cov-card">
+            <div class="cov-title"><span class="cov-icon">♿</span> Compliance</div>
+            <div id="cov-compliance">
+              <div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Realize uma análise para ver compliance</div>
+            </div>
+          </div>
+          <div class="cov-card">
+            <div class="cov-title"><span class="cov-icon">🤖</span> Automação</div>
+            <div id="cov-auto">
+              <div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Realize uma análise para ver automação</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTIFACT STUDIO -->
+    <div class="panel" id="panel-studio">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">⚙️ Artifact Studio</div>
+          <div class="panel-sub">Geração de artefatos para Robot Framework, Playwright, Cypress, Postman</div>
+        </div>
+        <div class="panel-actions">
+          <button class="btn-sm" onclick="copyArtifact()">📋 Copiar</button>
+          <button class="btn-sm btn-primary" onclick="downloadArtifact()">⬇ Baixar</button>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:20px;">
+        <div class="studio-grid">
+          <div class="studio-sidebar" id="studio-list">
+            <div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Frameworks</div>
+            <div class="studio-item active" onclick="selectStudio('robot', this)">
+              <div class="studio-item-name">🤖 Robot Framework</div>
+              <div class="studio-item-sub">BDD + Keywords</div>
+            </div>
+            <div class="studio-item" onclick="selectStudio('gherkin', this)">
+              <div class="studio-item-name">🥒 Gherkin / Behave</div>
+              <div class="studio-item-sub">Given / When / Then</div>
+            </div>
+            <div class="studio-item" onclick="selectStudio('playwright', this)">
+              <div class="studio-item-name">🎭 Playwright</div>
+              <div class="studio-item-sub">TypeScript / Python</div>
+            </div>
+            <div class="studio-item" onclick="selectStudio('cypress', this)">
+              <div class="studio-item-name">🌲 Cypress</div>
+              <div class="studio-item-sub">JavaScript E2E</div>
+            </div>
+            <div class="studio-item" onclick="selectStudio('postman', this)">
+              <div class="studio-item-name">📮 Postman Collection</div>
+              <div class="studio-item-sub">REST API Tests</div>
+            </div>
+          </div>
+          <div class="studio-preview">
+            <pre id="studio-code"><span class="cm"># Execute uma análise no Chat Cognitivo</span>
+<span class="cm"># Os artefatos serão gerados automaticamente</span>
+<span class="cm"># e disponibilizados aqui para download.</span>
+<span class="cm"></span>
+<span class="tag">*** Settings ***</span>
+<span class="kw">Library</span>    <span class="str">SeleniumLibrary</span>
+
+<span class="tag">*** Test Cases ***</span>
+<span class="cm"># AQuA-QE LKDF — Artifacts Engine</span>
+<span class="cm"># Aguardando análise...</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KNOWLEDGE PANEL -->
+    <div class="panel" id="panel-knowledge">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">📚 Knowledge Layer Explorer</div>
+          <div class="panel-sub">Padrões reutilizáveis · Histórias relacionadas · Aprendizado contínuo</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="knowledge-grid" id="knowledge-grid">
+          <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);">
+            <div style="font-size:40px;margin-bottom:12px;">📚</div>
+            <div style="font-size:14px;">O Knowledge Layer se alimenta conforme você realiza análises.</div>
+            <div style="font-size:12px;margin-top:8px;">Padrões reutilizáveis e insights serão listados aqui.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// =================== STATE ===================
+const state = {
+  history: [],       // {role, content}[]
+  rtmItems: [],
+  knowledgeItems: [],
+  activeStudio: 'robot',
+  analysisCount: 0,
+  artifacts: {}
+};
+
+const SYSTEM_PROMPT = `Você é o AQuA-QE LKDF — uma plataforma cognitiva de engenharia de qualidade orientada por IA.
+
+Sua arquitetura inclui múltiplas engines cognitivas que você DEVE ativar explicitamente:
+- Normalize Engine: padronização semântica
+- Requirement Intelligence Engine: interpretar requisitos, estruturar histórias
+- Validation & Ambiguity Engine: detectar ambiguidades, inconsistências, gaps
+- Business Rule Engine: identificar RN (Regras de Negócio)
+- Acceptance Criteria Engine: extrair CA (Critérios de Aceite)
+- Risk Engine: classificar riscos com criticidade (Alto/Médio/Baixo)
+- Coverage Validation Engine: validar cobertura funcional, WCAG, compliance
+- Inference Engine: inferir cenários ocultos, fluxos alternativos
+- Traceability Engine (LKDF): gerar RTM vivo
+- Artifact Generation Engine: gerar cenários em Gherkin/Robot Framework
+
+PADRÃO DE RESPOSTA OBRIGATÓRIO:
+Sempre estruture sua resposta com seções claras usando emojis e markdown:
+
+🔄 **Engine Ativada**: [nome da engine]
+📋 **Análise**: [sua análise]
+
+Quando analisar uma história ou requisito, SEMPRE inclua:
+1. **Regras de Negócio (RN)**  — lista numerada, ex: RN-01, RN-02...
+2. **Critérios de Aceite (CA)** — lista numerada, ex: CA-01, CA-02...
+3. **Riscos identificados** — com nível Alto/Médio/Baixo
+4. **Cenário Gherkin (FLOW)** — pelo menos 1 cenário completo
+5. **Casos de Teste (CT)** — pelo menos 2 casos no padrão: CT-001 - RN-01 | CA-01: Descrição
+6. **Gaps e Ambiguidades** — o que falta ou é ambíguo
+7. **Quality Score** — porcentagem estimada de cobertura
+
+FORMATO RTM para inclusão (use exatamente este formato em bloco de código rtm):
+\`\`\`rtm
+CT-001|RN-01|CA-01|Descrição do caso|Alto|Nenhum|Alta|Sim
+CT-002|RN-01|CA-02|Descrição do caso|Médio|Gap identificado|Média|Sim
+\`\`\`
+
+FORMATO GHERKIN para artefato:
+\`\`\`gherkin
+Funcionalidade: Nome da funcionalidade
+  Como [ator]
+  Quero [ação]
+  Para [benefício]
+
+  Cenário: [nome do cenário]
+    Dado que [precondição]
+    Quando [ação]
+    Então [resultado esperado]
+\`\`\`
+
+Sempre termine perguntando: "Deseja continuar o refinamento ou avançar para análise final completa?"
+
+Responda SEMPRE em português brasileiro. Seja técnico, preciso e estruturado.`;
+
+// =================== GATEWAY CONFIG ===================
+const GW = {
+  connMode:      'gateway',   // 'gateway' | 'direct' | 'mock'
+  gatewayUrl:    'http://localhost:8080',
+  gwProvider:    '',          // '' = auto routing
+  gwModel:       '',
+  gwModelCustom: '',
+  gwDeployment:  'cloud',
+  gwEngine:      'requirement',
+  directProvider:'anthropic',
+  directModel:   'claude-sonnet-4-20250514',
+  directKey:     '',
+  directTokens:  4000,
+  directTemp:    0.3,
+  isOnline:      false,
+  sessionCost:   0,
+  sessionTokens: 0,
+  sessionReqs:   0,
+};
+
+// Model catalog (same as gateway-panel)
+const GW_MODELS = {
+  anthropic:    ['claude-opus-4-5','claude-sonnet-4-5','claude-haiku-4-5','claude-sonnet-4-20250514'],
+  openai:       ['gpt-4o','gpt-4o-mini','gpt-4-turbo','gpt-3.5-turbo','o1-mini'],
+  google_gemini:['gemini-2.5-flash-lite','gemini-2.5-flash-preview-04-17','gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-pro','gemini-1.5-flash'],
+  groq:         ['llama-3.3-70b-versatile','llama-3.1-70b-versatile','llama-3.1-8b-instant','mixtral-8x7b-32768'],
+  mistral:      ['mistral-large-latest','mistral-medium-latest','mistral-small-latest','codestral-latest'],
+  ollama:       ['llama3.1:8b','llama3.1:70b','deepseek-r1:7b','qwen2.5:7b','phi4:latest'],
+  vllm:         ['meta-llama/Llama-3.1-8B-Instruct','mistralai/Mistral-7B-Instruct-v0.3'],
+  lm_studio:    ['local-model'],
+};
+const GW_DIRECT_ENDPOINTS = {
+  anthropic:    'https://api.anthropic.com/v1/messages',
+  openai:       'https://api.openai.com/v1/chat/completions',
+  google_gemini:null, // built dynamically
+  groq:         'https://api.groq.com/openai/v1/chat/completions',
+  mistral:      'https://api.mistral.ai/v1/chat/completions',
+};
+
+// =================== MODAL UI ===================
+function openGatewayModal() {
+  // Sync UI from GW state
+  setConnMode(GW.connMode, false);
+  document.getElementById('gw-url').value               = GW.gatewayUrl;
+  document.getElementById('gw-gw-provider').value       = GW.gwProvider;
+  document.getElementById('gw-gw-model-custom').value   = GW.gwModelCustom;
+  document.getElementById('gw-deployment').value        = GW.gwDeployment;
+  document.getElementById('gw-engine').value            = GW.gwEngine;
+  document.getElementById('gw-direct-provider').value   = GW.directProvider;
+  document.getElementById('gw-direct-key').value        = GW.directKey;
+  document.getElementById('gw-direct-tokens').value     = GW.directTokens;
+  document.getElementById('gw-direct-temp').value       = GW.directTemp;
+  onGwProviderChange();
+  onDirectProviderChange();
+  // Stats
+  document.getElementById('stat-reqs').textContent   = GW.sessionReqs;
+  document.getElementById('stat-cost').textContent   = '$' + GW.sessionCost.toFixed(6);
+  document.getElementById('stat-tokens').textContent = GW.sessionTokens.toLocaleString();
+  document.getElementById('gw-modal-overlay').classList.add('open');
+}
+
+function closeGatewayModal(evt) {
+  if (evt && evt.target !== document.getElementById('gw-modal-overlay')) return;
+  document.getElementById('gw-modal-overlay').classList.remove('open');
+}
+
+function setConnMode(mode, updateUI=true) {
+  GW.connMode = mode;
+  ['gateway','direct','mock'].forEach(m => {
+    document.getElementById('mode-card-' + m)?.classList.toggle('active', m === mode);
+    const sec = document.getElementById('gw-section-' + m);
+    if (sec) sec.style.display = m === mode ? '' : 'none';
+  });
+}
+
+function onGwProviderChange() {
+  const prov = document.getElementById('gw-gw-provider')?.value;
+  const modelSel = document.getElementById('gw-gw-model');
+  if (!modelSel) return;
+  const models = GW_MODELS[prov] || [];
+  modelSel.innerHTML = '<option value="">— padrão do provider —</option>'
+    + models.map(m => `<option value="${m}" ${m===GW.gwModel?'selected':''}>${m}</option>`).join('');
+}
+
+function onDirectProviderChange() {
+  const prov = document.getElementById('gw-direct-provider')?.value || 'anthropic';
+  const modelSel = document.getElementById('gw-direct-model');
+  if (!modelSel) return;
+  const models = GW_MODELS[prov] || [];
+  modelSel.innerHTML = models.map(m =>
+    `<option value="${m}" ${m===GW.directModel?'selected':''}>${m}</option>`
+  ).join('');
+  onDirectModelChange();
+}
+
+function onDirectModelChange() {
+  const prov  = document.getElementById('gw-direct-provider')?.value || '';
+  const model = document.getElementById('gw-direct-model')?.value || '';
+  const info  = document.getElementById('gw-direct-model-info');
+  if (!info) return;
+  const hints = {
+    'claude-sonnet-4-20250514': 'Contexto: 200K · $3/$15 /1k tokens',
+    'claude-sonnet-4-5':        'Contexto: 200K · $3/$15 /1k tokens',
+    'claude-haiku-4-5':         'Contexto: 200K · $0.25/$1.25 /1k tokens',
+    'gpt-4o':                   'Contexto: 128K · $5/$15 /1k tokens',
+    'gpt-4o-mini':              'Contexto: 128K · $0.15/$0.60 /1k tokens',
+    'gemini-2.5-flash-lite':    'Contexto: 1M · $0.10/$0.40 /1k tokens',
+    'gemini-2.0-flash':         'Contexto: 1M · $0.10/$0.40 /1k tokens',
+    'llama-3.3-70b-versatile':  'Contexto: 128K · $0.59/$0.79 /1k tokens (Groq)',
+    'mistral-large-latest':     'Contexto: 128K · $4/$12 /1k tokens',
+  };
+  info.textContent = hints[model] || '';
+}
+
+async function testGatewayConn() {
+  const url = document.getElementById('gw-url').value.trim();
+  const btn = document.getElementById('gw-test-btn');
+  const res = document.getElementById('gw-test-result');
+  btn.innerHTML = '<span class="spin-sm"></span>Testando…';
+  btn.disabled = true;
+  res.style.display = 'none';
+  try {
+    const resp = await fetch(url + '/health', { signal: AbortSignal.timeout(5000) });
+    const data = await resp.json();
+    if (data.status === 'ok') {
+      // Also fetch provider count
+      let provInfo = '';
+      try {
+        const p = await fetch(url + '/api/v1/info');
+        const pd = await p.json();
+        provInfo = ` · ${pd.providers_enabled} providers ativos · ${pd.engines_total} engines`;
+      } catch(e) {}
+      res.className = 'gw-test-result ok';
+      res.textContent = `✓ Gateway online${provInfo}`;
+      GW.isOnline = true;
+      updateGwBar();
+    } else throw new Error('status != ok');
+  } catch(e) {
+    res.className = 'gw-test-result err';
+    res.textContent = `✗ Não foi possível conectar em ${url} — verifique se o servidor está rodando`;
+    GW.isOnline = false;
+    updateGwBar();
+  }
+  res.style.display = 'block';
+  btn.innerHTML = '🏥 Testar Conexão';
+  btn.disabled = false;
+}
+
+function saveGatewayConfig() {
+  GW.gatewayUrl    = document.getElementById('gw-url').value.trim();
+  GW.gwProvider    = document.getElementById('gw-gw-provider').value;
+  GW.gwModel       = document.getElementById('gw-gw-model').value;
+  GW.gwModelCustom = document.getElementById('gw-gw-model-custom').value.trim();
+  GW.gwDeployment  = document.getElementById('gw-deployment').value;
+  GW.gwEngine      = document.getElementById('gw-engine').value;
+  GW.directProvider = document.getElementById('gw-direct-provider').value;
+  GW.directModel   = document.getElementById('gw-direct-model').value;
+  GW.directKey     = document.getElementById('gw-direct-key').value;
+  GW.directTokens  = parseInt(document.getElementById('gw-direct-tokens').value) || 4000;
+  GW.directTemp    = parseFloat(document.getElementById('gw-direct-temp').value) || 0.3;
+  document.getElementById('gw-modal-overlay').classList.remove('open');
+  updateGwBar();
+  if (GW.connMode === 'gateway') testGatewayConn().then(updateGwBar);
+}
+
+function updateGwBar() {
+  const dot = document.getElementById('gw-dot');
+  const provLabel  = document.getElementById('gw-provider-label');
+  const modelLabel = document.getElementById('gw-model-label');
+  const costLabel  = document.getElementById('gw-cost-label');
+
+  if (GW.connMode === 'mock') {
+    dot.className = 'gw-dot offline';
+    provLabel.textContent  = 'Mock (offline)';
+    modelLabel.textContent = 'simulado';
+  } else if (GW.connMode === 'gateway') {
+    dot.className = 'gw-dot ' + (GW.isOnline ? 'online' : 'offline');
+    const prov = GW.gwProvider || 'auto';
+    provLabel.textContent  = GW.isOnline ? `Gateway · ${prov}` : 'Gateway (offline)';
+    const model = GW.gwModelCustom || GW.gwModel || 'padrão';
+    modelLabel.textContent = model;
+  } else {
+    // direct mode
+    dot.className = 'gw-dot ' + (GW.isOnline ? 'online' : 'error');
+    provLabel.textContent  = GW.directProvider + (GW.isOnline ? '' : ' — gateway offline');
+    modelLabel.textContent = GW.directModel;
+  }
+  costLabel.textContent = '$' + GW.sessionCost.toFixed(6);
+  // Always sync chat indicator
+  if (typeof updateChatGwIndicator === 'function') updateChatGwIndicator();
+}
+
+// =================== API — UNIFIED CALL ===================
+async function callClaude(messages) {
+  switch (GW.connMode) {
+    case 'gateway': return callViaGateway(messages);
+    case 'direct':  return callDirect(messages);
+    case 'mock':    return callMock(messages);
+    default:        return callViaGateway(messages);
+  }
+}
+
+// ── 1. Gateway backend ──────────────────────────────────────
+async function callViaGateway(messages) {
+  const url = (GW.gatewayUrl || 'http://localhost:8080').replace(/\/$/, '');
+  const payload = {
+    engine:          GW.gwEngine || 'requirement',
+    content:         messages[messages.length - 1]?.content || '',
+    system_prompt:   SYSTEM_PROMPT,
+    deployment_mode: GW.gwDeployment || 'cloud',
+    max_tokens:      4000,
+    temperature:     0.3,
+  };
+  if (GW.gwProvider)    payload.force_provider = GW.gwProvider;
+  if (GW.gwModelCustom) payload.model_override = GW.gwModelCustom;
+  else if (GW.gwModel)  payload.model_override = GW.gwModel;
+
+  // Include full conversation context for multi-turn
+  if (messages.length > 1) {
+    payload.content = messages.map(m =>
+      `[${m.role === 'user' ? 'User' : 'Assistant'}]: ${m.content}`
+    ).join('\n\n');
+  }
+
+  const resp = await fetch(url + '/api/v1/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(90000),
+  });
+
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`Gateway ${resp.status}: ${err.substring(0,120)}`);
+  }
+  const data = await resp.json();
+  if (data.status === 'failed') throw new Error(data.error || 'Gateway returned failed status');
+
+  // Update session metrics
+  const m = data.metrics || {};
+  GW.sessionReqs++;
+  GW.sessionCost   += m.cost_usd   || 0;
+  GW.sessionTokens += (m.input_tokens || 0) + (m.output_tokens || 0);
+  GW.isOnline = true;
+
+  updateGwBar();
+  updateSessionBadge(data, m);
+  return data.content;
+}
+
+// ── 2. Direct provider call — via gateway proxy (sem CORS) ──────
+async function callDirect(messages) {
+  const prov  = GW.directProvider;
+  const model = GW.directModel;
+  const key   = GW.directKey;
+
+  if (!key) {
+    throw new Error(
+      `API key não configurada para "${prov}".\n` +
+      `Clique em ⚙️ Gateway → aba Direto → insira a chave.`
+    );
+  }
+
+  // Chamadas diretas de browser são bloqueadas por CORS na maioria dos providers
+  // (Anthropic, OpenAI, Mistral). Usamos o gateway como proxy intermediário.
+  if (!GW.isOnline) {
+    throw new Error(
+      `Modo Direto requer o gateway backend rodando (para evitar CORS).\n` +
+      `Execute: python main.py\n` +
+      `Ou use o modo Mock para testar offline.`
+    );
+  }
+
+  const gwUrl = (GW.gatewayUrl || 'http://localhost:8080').replace(/\/$/, '');
+
+  const resp = await fetch(`${gwUrl}/api/v1/proxy/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      provider:      prov,
+      model_id:      model,
+      messages:      messages,
+      system_prompt: SYSTEM_PROMPT,
+      api_key:       key,
+      max_tokens:    GW.directTokens,
+      temperature:   GW.directTemp,
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+    throw new Error(`${prov} (via proxy) ${resp.status}: ${err.detail || resp.statusText}`);
+  }
+
+  const data = await resp.json();
+
+  // Update session metrics
+  GW.sessionReqs++;
+  GW.sessionTokens += (data.input_tokens || 0) + (data.output_tokens || 0);
+  GW.sessionCost   += data.cost_usd || 0;
+  updateGwBar();
+
+  return data.content;
+}
+
+// ── 3. Mock ──────────────────────────────────────────────────
+async function callMock(messages) {
+  await new Promise(r => setTimeout(r, 600 + Math.random()*800));
+  const last = messages[messages.length-1]?.content || '';
+  return `[MOCK — sem consumo de tokens]\n\n🔄 **Requirement Intelligence Engine**\n\n**Regras de Negócio identificadas:**\n- RN-01: ${last.substring(0,60)}...\n- RN-02: Critérios de aceite obrigatórios\n\n**Critérios de Aceite:**\n- CA-01 (RN-01): Validação do fluxo principal\n- CA-02 (RN-01): Tratamento de erro\n\n\`\`\`rtm\nCT-001|RN-01|CA-01|Fluxo principal mock|Médio|Nenhum|Alta|Sim\nCT-002|RN-01|CA-02|Tratamento de erro mock|Baixo|Nenhum|Média|Sim\n\`\`\`\n\n\`\`\`gherkin\nFuncionalidade: Mock Feature\n  Cenário: Fluxo principal\n    Dado que o sistema está disponível\n    Quando o usuário executa a ação\n    Então o resultado esperado é retornado\n\`\`\`\n\nDeseja continuar o refinamento ou avançar para análise final?`;
+}
+
+function updateSessionBadge(data, metrics) {
+  // Update cost badge in chat header if present
+  const badge = document.getElementById('session-cost-badge');
+  if (badge) {
+    const cost = GW.sessionCost;
+    badge.textContent = '$' + cost.toFixed(4);
+    badge.className = 'gw-cost-badge' + (cost > 0.1 ? ' warn' : '');
+  }
+}
+
+
+
+// =================== CHAT ===================
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function fillHint(text) {
+  const inp = document.getElementById('user-input');
+  inp.value = text;
+  inp.focus();
+  autoResize(inp);
+}
+
+function clearHistory() {
+  if (!confirm('Limpar toda a sessão?')) return;
+  state.history = [];
+  state.rtmItems = [];
+  state.knowledgeItems = [];
+  state.analysisCount = 0;
+  document.getElementById('messages').innerHTML = '';
+  resetRTM();
+  resetKnowledge();
+  updateRTMBadge();
+  addAIMessage('Sessão limpa. Pronto para nova análise! 🧠');
+}
+
+async function sendMessage() {
+  const inp = document.getElementById('user-input');
+  const text = inp.value.trim();
+  if (!text) return;
+
+  inp.value = '';
+  inp.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+
+  appendUserMessage(text);
+  state.history.push({ role: 'user', content: text });
+
+  // Show thinking
+  const thinkId = showThinking();
+
+  // Animate engines
+  animateEngines(text);
+
+  try {
+    const response = await callClaude(state.history);
+    hideThinking(thinkId);
+    state.history.push({ role: 'assistant', content: response });
+
+    // Parse and display
+    const parsed = parseResponse(response);
+    appendAIMessage(parsed.display, parsed.rtmRows, parsed.gherkin);
+
+    // Update RTM
+    if (parsed.rtmRows.length) {
+      parsed.rtmRows.forEach(r => state.rtmItems.push(r));
+      updateRTMPanel();
+      updateCoveragePanel(parsed);
+      updateRTMBadge();
+    }
+
+    // Update artifacts
+    if (parsed.gherkin) {
+      updateArtifacts(parsed.gherkin, text);
+    }
+
+    // Update knowledge
+    state.analysisCount++;
+    addKnowledgeItem(text, parsed);
+
+  } catch (err) {
+    hideThinking(thinkId);
+    const msg = err.message || 'Erro desconhecido';
+    // Detect common error types and give actionable guidance
+    let hint = '';
+    if (msg.includes('API key não configurada') || msg.includes('x-api-key') || msg.includes('Bearer')) {
+      hint = '\n\n💡 **Solução:** Clique em **⚙️ Gateway** na barra superior e configure a API key do provider escolhido.';
+    } else if (msg.includes('gateway backend rodando') || msg.includes('Failed to fetch') || msg.includes('offline')) {
+      hint = '\n\n💡 **Solução:** Execute `python main.py` na pasta do gateway, ou mude para modo **Mock** em ⚙️ Gateway para testar sem backend.';
+    } else if (msg.includes('503') || msg.includes('high demand') || msg.includes('overloaded')) {
+      hint = '\n\n💡 **Solução:** O provider está sobrecarregado. Aguarde alguns segundos e tente novamente, ou troque de modelo em ⚙️ Gateway.';
+    } else if (msg.includes('401') || msg.includes('authentication') || msg.includes('invalid')) {
+      hint = '\n\n💡 **Solução:** A API key está inválida ou expirada. Verifique em ⚙️ Gateway.';
+    }
+    appendAIMessage(`❌ **Erro:** ${msg}${hint}`, [], null);
+  }
+
+  document.getElementById('send-btn').disabled = false;
+}
+
+function appendUserMessage(text) {
+  const el = document.createElement('div');
+  el.className = 'msg user';
+  el.innerHTML = `<div class="msg-avatar user">👤</div><div class="msg-bubble">${escHtml(text)}</div>`;
+  document.getElementById('messages').appendChild(el);
+  scrollBottom();
+}
+
+function appendAIMessage(html, rtmRows, gherkin) {
+  const el = document.createElement('div');
+  el.className = 'msg ai';
+
+  let extra = '';
+  if (rtmRows.length) {
+    extra += buildRTMCard(rtmRows);
+  }
+  if (gherkin) {
+    extra += buildGherkinCard(gherkin);
+  }
+
+  el.innerHTML = `<div class="msg-avatar ai">AQ</div><div style="flex:1;max-width:78%"><div class="msg-bubble">${html}</div>${extra}</div>`;
+  document.getElementById('messages').appendChild(el);
+  scrollBottom();
+}
+
+function addAIMessage(text) {
+  appendAIMessage(text, [], null);
+}
+
+function showThinking() {
+  const id = 'think-' + Date.now();
+  const el = document.createElement('div');
+  el.className = 'msg ai';
+  el.id = id;
+  el.innerHTML = `<div class="msg-avatar ai">AQ</div>
+    <div>
+      <div class="thinking">
+        <div class="thinking-dots"><span></span><span></span><span></span></div>
+        <span>Engines cognitivas processando...</span>
+      </div>
+      <div class="engine-log" id="${id}-log"><span>▶ Normalize Engine</span></div>
+    </div>`;
+  document.getElementById('messages').appendChild(el);
+  scrollBottom();
+
+  const engines = ['Requirement Intelligence', 'Validation & Ambiguity', 'Business Rule', 'Acceptance Criteria', 'Risk & Coverage', 'Traceability (LKDF)', 'Artifact Generation'];
+  let i = 0;
+  const interval = setInterval(() => {
+    const logEl = document.getElementById(id + '-log');
+    if (logEl && i < engines.length) {
+      logEl.innerHTML = `<span>▶ ${engines[i]} Engine</span>`;
+      i++;
+    } else {
+      clearInterval(interval);
+    }
+  }, 600);
+
+  return id;
+}
+
+function hideThinking(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function scrollBottom() {
+  const m = document.getElementById('messages');
+  m.scrollTop = m.scrollHeight;
+}
+
+// =================== PARSE RESPONSE ===================
+function parseResponse(text) {
+  // Convert markdown to HTML
+  let html = markdownToHtml(text);
+
+  // Extract RTM rows
+  const rtmRows = [];
+  const rtmMatch = text.match(/```rtm\n([\s\S]*?)```/g);
+  if (rtmMatch) {
+    rtmMatch.forEach(block => {
+      const lines = block.replace(/```rtm\n/, '').replace(/```/, '').trim().split('\n');
+      lines.forEach(line => {
+        const parts = line.split('|');
+        if (parts.length >= 8) {
+          rtmRows.push({
+            id: parts[0].trim(),
+            rn: parts[1].trim(),
+            ca: parts[2].trim(),
+            desc: parts[3].trim(),
+            risco: parts[4].trim(),
+            gap: parts[5].trim(),
+            prio: parts[6].trim(),
+            auto: parts[7].trim()
+          });
+        }
+      });
+    });
+    html = html.replace(/<pre[^>]*>```rtm[\s\S]*?```<\/pre>/g, '');
+  }
+
+  // Extract gherkin
+  let gherkin = null;
+  const ghMatch = text.match(/```gherkin\n([\s\S]*?)```/);
+  if (ghMatch) gherkin = ghMatch[1];
+
+  return { display: html, rtmRows, gherkin };
+}
+
+function markdownToHtml(text) {
+  return text
+    .replace(/```[\w]*\n[\s\S]*?```/g, m => {
+      const code = m.replace(/```[\w]*\n/, '').replace(/```$/, '').trim();
+      const lang = (m.match(/```(\w+)/) || ['',''])[1];
+      if (lang === 'rtm') return ''; // handled separately
+      if (lang === 'gherkin') {
+        const lines = code.split('\n').map(l => {
+          if (/^(Funcionalidade|Feature):/i.test(l.trim())) return `<span class="gherkin-kw">${escHtml(l)}</span>`;
+          if (/^\s*(Dado|Given|Quando|When|Então|Then|E|And|Mas|But|Cenário|Scenario|Como|Quero|Para)/.test(l)) {
+            return l.replace(/^(\s*)(Dado|Given|Quando|When|Então|Then|E|And|Mas|But|Cenário|Scenario|Como|Quero|Para)/, (_, sp, kw) =>
+              `${sp}<span class="gherkin-kw">${kw}</span>`);
+          }
+          return escHtml(l);
+        }).join('\n');
+        return `<pre><code>${lines}</code></pre>`;
+      }
+      return `<pre><code>${escHtml(code)}</code></pre>`;
+    })
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^#{1,3} (.+)$/gm, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// =================== ARTIFACT CARDS IN CHAT ===================
+function buildRTMCard(rows) {
+  const rowsHtml = rows.map(r => `
+    <tr>
+      <td><code>${r.id}</code></td>
+      <td>${r.rn}</td>
+      <td>${r.ca}</td>
+      <td>${r.desc}</td>
+      <td class="risk-${r.risco.toLowerCase().includes('alto') ? 'alto' : r.risco.toLowerCase().includes('médio') || r.risco.toLowerCase().includes('medio') ? 'medio' : 'baixo'}">${r.risco}</td>
+      <td>${r.gap === 'Nenhum' ? '—' : r.gap}</td>
+      <td><span class="badge-prio prio-${r.prio.toLowerCase().includes('alta') ? 'alta' : r.prio.toLowerCase().includes('média') || r.prio.toLowerCase().includes('media') ? 'media' : 'baixa'}">${r.prio}</span></td>
+      <td><span class="auto-chip ${r.auto.toLowerCase().includes('sim') ? 'auto-sim' : 'auto-nao'}">${r.auto}</span></td>
+    </tr>`).join('');
+  return `
+    <div class="artifact-card" style="margin-top:8px;">
+      <div class="artifact-header"><span class="artifact-tag tag-rtm">📊 RTM</span> Traceability Matrix — ${rows.length} caso(s)</div>
+      <div class="artifact-body" style="padding:0;overflow-x:auto;">
+        <table class="rtm-table">
+          <thead><tr><th>ID</th><th>RN</th><th>CA</th><th>Descrição</th><th>Risco</th><th>Gap</th><th>Prioridade</th><th>Auto</th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function buildGherkinCard(gherkin) {
+  const lines = gherkin.split('\n').map(l => {
+    const kws = ['Funcionalidade','Feature','Cenário','Scenario','Dado','Given','Quando','When','Então','Then','E','And','Como','Quero','Para'];
+    for (const kw of kws) {
+      if (l.trim().startsWith(kw)) {
+        return `<span class="gherkin-kw">${escHtml(l)}</span>`;
+      }
+    }
+    return `<span style="color:#C3E88D">${escHtml(l)}</span>`;
+  }).join('\n');
+
+  return `
+    <div class="artifact-card" style="margin-top:8px;">
+      <div class="artifact-header"><span class="artifact-tag tag-gherkin">🥒 Gherkin</span> Flow Layer — LKDF</div>
+      <div class="artifact-body" style="background:#0D1F35;color:#A8D8FF;font-family:var(--mono);">
+        <pre style="background:none;padding:0;margin:0;">${lines}</pre>
+      </div>
+    </div>`;
+}
+
+// =================== ENGINE ANIMATION ===================
+function animateEngines(text) {
+  const chips = ['norm','req','val','rn','ca','risk','cov','rtm','art'];
+  chips.forEach(c => document.getElementById('chip-' + c)?.classList.remove('active-engine'));
+
+  const sequence = ['norm','req','val','rn','ca','risk','cov','rtm','art'];
+  sequence.forEach((chip, i) => {
+    setTimeout(() => {
+      chips.forEach(c => document.getElementById('chip-' + c)?.classList.remove('active-engine'));
+      document.getElementById('chip-' + chip)?.classList.add('active-engine');
+      if (i === sequence.length - 1) {
+        setTimeout(() => document.getElementById('chip-' + chip)?.classList.remove('active-engine'), 1000);
+      }
+    }, i * 600);
+  });
+}
+
+// =================== RTM PANEL ===================
+function updateRTMPanel() {
+  const items = state.rtmItems;
+  const count = items.length;
+  const rns = [...new Set(items.map(i => i.rn))].length;
+  const autos = items.filter(i => i.auto.toLowerCase().includes('sim')).length;
+  const cov = count ? Math.min(95, 60 + count * 5) : 0;
+  const autoPct = count ? Math.round(autos / count * 100) : 0;
+
+  document.getElementById('sc-ct').textContent = count;
+  document.getElementById('sc-rn').textContent = rns;
+  document.getElementById('sc-cov').textContent = cov + '%';
+  document.getElementById('sc-auto').textContent = autoPct + '%';
+
+  // Update bars
+  const bars = document.querySelectorAll('#rtm-scores .score-fill');
+  if (bars[0]) bars[0].style.width = Math.min(count * 10, 100) + '%';
+  if (bars[1]) bars[1].style.width = Math.min(rns * 20, 100) + '%';
+  if (bars[2]) { bars[2].style.width = cov + '%'; bars[2].className = 'score-fill ' + (cov >= 80 ? 'good' : 'warn'); }
+  if (bars[3]) bars[3].style.width = autoPct + '%';
+
+  const cas = [...new Set(items.map(i => i.ca))].length;
+  document.getElementById('cnt-rn').textContent = rns + ' regras';
+  document.getElementById('cnt-ca').textContent = cas + ' critérios';
+  document.getElementById('cnt-flow').textContent = Math.max(1, Math.ceil(count / 3)) + ' flows';
+  document.getElementById('cnt-scen').textContent = Math.max(1, Math.ceil(count / 2)) + ' cenários';
+  document.getElementById('cnt-ct').textContent = count + ' casos';
+
+  // Full table
+  const rowsHtml = items.map(r => `
+    <tr>
+      <td><code style="font-size:11px;">${r.id}</code></td>
+      <td>${r.rn}</td>
+      <td>${r.ca}</td>
+      <td>${r.desc}</td>
+      <td class="risk-${r.risco.toLowerCase().includes('alto') ? 'alto' : r.risco.toLowerCase().includes('médio') || r.risco.toLowerCase().includes('medio') ? 'medio' : 'baixo'}">${r.risco}</td>
+      <td style="font-size:11px;color:var(--text3);">${r.gap === 'Nenhum' ? '—' : r.gap}</td>
+      <td><span class="badge-prio prio-${r.prio.toLowerCase().includes('alta') ? 'alta' : r.prio.toLowerCase().includes('média') || r.prio.toLowerCase().includes('media') ? 'media' : 'baixa'}">${r.prio}</span></td>
+      <td><span class="auto-chip ${r.auto.toLowerCase().includes('sim') ? 'auto-sim' : 'auto-nao'}">${r.auto}</span></td>
+    </tr>`).join('');
+
+  document.getElementById('rtm-table-wrap').innerHTML = `
+    <table class="rtm-full-table">
+      <thead><tr><th>ID do Teste</th><th>RN</th><th>CA</th><th>Descrição</th><th>Risco</th><th>Gap</th><th>Prioridade</th><th>Auto</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>`;
+}
+
+function updateRTMBadge() {
+  document.getElementById('rtm-count').textContent = state.rtmItems.length;
+}
+
+function resetRTM() {
+  ['sc-ct','sc-rn','sc-cov','sc-auto'].forEach(id => document.getElementById(id).textContent = id.includes('cov') || id.includes('auto') ? '0%' : '0');
+  ['cnt-rn','cnt-ca','cnt-flow','cnt-scen','cnt-ct'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '0 ' + id.replace('cnt-','');
+  });
+  document.querySelectorAll('#rtm-scores .score-fill').forEach(b => b.style.width = '0%');
+  document.getElementById('rtm-table-wrap').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;"><div style="font-size:40px;margin-bottom:12px;">📋</div>Nenhuma análise ainda.</div>';
+}
+
+function exportRTM() {
+  if (!state.rtmItems.length) { alert('Nenhum dado para exportar.'); return; }
+  const header = 'ID do Teste,RN,CA,Descrição,Risco,Gap,Prioridade,Automatizável\n';
+  const rows = state.rtmItems.map(r => [r.id,r.rn,r.ca,`"${r.desc}"`,r.risco,r.gap,r.prio,r.auto].join(',')).join('\n');
+  const blob = new Blob([header + rows], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'aqua-qe-rtm.csv'; a.click();
+}
+
+// =================== COVERAGE PANEL ===================
+function updateCoveragePanel(parsed) {
+  const items = state.rtmItems;
+  const count = items.length;
+
+  const funcData = [
+    { label: 'Fluxo principal', pct: Math.min(100, 60 + count * 8), color: '#00509E' },
+    { label: 'Fluxos alternativos', pct: Math.min(100, 40 + count * 6), color: '#0070CC' },
+    { label: 'Fluxos de exceção', pct: Math.min(100, 30 + count * 5), color: '#00D4AA' },
+    { label: 'Regras de negócio', pct: Math.min(100, 50 + count * 7), color: '#00509E' },
+  ];
+
+  document.getElementById('cov-func').innerHTML = funcData.map(d => `
+    <div class="cov-row">
+      <div class="cov-label">${d.label}</div>
+      <div class="cov-bar-wrap"><div class="cov-bar" style="width:${d.pct}%;background:${d.color}"></div></div>
+      <div class="cov-pct">${d.pct}%</div>
+    </div>`).join('');
+
+  const altoCount = items.filter(i => i.risco.toLowerCase().includes('alto')).length;
+  const medioCount = items.filter(i => i.risco.toLowerCase().includes('médio') || i.risco.toLowerCase().includes('medio')).length;
+  const baixoCount = items.filter(i => i.risco.toLowerCase().includes('baixo')).length;
+
+  document.getElementById('cov-risk').innerHTML = `
+    <div class="cov-row"><div class="cov-label" style="color:var(--danger);">⬛ Risco Alto</div><div class="cov-bar-wrap"><div class="cov-bar" style="width:${altoCount ? Math.min(100, altoCount * 25) : 5}%;background:var(--danger)"></div></div><div class="cov-pct">${altoCount}</div></div>
+    <div class="cov-row"><div class="cov-label" style="color:var(--warn);">🟨 Risco Médio</div><div class="cov-bar-wrap"><div class="cov-bar" style="width:${medioCount ? Math.min(100, medioCount * 25) : 5}%;background:var(--warn)"></div></div><div class="cov-pct">${medioCount}</div></div>
+    <div class="cov-row"><div class="cov-label" style="color:var(--success);">🟩 Risco Baixo</div><div class="cov-bar-wrap"><div class="cov-bar" style="width:${baixoCount ? Math.min(100, baixoCount * 25) : 5}%;background:var(--success)"></div></div><div class="cov-pct">${baixoCount}</div></div>`;
+
+  document.getElementById('cov-compliance').innerHTML = `
+    <div class="cov-row"><div class="cov-label">WCAG 2.1 AA</div><div class="cov-bar-wrap"><div class="cov-bar" style="width:65%;background:#00509E"></div></div><div class="cov-pct">65%</div></div>
+    <div class="cov-row"><div class="cov-label">LGPD</div><div class="cov-bar-wrap"><div class="cov-bar" style="width:${count ? 50 : 0}%;background:#0070CC"></div></div><div class="cov-pct">${count ? 50 : 0}%</div></div>
+    <div class="cov-row"><div class="cov-label">OWASP Top 10</div><div class="cov-bar-wrap"><div class="cov-bar" style="width:${count ? 40 : 0}%;background:#00D4AA"></div></div><div class="cov-pct">${count ? 40 : 0}%</div></div>`;
+
+  const autos = items.filter(i => i.auto.toLowerCase().includes('sim')).length;
+  const autoPct = count ? Math.round(autos / count * 100) : 0;
+  document.getElementById('cov-auto').innerHTML = `
+    <div class="cov-row"><div class="cov-label">Automatizáveis</div><div class="cov-bar-wrap"><div class="cov-bar" style="width:${autoPct}%;background:var(--success)"></div></div><div class="cov-pct">${autoPct}%</div></div>
+    <div class="cov-row"><div class="cov-label">Robot Framework</div><div class="cov-bar-wrap"><div class="cov-bar" style="width:${Math.round(autoPct*0.6)}%;background:#00509E"></div></div><div class="cov-pct">${Math.round(autoPct*0.6)}%</div></div>
+    <div class="cov-row"><div class="cov-label">Playwright</div><div class="cov-bar-wrap"><div class="cov-bar" style="width:${Math.round(autoPct*0.4)}%;background:#0070CC"></div></div><div class="cov-pct">${Math.round(autoPct*0.4)}%</div></div>`;
+}
+
+function recalcCoverage() {
+  if (state.rtmItems.length) updateCoveragePanel({});
+}
+
+// =================== ARTIFACT STUDIO ===================
+const studioTemplates = {
+  robot: (gherkin) => gherkin ? robotFromGherkin(gherkin) : defaultRobot(),
+  gherkin: (gherkin) => gherkin || defaultGherkin(),
+  playwright: (gherkin) => gherkin ? playwrightFromGherkin(gherkin) : defaultPlaywright(),
+  cypress: (gherkin) => gherkin ? cypressFromGherkin(gherkin) : defaultCypress(),
+  postman: () => defaultPostman()
+};
+
+function robotFromGherkin(g) {
+  const lines = g.split('\n');
+  const title = (lines.find(l => l.includes('Funcionalidade:')) || '').replace('Funcionalidade:', '').trim() || 'AQuA-QE Test Suite';
+  return `*** Settings ***\nLibrary    SeleniumLibrary\nLibrary    Collections\nResource   ../resources/keywords.robot\nSuite Setup    Abrir Navegador\nSuite Teardown    Fechar Navegador\n\n*** Variables ***\n\${URL}    https://app.exemplo.com\n\${BROWSER}    chrome\n\n*** Test Cases ***\n${title}\n    [Documentation]    Gerado pelo AQuA-QE LKDF\n    [Tags]    smoke    regression\n    ${g.split('\n').filter(l => /^    (Dado|Quando|Então|E)/.test(l)).map(l => '    ' + l.trim().replace(/^(Dado|Quando|Então|E) /, '')).join('\n')}\n\n*** Keywords ***\nAbrir Navegador\n    Open Browser    \${URL}    \${BROWSER}\n    Maximize Browser Window\n\nFechar Navegador\n    Close All Browsers`;
+}
+
+function defaultRobot() {
+  return `*** Settings ***\nLibrary    SeleniumLibrary\nLibrary    Collections\nResource   ../resources/keywords.robot\n\n*** Variables ***\n\${URL}    https://app.exemplo.com\n\${USUARIO}    usuario@email.com\n\${SENHA}    Senha@123\n\n*** Test Cases ***\nCT-001 - Login com credenciais válidas\n    [Documentation]    RN-01 | CA-01: Verificar login bem-sucedido\n    [Tags]    smoke    login\n    Abrir Página de Login\n    Informar Email    \${USUARIO}\n    Informar Senha    \${SENHA}\n    Clicar em Entrar\n    Verificar Redirecionamento para Dashboard\n\n*** Keywords ***\nAbrir Página de Login\n    Go To    \${URL}/login\n    Wait Until Element Is Visible    id=email-field`;
+}
+
+function defaultGherkin() {
+  return `# language: pt\n\nFuncionalidade: Login de Usuário\n  Como usuário cadastrado\n  Quero realizar login no sistema\n  Para acessar as funcionalidades disponíveis\n\n  @smoke @regressao\n  Cenário: Login com credenciais válidas\n    Dado que estou na página de login\n    E tenho um usuário "usuario@email.com" cadastrado\n    Quando informo o email "usuario@email.com"\n    E informo a senha "Senha@123"\n    E clico no botão "Entrar"\n    Então devo ser redirecionado para o dashboard\n    E devo ver a mensagem "Bem-vindo!"\n\n  Cenário: Login com senha inválida\n    Dado que estou na página de login\n    Quando informo o email "usuario@email.com"\n    E informo uma senha incorreta\n    E clico em "Entrar"\n    Então devo ver a mensagem de erro "Credenciais inválidas"`;
+}
+
+function playwrightFromGherkin(g) {
+  const title = (g.split('\n').find(l => l.includes('Funcionalidade:')) || '').replace('Funcionalidade:', '').trim() || 'AQuA-QE Tests';
+  return `import { test, expect } from '@playwright/test';\n\n// Gerado pelo AQuA-QE LKDF Engine\n// ${title}\n\ntest.describe('${title}', () => {\n  test.beforeEach(async ({ page }) => {\n    await page.goto(process.env.BASE_URL || 'https://app.exemplo.com');\n  });\n\n  test('CT-001: Fluxo principal - sucesso', async ({ page }) => {\n    // Given\n    await expect(page).toHaveURL(/login/);\n    \n    // When  \n    await page.fill('[data-testid="email"]', 'usuario@email.com');\n    await page.fill('[data-testid="password"]', 'Senha@123');\n    await page.click('[data-testid="submit"]');\n    \n    // Then\n    await expect(page).toHaveURL(/dashboard/);\n    await expect(page.locator('h1')).toContainText('Bem-vindo');\n  });\n\n  test('CT-002: Validação de campos obrigatórios', async ({ page }) => {\n    await page.click('[data-testid="submit"]');\n    await expect(page.locator('.error-message')).toBeVisible();\n  });\n});`;
+}
+
+function defaultPlaywright() { return playwrightFromGherkin(''); }
+
+function cypressFromGherkin(g) {
+  const title = (g.split('\n').find(l => l.includes('Funcionalidade:')) || '').replace('Funcionalidade:', '').trim() || 'AQuA-QE Tests';
+  return `// Gerado pelo AQuA-QE LKDF Engine\n// ${title}\n\ndescribe('${title}', () => {\n  beforeEach(() => {\n    cy.visit(Cypress.env('baseUrl') || '/');\n  });\n\n  it('CT-001: Fluxo principal - sucesso', () => {\n    // Given - Precondição\n    cy.url().should('include', '/login');\n    \n    // When - Ação\n    cy.get('[data-cy=email]').type('usuario@email.com');\n    cy.get('[data-cy=password]').type('Senha@123');\n    cy.get('[data-cy=submit]').click();\n    \n    // Then - Resultado esperado\n    cy.url().should('include', '/dashboard');\n    cy.get('h1').should('contain', 'Bem-vindo');\n  });\n\n  it('CT-002: Campos obrigatórios', () => {\n    cy.get('[data-cy=submit]').click();\n    cy.get('.error').should('be.visible');\n  });\n});`;
+}
+
+function defaultCypress() { return cypressFromGherkin(''); }
+
+function defaultPostman() {
+  return `{\n  "info": {\n    "name": "AQuA-QE API Tests",\n    "description": "Gerado pelo AQuA-QE LKDF Engine",\n    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"\n  },\n  "item": [\n    {\n      "name": "CT-001: POST /auth/login - Sucesso",\n      "request": {\n        "method": "POST",\n        "url": "{{baseUrl}}/auth/login",\n        "header": [{"key": "Content-Type", "value": "application/json"}],\n        "body": {\n          "mode": "raw",\n          "raw": "{\\"email\\": \\"usuario@email.com\\", \\"password\\": \\"Senha@123\\"}"\n        }\n      },\n      "event": [{\n        "listen": "test",\n        "script": "pm.test('Status 200', () => pm.response.to.have.status(200));\\npm.test('Token presente', () => pm.expect(pm.response.json().token).to.exist);"\n      }]\n    }\n  ]\n}`;
+}
+
+function updateArtifacts(gherkin, userInput) {
+  state.artifacts.gherkin = gherkin;
+  state.artifacts.userInput = userInput;
+  selectStudio(state.activeStudio, document.querySelector('.studio-item.active'));
+}
+
+function selectStudio(type, el) {
+  document.querySelectorAll('.studio-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  state.activeStudio = type;
+  const code = studioTemplates[type](state.artifacts.gherkin);
+  document.getElementById('studio-code').textContent = code;
+  syntaxHighlight();
+}
+
+function syntaxHighlight() {
+  const el = document.getElementById('studio-code');
+  let code = el.textContent;
+  // simple highlight
+  el.innerHTML = code
+    .replace(/^(\*\*\* [\w ]+ \*\*\*)$/gm, '<span style="color:#80CBC4;font-weight:bold">$1</span>')
+    .replace(/^(Library|Resource|Suite Setup|Suite Teardown|Test Cases|Settings|Variables|Keywords)(\s)/gm, '<span style="color:#C792EA">$1</span>$2')
+    .replace(/(Dado|Quando|Então|E |And |Given|When|Then|Funcionalidade|Feature|Cenário|Scenario):/g, '<span style="color:#C792EA">$1</span>:')
+    .replace(/"([^"]+)"/g, '<span style="color:#C3E88D">"$1"</span>')
+    .replace(/#.*/g, '<span style="color:#637777">$&</span>')
+    .replace(/\$\{[\w]+\}/g, '<span style="color:#F78C6C">$&</span>');
+}
+
+function copyArtifact() {
+  navigator.clipboard.writeText(document.getElementById('studio-code').textContent).then(() => alert('Copiado!'));
+}
+
+function downloadArtifact() {
+  const ext = { robot: '.robot', gherkin: '.feature', playwright: '.spec.ts', cypress: '.cy.js', postman: '.json' };
+  const code = document.getElementById('studio-code').textContent;
+  const blob = new Blob([code], { type: 'text/plain' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `aqua-qe-${state.activeStudio}${ext[state.activeStudio] || '.txt'}`;
+  a.click();
+}
+
+// =================== KNOWLEDGE LAYER ===================
+function addKnowledgeItem(input, parsed) {
+  const colors = [
+    { tag: 'Login/Auth', bg: '#EEF6FF', color: '#0052CC' },
+    { tag: 'Pagamento', bg: '#FEECEC', color: '#AE1414' },
+    { tag: 'Cadastro', bg: '#EDFAF5', color: '#006644' },
+    { tag: 'Relatório', bg: '#FFF8E6', color: '#974F0C' },
+    { tag: 'API', bg: '#F6EEFF', color: '#5B21B6' },
+  ];
+  const cat = colors[state.analysisCount % colors.length];
+
+  state.knowledgeItems.push({
+    tag: cat.tag,
+    tagBg: cat.bg,
+    tagColor: cat.color,
+    title: input.length > 60 ? input.substring(0, 60) + '...' : input,
+    sub: `${parsed.rtmRows.length} casos de teste gerados · ${[...new Set(parsed.rtmRows.map(r => r.rn))].length} RN identificadas`,
+    cts: parsed.rtmRows.length,
+    date: new Date().toLocaleDateString('pt-BR')
+  });
+
+  renderKnowledge();
+}
+
+function renderKnowledge() {
+  if (!state.knowledgeItems.length) return;
+  document.getElementById('knowledge-grid').innerHTML = state.knowledgeItems.map(k => `
+    <div class="kn-card">
+      <span class="kn-tag" style="background:${k.tagBg};color:${k.tagColor};">${k.tag}</span>
+      <div class="kn-title">${escHtml(k.title)}</div>
+      <div class="kn-sub">${k.sub}</div>
+      <div class="kn-meta">
+        <span>📋 ${k.cts} CTs</span>
+        <span>📅 ${k.date}</span>
+      </div>
+    </div>`).join('');
+}
+
+function resetKnowledge() {
+  document.getElementById('knowledge-grid').innerHTML = `
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);">
+      <div style="font-size:40px;margin-bottom:12px;">📚</div>
+      <div style="font-size:14px;">O Knowledge Layer se alimenta conforme você realiza análises.</div>
+    </div>`;
+}
+
+// =================== NAVIGATION ===================
+function showPanel(id, navEl) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+}
+
+function showAttachNote() {
+  alert('Em produção: suporte a PDF, DOCX, Markdown, imagens e Confluence.\nDigite o conteúdo diretamente no chat por ora.');
+}
+
+// =================== INIT ===================
+selectStudio('robot', document.querySelector('.studio-item'));
+
+// =================== GATEWAY INIT ===================
+function updateChatGwIndicator() {
+  const el = document.getElementById('chat-gw-indicator');
+  if (!el) return;
+  const modeLabels = { gateway:'GATEWAY', direct:'DIRETO', mock:'MOCK' };
+  const modeColors = {
+    gateway: GW.isOnline ? ['#ECFDF5','#065F46'] : ['#FFF8E6','#92400E'],
+    direct:  ['#E8F2FB','#00509E'],
+    mock:    ['#F0EBFF','#7C3AED'],
+  };
+  const [bg, color] = modeColors[GW.connMode] || ['#E8F2FB','#00509E'];
+  el.style.background = bg;
+  el.style.color = color;
+  const prov = GW.connMode === 'gateway'
+    ? (GW.gwProvider || 'auto') + (GW.isOnline ? ' ✓' : ' ✗')
+    : GW.connMode === 'direct' ? GW.directProvider : '';
+  el.textContent = modeLabels[GW.connMode] + (prov ? ` · ${prov}` : '');
+}
+
+// =================== GATEWAY INIT ===================
+function updateChatGwIndicator() {
+  const el = document.getElementById('chat-gw-indicator');
+  if (!el) return;
+  const modeLabels = { gateway:'GATEWAY', direct:'DIRETO', mock:'MOCK' };
+  const modeColors = {
+    gateway: GW.isOnline ? ['#ECFDF5','#065F46'] : ['#FFF8E6','#92400E'],
+    direct:  GW.isOnline ? ['#E8F2FB','#00509E'] : ['#FEF2F2','#991B1B'],
+    mock:    ['#F0EBFF','#7C3AED'],
+  };
+  const [bg, color] = modeColors[GW.connMode] || ['#E8F2FB','#00509E'];
+  el.style.background = bg;
+  el.style.color = color;
+  const prov = GW.connMode === 'gateway'
+    ? (GW.gwProvider || 'auto') + (GW.isOnline ? ' ✓' : ' ✗ offline')
+    : GW.connMode === 'direct'
+      ? GW.directProvider + (GW.isOnline ? ' (via proxy)' : ' ✗ gateway offline')
+      : '';
+  el.textContent = modeLabels[GW.connMode] + (prov ? ` · ${prov}` : '');
+}
+
+// NOTE: updateGwBar is defined earlier — we call updateChatGwIndicator directly after it
+// (no re-declaration patch needed — original calls updateChatGwIndicator via direct call below)
+
+// Auto-probe gateway on load
+(async function initGateway() {
+  try {
+    const resp = await fetch('http://localhost:8080/health', {
+      signal: AbortSignal.timeout(2500),
+    });
+    const data = await resp.json();
+    if (data.status === 'ok') {
+      GW.isOnline   = true;
+      GW.connMode   = 'gateway';
+      GW.gatewayUrl = 'http://localhost:8080';
+      console.log('[AQuA-QE] Gateway online em http://localhost:8080');
+    } else {
+      throw new Error('status != ok');
+    }
+  } catch(e) {
+    GW.isOnline = false;
+    console.log('[AQuA-QE] Gateway offline — configure em ⚙️ Gateway');
+  }
+  updateGwBar();
+  updateChatGwIndicator();
+})();
+</script>
+</body>
+</html>
