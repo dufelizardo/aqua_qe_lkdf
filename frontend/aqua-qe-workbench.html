@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQuA-QE — Workbench v3 · RTM Graph + Coverage Heatmap</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+/* ════════════════════════════════════
+   DESIGN SYSTEM — B3 Blue + Dark Tech
+   ════════════════════════════════════ */
+:root {
+  --b3:       #00509E;
+  --b3l:      #0070CC;
+  --b3d:      #003D7A;
+  --b3pale:   #E8F2FB;
+  --b3mid:    #C5DEFF;
+  --acc:      #00D4AA;
+  --acc2:     #00A882;
+  --gold:     #F59E0B;
+  --goldp:    #FFF8E6;
+  --danger:   #EF4444;
+  --dangerp:  #FEF2F2;
+  --success:  #10B981;
+  --successp: #ECFDF5;
+  --purple:   #7C3AED;
+  --purplep:  #F0EBFF;
+  --orange:   #F97316;
+
+  --bg:     #F0F4FA;
+  --panel:  #FFFFFF;
+  --surf:   #F7F9FC;
+  --surf2:  #EFF3F8;
+  --bd:     #D5E3F2;
+  --bd2:    #B8CEEA;
+  --txt:    #0D1F35;
+  --txt2:   #3A5A7A;
+  --txt3:   #6B8CAE;
+
+  --sans:  'DM Sans', sans-serif;
+  --mono:  'IBM Plex Mono', monospace;
+  --r:     8px;
+  --rl:    14px;
+  --sh:    0 1px 8px rgba(0,80,158,.08);
+  --sh2:   0 4px 24px rgba(0,80,158,.13);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--sans); background: var(--bg); color: var(--txt); font-size: 14px; overflow: hidden; }
+
+/* ══ LAYOUT ══ */
+.wb {
+  display: grid;
+  grid-template-columns: 56px 260px 1fr;
+  grid-template-rows: 52px 1fr 28px;
+  height: 100vh;
+}
+
+/* ══ TOPBAR ══ */
+.topbar {
+  grid-column: 1 / -1;
+  background: var(--b3d);
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  position: relative;
+}
+.topbar::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--acc), var(--b3l), transparent);
+  opacity: .5;
+}
+.logo { display: flex; align-items: center; gap: 8px; }
+.logo-pill {
+  background: linear-gradient(135deg, var(--b3l), var(--acc));
+  color: white; font-weight: 700; font-size: 11px;
+  padding: 3px 10px; border-radius: 5px; letter-spacing: .07em;
+  white-space: nowrap;
+}
+.topbar-title { color: white; font-weight: 600; font-size: 14px; }
+.topbar-sep { color: rgba(255,255,255,.2); }
+.topbar-sub { color: rgba(255,255,255,.5); font-size: 12px; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.tb-metric { text-align: center; }
+.tb-n { color: var(--acc); font-weight: 700; font-size: 16px; line-height: 1; font-family: var(--mono); }
+.tb-l { color: rgba(255,255,255,.4); font-size: 9px; text-transform: uppercase; letter-spacing: .07em; margin-top: 1px; }
+.tb-div { width: 1px; height: 26px; background: rgba(255,255,255,.1); }
+.tb-status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: rgba(255,255,255,.5); }
+.sdot { width: 7px; height: 7px; border-radius: 50%; }
+.sdot.on  { background: var(--acc); box-shadow: 0 0 6px var(--acc); animation: sdotPulse 2s infinite; }
+.sdot.off { background: var(--gold); }
+@keyframes sdotPulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+.tb-btn { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.8); padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-family: var(--sans); transition: all .15s; }
+.tb-btn:hover { background: rgba(255,255,255,.16); }
+.tb-btn.active { background: var(--acc); border-color: var(--acc); color: white; }
+
+/* ══ ICON SIDEBAR ══ */
+.icon-bar {
+  background: var(--b3d);
+  border-right: 1px solid rgba(255,255,255,.06);
+  display: flex; flex-direction: column;
+  align-items: center; padding: 8px 0; gap: 2px;
+}
+.ib-item {
+  width: 40px; height: 40px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 18px; transition: all .15s;
+  color: rgba(255,255,255,.4); position: relative;
+}
+.ib-item:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
+.ib-item.active { background: rgba(0,212,170,.15); color: var(--acc); }
+.ib-item::after {
+  content: attr(data-tip);
+  position: absolute; left: 48px; top: 50%; transform: translateY(-50%);
+  background: var(--txt); color: white; font-size: 11px; padding: 3px 8px;
+  border-radius: 5px; white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity .15s; z-index: 100;
+}
+.ib-item:hover::after { opacity: 1; }
+.ib-sep { width: 28px; height: 1px; background: rgba(255,255,255,.08); margin: 4px 0; }
+
+/* ══ LEFT PANEL ══ */
+.left-panel {
+  background: var(--panel);
+  border-right: 1px solid var(--bd);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.lp-header {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--bd);
+  background: var(--surf);
+  flex-shrink: 0;
+}
+.lp-title { font-size: 12px; font-weight: 700; color: var(--txt); }
+.lp-sub   { font-size: 10px; color: var(--txt3); margin-top: 2px; }
+.lp-search {
+  margin: 10px 14px 0;
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surf2); border: 1px solid var(--bd);
+  border-radius: 6px; padding: 5px 10px;
+  flex-shrink: 0;
+}
+.lp-search input {
+  border: none; outline: none; background: transparent;
+  font-family: var(--sans); font-size: 12px; color: var(--txt); flex: 1;
+}
+.lp-search input::placeholder { color: var(--txt3); }
+.lp-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+
+/* Story item */
+.story-item {
+  padding: 9px 14px; cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all .12s; position: relative;
+}
+.story-item:hover { background: var(--b3pale); }
+.story-item.active { background: var(--b3pale); border-left-color: var(--b3); }
+.si-title { font-size: 12px; font-weight: 500; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.si-meta { display: flex; gap: 6px; margin-top: 4px; align-items: center; }
+.si-badge { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; }
+.si-score { font-family: var(--mono); font-size: 10px; margin-left: auto; font-weight: 600; }
+
+/* Score colors */
+.score-high { color: var(--success); }
+.score-mid  { color: var(--gold); }
+.score-low  { color: var(--danger); }
+.bg-high { background: var(--successp); color: #065F46; }
+.bg-mid  { background: var(--goldp); color: #92400E; }
+.bg-low  { background: var(--dangerp); color: #991B1B; }
+.bg-blue { background: var(--b3pale); color: var(--b3); }
+.bg-pur  { background: var(--purplep); color: var(--purple); }
+
+/* ══ MAIN AREA ══ */
+.main-area {
+  display: flex; flex-direction: column;
+  overflow: hidden; background: var(--bg);
+}
+
+/* ══ TAB BAR ══ */
+.tab-bar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--bd);
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 2px;
+  flex-shrink: 0; height: 42px;
+}
+.tab {
+  padding: 8px 16px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border-radius: 6px 6px 0 0;
+  color: var(--txt3); transition: all .12s;
+  display: flex; align-items: center; gap: 6px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tab:hover { color: var(--b3); background: var(--b3pale); }
+.tab.active { color: var(--b3); border-bottom-color: var(--b3); background: var(--b3pale); font-weight: 600; }
+.tab-count { background: var(--b3); color: white; font-size: 9px; padding: 1px 5px; border-radius: 10px; }
+.tab-right { margin-left: auto; display: flex; gap: 6px; }
+.action-btn {
+  padding: 5px 12px; border-radius: 6px; font-size: 11px; font-family: var(--sans);
+  cursor: pointer; border: 1px solid var(--bd); background: var(--panel); color: var(--txt2);
+  transition: all .12s; font-weight: 500;
+}
+.action-btn:hover { background: var(--surf); border-color: var(--bd2); }
+.action-btn.primary { background: var(--b3); color: white; border-color: var(--b3); }
+.action-btn.primary:hover { background: var(--b3l); }
+
+/* ══ PANELS ══ */
+.view { display: none; flex: 1; overflow: hidden; }
+.view.active { display: flex; }
+
+/* ══ RTM GRAPH VIEW ══ */
+.graph-view {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 0; height: 100%;
+}
+#cy-container {
+  background: #0A1628;
+  position: relative;
+  overflow: hidden;
+}
+.cy-overlay {
+  position: absolute; top: 12px; left: 12px;
+  display: flex; flex-direction: column; gap: 6px; z-index: 10;
+}
+.cy-badge {
+  background: rgba(0,80,158,.85); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 7px;
+  padding: 5px 10px; font-size: 11px; color: rgba(255,255,255,.85);
+  font-family: var(--mono);
+}
+.cy-controls {
+  position: absolute; bottom: 12px; right: 12px;
+  display: flex; flex-direction: column; gap: 4px; z-index: 10;
+}
+.cy-btn {
+  width: 32px; height: 32px; border-radius: 6px;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+  color: white; cursor: pointer; font-size: 16px; display: flex;
+  align-items: center; justify-content: center; transition: all .15s;
+  backdrop-filter: blur(4px);
+}
+.cy-btn:hover { background: rgba(255,255,255,.2); }
+
+/* Legend */
+.cy-legend {
+  position: absolute; bottom: 12px; left: 12px; z-index: 10;
+  background: rgba(10,22,40,.9); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px; padding: 8px 12px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: rgba(255,255,255,.7); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* Graph detail panel */
+.graph-detail {
+  background: var(--panel); border-left: 1px solid var(--bd);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.gd-header { padding: 12px 14px; border-bottom: 1px solid var(--bd); background: var(--surf); flex-shrink: 0; }
+.gd-title { font-size: 13px; font-weight: 700; color: var(--txt); }
+.gd-sub   { font-size: 11px; color: var(--txt3); margin-top: 2px; }
+.gd-body  { flex: 1; overflow-y: auto; padding: 12px 14px; }
+.gd-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--txt3); font-size: 12px; gap: 8px; }
+.detail-section { margin-bottom: 14px; }
+.detail-label { font-size: 10px; font-weight: 700; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.detail-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 5px; font-size: 11px; margin: 2px; }
+.detail-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--bd); font-size: 12px; }
+.detail-row:last-child { border-bottom: none; }
+.detail-key { color: var(--txt3); }
+.detail-val { font-weight: 500; color: var(--txt); font-family: var(--mono); font-size: 11px; }
+
+/* ══ COVERAGE VIEW ══ */
+.coverage-view {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 14px; padding: 14px; height: 100%; overflow: auto;
+}
+.cov-card {
+  background: var(--panel); border: 1px solid var(--bd);
+  border-radius: var(--rl); overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: var(--sh);
+}
+.cov-card-header {
+  padding: 12px 16px; border-bottom: 1px solid var(--bd);
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surf); flex-shrink: 0;
+}
+.cov-card-title { font-size: 13px; font-weight: 700; color: var(--txt); }
+.cov-card-body { flex: 1; padding: 12px; min-height: 0; position: relative; }
+canvas { max-width: 100%; max-height: 100%; }
+
+/* Heatmap */
+.heatmap-grid {
+  display: grid;
+  gap: 3px;
+}
+.heatmap-cell {
+  border-radius: 4px; cursor: pointer;
+  transition: all .15s; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; font-family: var(--mono);
+}
+.heatmap-cell:hover { transform: scale(1.15); z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
+.hm-tooltip {
+  position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+  background: var(--txt); color: white; font-size: 10px; padding: 3px 8px;
+  border-radius: 4px; white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity .15s; z-index: 20;
+}
+.heatmap-cell:hover .hm-tooltip { opacity: 1; }
+
+/* Bar list */
+.bar-list { display: flex; flex-direction: column; gap: 8px; }
+.bar-item { display: flex; align-items: center; gap: 10px; }
+.bar-label { font-size: 11px; color: var(--txt2); width: 110px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 8px; background: var(--surf2); border-radius: 4px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.34,1.56,.64,1); }
+.bar-pct   { font-size: 11px; font-family: var(--mono); font-weight: 600; color: var(--txt2); width: 36px; text-align: right; }
+
+/* ══ RTM TABLE VIEW ══ */
+.rtm-view { flex: 1; overflow: auto; padding: 14px; }
+.rtm-table-wrap { background: var(--panel); border: 1px solid var(--bd); border-radius: var(--rl); overflow: hidden; box-shadow: var(--sh); }
+.rtm-tbl { width: 100%; border-collapse: collapse; }
+.rtm-tbl thead th {
+  background: var(--b3); color: white; padding: 9px 12px;
+  text-align: left; font-size: 11px; font-weight: 500; letter-spacing: .04em;
+  position: sticky; top: 0; z-index: 1; white-space: nowrap;
+}
+.rtm-tbl thead th:first-child { border-radius: 0; }
+.rtm-tbl tbody td { padding: 9px 12px; border-bottom: 1px solid var(--bd); font-size: 12px; vertical-align: middle; }
+.rtm-tbl tbody tr:hover td { background: var(--b3pale); cursor: pointer; }
+.rtm-tbl tbody tr:last-child td { border-bottom: none; }
+.rtm-tbl td code { font-family: var(--mono); font-size: 11px; background: var(--surf2); padding: 1px 5px; border-radius: 3px; }
+.risk-chip { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+.risk-a { background: var(--dangerp); color: var(--danger); }
+.risk-m { background: var(--goldp); color: #92400E; }
+.risk-b { background: var(--successp); color: #065F46; }
+.prio-chip { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+.prio-a { background: var(--b3pale); color: var(--b3); }
+.prio-m { background: var(--purplep); color: var(--purple); }
+.prio-b { background: var(--surf2); color: var(--txt3); }
+.auto-chip2 { font-size: 10px; font-weight: 700; }
+.auto-y { color: var(--success); }
+.auto-n { color: var(--txt3); }
+
+/* ══ STATUSBAR ══ */
+.statusbar {
+  grid-column: 2 / -1;
+  background: var(--b3d);
+  display: flex; align-items: center; padding: 0 14px; gap: 16px;
+  font-size: 10px; color: rgba(255,255,255,.45); font-family: var(--mono);
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.sb-item { display: flex; align-items: center; gap: 4px; }
+.sb-val  { color: rgba(255,255,255,.75); font-weight: 600; }
+.sb-sep  { color: rgba(255,255,255,.15); }
+
+/* ══ SCROLLBARS ══ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--bd2); border-radius: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ══ TOAST ══ */
+#toasts { position: fixed; bottom: 36px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 9999; }
+.toast { padding: 8px 14px; border-radius: 7px; font-size: 12px; font-weight: 500; box-shadow: var(--sh2); animation: toastIn .2s ease; }
+@keyframes toastIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:none} }
+.toast-ok   { background: var(--success); color: white; }
+.toast-info { background: var(--b3); color: white; }
+.toast-err  { background: var(--danger); color: white; }
+
+/* Spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin .7s linear infinite; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="wb">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-pill">AQuA-QE</div>
+    <span class="topbar-title">Workbench</span>
+    <span class="topbar-sep">·</span>
+    <span class="topbar-sub">Fase 3 — RTM Graph · Coverage Heatmap</span>
+  </div>
+  <div class="topbar-right">
+    <div class="tb-metric"><div class="tb-n" id="tb-cts">0</div><div class="tb-l">CTs</div></div>
+    <div class="tb-div"></div>
+    <div class="tb-metric"><div class="tb-n" id="tb-rns">0</div><div class="tb-l">RNs</div></div>
+    <div class="tb-div"></div>
+    <div class="tb-metric"><div class="tb-n" id="tb-cov">0%</div><div class="tb-l">Cobertura</div></div>
+    <div class="tb-div"></div>
+    <div class="tb-metric"><div class="tb-n" id="tb-risk" style="color:var(--gold)">—</div><div class="tb-l">Risco</div></div>
+    <div class="tb-div"></div>
+    <div class="tb-status"><div class="sdot off" id="gw-sdot"></div><span id="gw-status-txt">gateway</span></div>
+    <button class="tb-btn" onclick="connectGateway()">🔌 Conectar</button>
+    <button class="tb-btn" onclick="loadDemoData()">📦 Demo</button>
+    <button class="tb-btn active" onclick="exportAll()">⬇ Exportar</button>
+  </div>
+</div>
+
+<!-- ICON BAR -->
+<div class="icon-bar">
+  <div class="ib-item active" id="ib-graph"   data-tip="RTM Graph"      onclick="setView('graph',this)">🕸️</div>
+  <div class="ib-item"        id="ib-coverage" data-tip="Coverage Heatmap" onclick="setView('coverage',this)">🎯</div>
+  <div class="ib-item"        id="ib-rtm"      data-tip="RTM Tabela"     onclick="setView('rtm',this)">📋</div>
+  <div class="ib-sep"></div>
+  <div class="ib-item"        data-tip="Importar JSON" onclick="importJSON()">⬆</div>
+  <div class="ib-item"        data-tip="Adicionar CT"  onclick="openAddCT()">＋</div>
+  <div class="ib-item"        data-tip="Limpar"        onclick="clearAll()">🗑</div>
+</div>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div class="lp-header">
+    <div class="lp-title">Histórias / Features</div>
+    <div class="lp-sub" id="lp-count">0 histórias · 0 CTs</div>
+  </div>
+  <div class="lp-search">
+    <span style="color:var(--txt3);font-size:13px;">🔍</span>
+    <input id="search-input" placeholder="Buscar história, RN, CT..." oninput="filterStories()">
+  </div>
+  <div class="lp-list" id="stories-list"></div>
+</div>
+
+<!-- MAIN AREA -->
+<div class="main-area">
+  <div class="tab-bar">
+    <div class="tab active" id="tab-graph"    onclick="setView('graph',null)">🕸️ RTM Graph <span class="tab-count" id="tc-nodes">0</span></div>
+    <div class="tab"        id="tab-coverage" onclick="setView('coverage',null)">🎯 Coverage</div>
+    <div class="tab"        id="tab-rtm"      onclick="setView('rtm',null)">📋 RTM Tabela <span class="tab-count" id="tc-rows">0</span></div>
+    <div class="tab-right">
+      <button class="action-btn" onclick="layoutGraph()">↺ Layout</button>
+      <button class="action-btn" onclick="filterHighRisk()">⚠️ Apenas Alto Risco</button>
+      <button class="action-btn primary" onclick="openAddCT()">+ Caso de Teste</button>
+    </div>
+  </div>
+
+  <!-- ── GRAPH VIEW ── -->
+  <div class="view active" id="view-graph" style="flex-direction:row;">
+    <div style="flex:1;position:relative;">
+      <div id="cy-container" style="width:100%;height:100%;"></div>
+      <div class="cy-overlay">
+        <div class="cy-badge" id="cy-stats">0 nós · 0 arestas</div>
+        <div class="cy-badge" id="cy-selected" style="display:none;"></div>
+      </div>
+      <div class="cy-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#00D4AA"></div>Requisito (RN)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#0070CC"></div>Critério (CA)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#F59E0B"></div>Flow</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#7C3AED"></div>Scenario</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#EF4444"></div>CT · Risco Alto</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#10B981"></div>CT · Risco Baixo</div>
+      </div>
+      <div class="cy-controls">
+        <button class="cy-btn" onclick="cy.zoom(cy.zoom()*1.2);cy.center()">+</button>
+        <button class="cy-btn" onclick="cy.zoom(cy.zoom()*.8);cy.center()">−</button>
+        <button class="cy-btn" onclick="cy.fit(null,40)">⊡</button>
+      </div>
+    </div>
+    <div class="graph-detail" style="width:280px;">
+      <div class="gd-header">
+        <div class="gd-title" id="gd-title">Detalhes do Nó</div>
+        <div class="gd-sub"   id="gd-sub">Clique em um nó para ver detalhes</div>
+      </div>
+      <div class="gd-body" id="gd-body">
+        <div class="gd-empty">
+          <div style="font-size:36px;">🕸️</div>
+          <div>Clique em qualquer nó do grafo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── COVERAGE VIEW ── -->
+  <div class="view" id="view-coverage">
+    <div class="coverage-view">
+      <!-- Card 1: Heatmap funcional -->
+      <div class="cov-card" style="grid-row: span 2;">
+        <div class="cov-card-header">
+          <span style="font-size:18px;">🔥</span>
+          <div>
+            <div class="cov-card-title">Heatmap de Cobertura</div>
+            <div style="font-size:10px;color:var(--txt3);">RN × Tipo de Teste</div>
+          </div>
+        </div>
+        <div class="cov-card-body" id="heatmap-container" style="overflow:auto;padding:14px;">
+          <div style="color:var(--txt3);font-size:12px;text-align:center;padding:20px;">
+            Carregue dados para ver o heatmap
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Donut chart cobertura geral -->
+      <div class="cov-card">
+        <div class="cov-card-header">
+          <span style="font-size:18px;">🎯</span>
+          <div>
+            <div class="cov-card-title">Cobertura Geral</div>
+            <div style="font-size:10px;color:var(--txt3);">Funcional · Risco · Compliance</div>
+          </div>
+        </div>
+        <div class="cov-card-body">
+          <canvas id="chart-donut" style="max-height:180px;"></canvas>
+        </div>
+      </div>
+
+      <!-- Card 3: Barras por dimensão -->
+      <div class="cov-card">
+        <div class="cov-card-header">
+          <span style="font-size:18px;">📊</span>
+          <div>
+            <div class="cov-card-title">Cobertura por Dimensão</div>
+            <div style="font-size:10px;color:var(--txt3);">Caixa Preta · Branca · Cinza · WCAG</div>
+          </div>
+        </div>
+        <div class="cov-card-body" id="dim-bars" style="padding:14px;">
+          <div style="color:var(--txt3);font-size:12px;">Carregue dados</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RTM TABLE VIEW ── -->
+  <div class="view" id="view-rtm" style="overflow:auto;">
+    <div class="rtm-view">
+      <div class="rtm-table-wrap">
+        <table class="rtm-tbl">
+          <thead>
+            <tr>
+              <th onclick="sortTable('id')"    style="cursor:pointer;">ID ↕</th>
+              <th onclick="sortTable('rn')"    style="cursor:pointer;">RN ↕</th>
+              <th onclick="sortTable('ca')"    style="cursor:pointer;">CA ↕</th>
+              <th>Descrição</th>
+              <th onclick="sortTable('risco')" style="cursor:pointer;">Risco ↕</th>
+              <th>Gap</th>
+              <th onclick="sortTable('prio')"  style="cursor:pointer;">Prioridade ↕</th>
+              <th>Auto</th>
+              <th>Story</th>
+            </tr>
+          </thead>
+          <tbody id="rtm-tbody">
+            <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--txt3);">
+              Clique em "Demo" ou importe um JSON para carregar dados
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div><!-- /main-area -->
+
+<!-- STATUSBAR -->
+<div class="statusbar">
+  <div class="sb-item">AQuA-QE Workbench</div>
+  <div class="sb-sep">|</div>
+  <div class="sb-item">CTs: <span class="sb-val" id="sb-cts">0</span></div>
+  <div class="sb-item">Nós: <span class="sb-val" id="sb-nodes">0</span></div>
+  <div class="sb-item">Arestas: <span class="sb-val" id="sb-edges">0</span></div>
+  <div class="sb-sep">|</div>
+  <div class="sb-item">Gateway: <span class="sb-val" id="sb-gw">offline</span></div>
+  <div style="margin-left:auto;" class="sb-item" id="sb-selected"></div>
+</div>
+
+</div><!-- /wb -->
+<div id="toasts"></div>
+
+<!-- Add CT Modal -->
+<div id="addct-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--panel);border-radius:14px;width:520px;max-width:96vw;box-shadow:0 24px 80px rgba(0,0,0,.3);overflow:hidden;">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;">
+      <div style="font-size:16px;font-weight:700;color:var(--txt);">+ Novo Caso de Teste</div>
+      <button onclick="document.getElementById('addct-modal').style.display='none'" style="margin-left:auto;background:none;border:none;font-size:20px;cursor:pointer;color:var(--txt3);">×</button>
+    </div>
+    <div style="padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div><label class="field-lbl">ID</label><input id="f-id" class="field-inp" placeholder="CT-001"></div>
+      <div><label class="field-lbl">Story</label><input id="f-story" class="field-inp" placeholder="US Login"></div>
+      <div><label class="field-lbl">RN</label><input id="f-rn" class="field-inp" placeholder="RN-01"></div>
+      <div><label class="field-lbl">CA</label><input id="f-ca" class="field-inp" placeholder="CA-01"></div>
+      <div style="grid-column:1/-1"><label class="field-lbl">Descrição</label><input id="f-desc" class="field-inp" placeholder="Verificar login com credenciais válidas"></div>
+      <div>
+        <label class="field-lbl">Risco</label>
+        <select id="f-risco" class="field-inp">
+          <option value="Alto">Alto</option>
+          <option value="Médio" selected>Médio</option>
+          <option value="Baixo">Baixo</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-lbl">Prioridade</label>
+        <select id="f-prio" class="field-inp">
+          <option value="Alta">Alta</option>
+          <option value="Média" selected>Média</option>
+          <option value="Baixa">Baixa</option>
+        </select>
+      </div>
+      <div><label class="field-lbl">Gap</label><input id="f-gap" class="field-inp" placeholder="Nenhum"></div>
+      <div>
+        <label class="field-lbl">Automatizável</label>
+        <select id="f-auto" class="field-inp">
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+        </select>
+      </div>
+    </div>
+    <div style="padding:12px 20px 18px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--bd);">
+      <button class="action-btn" onclick="document.getElementById('addct-modal').style.display='none'">Cancelar</button>
+      <button class="action-btn primary" onclick="addCT()">✓ Adicionar</button>
+    </div>
+  </div>
+</div>
+<style>
+.field-lbl { display:block; font-size:11px; font-weight:700; color:var(--txt3); margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em; }
+.field-inp { width:100%; padding:7px 10px; border:1px solid var(--bd); border-radius:7px; font-family:var(--sans); font-size:13px; color:var(--txt); outline:none; background:var(--panel); transition:border-color .15s; }
+.field-inp:focus { border-color:var(--b3); }
+</style>
+
+<input type="file" id="import-input" accept=".json,.csv" style="display:none;" onchange="onImportFile(event)">
+
+<script>
+// ════════════════════════════════════
+// STATE
+// ════════════════════════════════════
+const WB = {
+  items:       [],   // all CT objects
+  stories:     {},   // { storyName: [ctIds] }
+  activeStory: null,
+  sortField:   'id',
+  sortAsc:     true,
+  filterRisk:  false,
+  gwUrl:       'http://localhost:8080',
+  gwOnline:    false,
+};
+
+let cy = null;
+let chartDonut = null;
+
+// ════════════════════════════════════
+// DEMO DATA
+// ════════════════════════════════════
+const DEMO_DATA = [
+  // US: Login
+  { id:'CT-001', story:'US: Login', rn:'RN-01', ca:'CA-01', desc:'Login com email/senha válidos — fluxo principal', risco:'Alto',  gap:'Nenhum', prio:'Alta',  auto:'Sim' },
+  { id:'CT-002', story:'US: Login', rn:'RN-01', ca:'CA-02', desc:'Login com senha incorreta — mensagem de erro', risco:'Alto',  gap:'Nenhum', prio:'Alta',  auto:'Sim' },
+  { id:'CT-003', story:'US: Login', rn:'RN-02', ca:'CA-03', desc:'Bloqueio após 5 tentativas inválidas', risco:'Alto',  gap:'Nenhum', prio:'Alta',  auto:'Sim' },
+  { id:'CT-004', story:'US: Login', rn:'RN-02', ca:'CA-04', desc:'Recuperação de senha por email', risco:'Médio', gap:'Nenhum', prio:'Média', auto:'Sim' },
+  { id:'CT-005', story:'US: Login', rn:'RN-03', ca:'CA-05', desc:'Login com 2FA habilitado', risco:'Alto',  gap:'Fluxo 2FA incompleto', prio:'Alta',  auto:'Não' },
+  { id:'CT-006', story:'US: Login', rn:'RN-03', ca:'CA-06', desc:'Token 2FA expirado', risco:'Médio', gap:'Nenhum', prio:'Média', auto:'Não' },
+  // US: Extrato
+  { id:'CT-007', story:'US: Extrato', rn:'RN-04', ca:'CA-07', desc:'Visualizar extrato do período atual', risco:'Médio', gap:'Nenhum', prio:'Alta',  auto:'Sim' },
+  { id:'CT-008', story:'US: Extrato', rn:'RN-04', ca:'CA-08', desc:'Filtrar extrato por data — intervalo válido', risco:'Baixo', gap:'Nenhum', prio:'Média', auto:'Sim' },
+  { id:'CT-009', story:'US: Extrato', rn:'RN-05', ca:'CA-09', desc:'Exportar extrato como PDF', risco:'Baixo', gap:'Nenhum', prio:'Baixa', auto:'Não' },
+  { id:'CT-010', story:'US: Extrato', rn:'RN-05', ca:'CA-10', desc:'Extrato com saldo negativo — alerta visual', risco:'Médio', gap:'Comportamento alerta indefinido', prio:'Média', auto:'Sim' },
+  // US: Pagamento PIX
+  { id:'CT-011', story:'US: Pagamento PIX', rn:'RN-06', ca:'CA-11', desc:'PIX para chave CPF — valor abaixo do limite', risco:'Alto',  gap:'Nenhum', prio:'Alta',  auto:'Sim' },
+  { id:'CT-012', story:'US: Pagamento PIX', rn:'RN-06', ca:'CA-12', desc:'PIX acima do limite diário — bloquear', risco:'Alto',  gap:'Nenhum', prio:'Alta',  auto:'Sim' },
+  { id:'CT-013', story:'US: Pagamento PIX', rn:'RN-07', ca:'CA-13', desc:'PIX com biometria — valor > R$1.000', risco:'Alto',  gap:'Nenhum', prio:'Alta',  auto:'Não' },
+  { id:'CT-014', story:'US: Pagamento PIX', rn:'RN-07', ca:'CA-14', desc:'Cancelamento de PIX em até 30 min', risco:'Médio', gap:'Janela cancelamento não validada', prio:'Alta',  auto:'Não' },
+  { id:'CT-015', story:'US: Pagamento PIX', rn:'RN-08', ca:'CA-15', desc:'Histórico de PIX realizados', risco:'Baixo', gap:'Nenhum', prio:'Baixa', auto:'Sim' },
+  // US: Cadastro
+  { id:'CT-016', story:'US: Cadastro', rn:'RN-09', ca:'CA-16', desc:'Cadastro com dados válidos — sucesso', risco:'Médio', gap:'Nenhum', prio:'Alta',  auto:'Sim' },
+  { id:'CT-017', story:'US: Cadastro', rn:'RN-09', ca:'CA-17', desc:'CPF já cadastrado — erro amigável', risco:'Médio', gap:'Nenhum', prio:'Média', auto:'Sim' },
+  { id:'CT-018', story:'US: Cadastro', rn:'RN-10', ca:'CA-18', desc:'Validação LGPD — consentimento', risco:'Alto',  gap:'Texto LGPD não definido', prio:'Alta',  auto:'Não' },
+  { id:'CT-019', story:'US: Cadastro', rn:'RN-10', ca:'CA-19', desc:'Email de confirmação enviado', risco:'Baixo', gap:'Nenhum', prio:'Média', auto:'Sim' },
+  { id:'CT-020', story:'US: Cadastro', rn:'RN-11', ca:'CA-20', desc:'Formulário WCAG AA — campos obrigatórios', risco:'Médio', gap:'Nenhum', prio:'Alta',  auto:'Não' },
+];
+
+// ════════════════════════════════════
+// INIT
+// ════════════════════════════════════
+function init() {
+  initCytoscape();
+  probeGateway();
+  renderStoriesList();
+  updateStatusBar();
+}
+
+// ════════════════════════════════════
+// VIEWS
+// ════════════════════════════════════
+function setView(name, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.ib-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.getElementById('ib-' + name)?.classList.add('active');
+  document.getElementById('tab-' + name)?.classList.add('active');
+  if (name === 'coverage') renderCoverage();
+  if (name === 'rtm') renderRTMTable();
+  if (name === 'graph') { setTimeout(() => cy?.resize(), 100); }
+}
+
+// ════════════════════════════════════
+// DATA LOAD
+// ════════════════════════════════════
+function loadDemoData() {
+  WB.items = JSON.parse(JSON.stringify(DEMO_DATA));
+  processData();
+  toast('20 casos de teste de demo carregados', 'ok');
+}
+
+function processData() {
+  // Group by story
+  WB.stories = {};
+  WB.items.forEach(ct => {
+    if (!WB.stories[ct.story]) WB.stories[ct.story] = [];
+    WB.stories[ct.story].push(ct.id);
+  });
+  renderStoriesList();
+  buildGraph();
+  renderCoverage();
+  renderRTMTable();
+  updateTopbarMetrics();
+  updateStatusBar();
+}
+
+function updateTopbarMetrics() {
+  const items = WB.items;
+  const rns   = [...new Set(items.map(i => i.rn))].length;
+  const cov   = items.length ? Math.min(95, 55 + items.length * 2) : 0;
+  const altos = items.filter(i => i.risco === 'Alto').length;
+  const riskLabel = altos > 5 ? '🔴 Alto' : altos > 2 ? '🟡 Médio' : '🟢 Baixo';
+
+  document.getElementById('tb-cts').textContent  = items.length;
+  document.getElementById('tb-rns').textContent  = rns;
+  document.getElementById('tb-cov').textContent  = cov + '%';
+  document.getElementById('tb-risk').textContent = riskLabel;
+  document.getElementById('tc-nodes').textContent = items.length + rns;
+  document.getElementById('tc-rows').textContent  = items.length;
+}
+
+// ════════════════════════════════════
+// STORIES LIST
+// ════════════════════════════════════
+function renderStoriesList(filter = '') {
+  const list   = document.getElementById('stories-list');
+  const stories = Object.entries(WB.stories);
+  const query  = filter.toLowerCase();
+
+  const filteredStories = stories.map(([name, ids]) => {
+    const cts = WB.items.filter(i => ids.includes(i.id) &&
+      (!query || i.desc.toLowerCase().includes(query) ||
+       name.toLowerCase().includes(query) ||
+       i.rn.toLowerCase().includes(query) ||
+       i.id.toLowerCase().includes(query)));
+    return { name, cts };
+  }).filter(s => s.cts.length > 0);
+
+  if (!filteredStories.length) {
+    list.innerHTML = `<div style="padding:20px 14px;text-align:center;color:var(--txt3);font-size:12px;">
+      ${WB.items.length ? 'Sem resultados' : 'Clique em "Demo" para carregar dados'}</div>`;
+    document.getElementById('lp-count').textContent = '0 histórias · 0 CTs';
+    return;
+  }
+
+  document.getElementById('lp-count').textContent =
+    `${filteredStories.length} histórias · ${filteredStories.reduce((s,x) => s + x.cts.length, 0)} CTs`;
+
+  list.innerHTML = filteredStories.map(({ name, cts }) => {
+    const altos = cts.filter(c => c.risco === 'Alto').length;
+    const autos = cts.filter(c => c.auto === 'Sim').length;
+    const gaps  = cts.filter(c => c.gap !== 'Nenhum').length;
+    const score = Math.max(0, 100 - altos * 8 - gaps * 12);
+    const scoreClass = score >= 80 ? 'score-high' : score >= 60 ? 'score-mid' : 'score-low';
+    const scoreBg    = score >= 80 ? 'bg-high'    : score >= 60 ? 'bg-mid'    : 'bg-low';
+    const isActive   = WB.activeStory === name;
+
+    return `<div class="story-item ${isActive ? 'active' : ''}" onclick="selectStory('${escQ(name)}')">
+      <div class="si-title">${escH(name)}</div>
+      <div class="si-meta">
+        <span class="si-badge bg-blue">${cts.length} CTs</span>
+        ${altos ? `<span class="si-badge bg-low">⚠️ ${altos} alto</span>` : ''}
+        ${gaps  ? `<span class="si-badge bg-mid">⚡ ${gaps} gap</span>`  : ''}
+        <span class="si-score ${scoreClass}">${score}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectStory(name) {
+  WB.activeStory = WB.activeStory === name ? null : name;
+  renderStoriesList(document.getElementById('search-input').value);
+  if (WB.activeStory) highlightStoryInGraph(name);
+  else cy?.elements().removeClass('faded highlighted');
+}
+
+function filterStories() {
+  renderStoriesList(document.getElementById('search-input').value);
+}
+
+// ════════════════════════════════════
+// CYTOSCAPE GRAPH
+// ════════════════════════════════════
+function initCytoscape() {
+  cy = cytoscape({
+    container: document.getElementById('cy-container'),
+    style: [
+      {
+        selector: 'node',
+        style: {
+          'width': 'data(size)', 'height': 'data(size)',
+          'background-color': 'data(color)',
+          'label': 'data(label)',
+          'color': '#FFFFFF',
+          'font-size': '10px',
+          'font-family': 'IBM Plex Mono, monospace',
+          'text-valign': 'center',
+          'text-halign': 'center',
+          'text-wrap': 'wrap',
+          'text-max-width': '80px',
+          'border-width': 2,
+          'border-color': 'data(borderColor)',
+          'border-opacity': 0.6,
+          'transition-property': 'background-color, border-color, opacity, width, height',
+          'transition-duration': '200ms',
+        }
+      },
+      {
+        selector: 'node:selected',
+        style: {
+          'border-width': 3,
+          'border-color': '#00D4AA',
+          'border-opacity': 1,
+          'box-shadow': '0 0 12px rgba(0,212,170,.6)',
+        }
+      },
+      {
+        selector: 'node.faded',
+        style: { 'opacity': 0.15 }
+      },
+      {
+        selector: 'node.highlighted',
+        style: { 'opacity': 1, 'border-color': '#F59E0B', 'border-width': 3 }
+      },
+      {
+        selector: 'edge',
+        style: {
+          'width': 1.5,
+          'line-color': 'data(edgeColor)',
+          'target-arrow-color': 'data(edgeColor)',
+          'target-arrow-shape': 'triangle',
+          'arrow-scale': 0.8,
+          'curve-style': 'bezier',
+          'opacity': 0.55,
+          'transition-property': 'opacity',
+          'transition-duration': '200ms',
+        }
+      },
+      {
+        selector: 'edge.faded',
+        style: { 'opacity': 0.05 }
+      },
+      {
+        selector: 'edge.highlighted',
+        style: { 'opacity': 0.9, 'width': 2.5 }
+      },
+    ],
+    layout: { name: 'preset' },
+    userZoomingEnabled: true,
+    userPanningEnabled: true,
+    boxSelectionEnabled: false,
+    minZoom: 0.2,
+    maxZoom: 4,
+  });
+
+  cy.on('tap', 'node', e => {
+    const node = e.target;
+    showNodeDetail(node);
+    cy.elements().removeClass('faded highlighted');
+    const hood = node.closedNeighborhood();
+    cy.elements().not(hood).addClass('faded');
+    hood.addClass('highlighted');
+    document.getElementById('cy-selected').style.display = 'block';
+    document.getElementById('cy-selected').textContent = node.data('id');
+    document.getElementById('sb-selected').textContent = 'Selecionado: ' + node.data('id');
+  });
+
+  cy.on('tap', e => {
+    if (e.target === cy) {
+      cy.elements().removeClass('faded highlighted');
+      document.getElementById('gd-body').innerHTML = `<div class="gd-empty"><div style="font-size:36px;">🕸️</div><div>Clique em qualquer nó do grafo</div></div>`;
+      document.getElementById('gd-title').textContent = 'Detalhes do Nó';
+      document.getElementById('gd-sub').textContent   = 'Clique em um nó para ver detalhes';
+      document.getElementById('cy-selected').style.display = 'none';
+      document.getElementById('sb-selected').textContent = '';
+    }
+  });
+}
+
+function buildGraph() {
+  if (!cy) return;
+  cy.elements().remove();
+
+  const items   = WB.items;
+  const rns     = [...new Set(items.map(i => i.rn))];
+  const cas     = [...new Set(items.map(i => i.ca))];
+  const stories = [...new Set(items.map(i => i.story))];
+
+  const nodes = [];
+  const edges = [];
+  const positions = {};
+
+  // Layout: concentric rings
+  // Center: story nodes
+  // Ring 1: RN nodes
+  // Ring 2: CA nodes
+  // Ring 3: CT nodes
+
+  const cx = 0, cy_ = 0;
+  const R = [0, 180, 340, 520];
+
+  // Story nodes (center cluster)
+  stories.forEach((s, i) => {
+    const angle = (i / stories.length) * 2 * Math.PI;
+    const r = stories.length > 1 ? 60 : 0;
+    positions[s] = { x: cx + r * Math.cos(angle), y: cy_ + r * Math.sin(angle) };
+    nodes.push({ data: { id: s, label: s.replace('US: ',''), type: 'story',
+      color: '#00509E', borderColor: '#0070CC', size: 44 }, position: positions[s] });
+  });
+
+  // RN nodes (ring 1)
+  rns.forEach((rn, i) => {
+    const angle = (i / rns.length) * 2 * Math.PI - Math.PI/2;
+    positions[rn] = { x: cx + R[1] * Math.cos(angle), y: cy_ + R[1] * Math.sin(angle) };
+    nodes.push({ data: { id: rn, label: rn, type: 'rn',
+      color: '#00A882', borderColor: '#00D4AA', size: 36 }, position: positions[rn] });
+    // Edge story → RN
+    const storyForRN = items.find(i => i.rn === rn)?.story;
+    if (storyForRN) edges.push({ data: { source: storyForRN, target: rn, edgeColor: '#004080' } });
+  });
+
+  // CA nodes (ring 2)
+  cas.forEach((ca, i) => {
+    const angle = (i / cas.length) * 2 * Math.PI - Math.PI/2;
+    positions[ca] = { x: cx + R[2] * Math.cos(angle), y: cy_ + R[2] * Math.sin(angle) };
+    nodes.push({ data: { id: ca, label: ca, type: 'ca',
+      color: '#0070CC', borderColor: '#5BA4FF', size: 30 }, position: positions[ca] });
+    // Edge RN → CA
+    const rnForCA = items.find(i => i.ca === ca)?.rn;
+    if (rnForCA) edges.push({ data: { source: rnForCA, target: ca, edgeColor: '#005099' } });
+  });
+
+  // CT nodes (ring 3) — colored by risk
+  items.forEach((ct, i) => {
+    const angle = (i / items.length) * 2 * Math.PI - Math.PI/2;
+    const riskColor = ct.risco === 'Alto' ? '#EF4444' : ct.risco === 'Médio' ? '#F59E0B' : '#10B981';
+    const riskBorder = ct.risco === 'Alto' ? '#FF6B6B' : ct.risco === 'Médio' ? '#FBBF24' : '#34D399';
+    positions[ct.id] = { x: cx + R[3] * Math.cos(angle), y: cy_ + R[3] * Math.sin(angle) };
+    nodes.push({
+      data: { id: ct.id, label: ct.id, type: 'ct', ct,
+        color: riskColor, borderColor: riskBorder, size: 28 },
+      position: positions[ct.id]
+    });
+    // Edge CA → CT
+    edges.push({ data: { source: ct.ca, target: ct.id, edgeColor: riskColor + '88' } });
+  });
+
+  cy.add([...nodes, ...edges]);
+  cy.fit(null, 60);
+
+  document.getElementById('cy-stats').textContent =
+    `${nodes.length} nós · ${edges.length} arestas`;
+  document.getElementById('sb-nodes').textContent = nodes.length;
+  document.getElementById('sb-edges').textContent = edges.length;
+}
+
+function showNodeDetail(node) {
+  const d = node.data();
+  const title = document.getElementById('gd-title');
+  const sub   = document.getElementById('gd-sub');
+  const body  = document.getElementById('gd-body');
+
+  const typeLabels = { story:'Story', rn:'Regra de Negócio', ca:'Critério de Aceite', ct:'Caso de Teste' };
+  title.textContent = d.id;
+  sub.textContent   = typeLabels[d.type] || d.type;
+
+  if (d.type === 'ct' && d.ct) {
+    const ct = d.ct;
+    const riskCls = ct.risco === 'Alto' ? 'risk-a' : ct.risco === 'Médio' ? 'risk-m' : 'risk-b';
+    const prioCls = ct.prio  === 'Alta' ? 'prio-a' : ct.prio  === 'Média' ? 'prio-m' : 'prio-b';
+    body.innerHTML = `
+      <div class="detail-section">
+        <div class="detail-label">Identificação</div>
+        <div class="detail-row"><span class="detail-key">Story</span><span class="detail-val">${escH(ct.story)}</span></div>
+        <div class="detail-row"><span class="detail-key">RN</span><span class="detail-val">${escH(ct.rn)}</span></div>
+        <div class="detail-row"><span class="detail-key">CA</span><span class="detail-val">${escH(ct.ca)}</span></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Descrição</div>
+        <div style="font-size:12px;color:var(--txt2);line-height:1.6;padding:6px 0;">${escH(ct.desc)}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Classificação</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding:4px 0;">
+          <span class="risk-chip ${riskCls}">⚠️ ${ct.risco}</span>
+          <span class="prio-chip ${prioCls}">🎯 ${ct.prio}</span>
+          <span class="detail-chip ${ct.auto==='Sim'?'bg-high':'bg-mid'}">🤖 ${ct.auto}</span>
+        </div>
+      </div>
+      ${ct.gap !== 'Nenhum' ? `
+      <div class="detail-section">
+        <div class="detail-label" style="color:var(--gold);">⚡ Gap Identificado</div>
+        <div style="font-size:12px;color:var(--txt2);padding:6px 0;background:var(--goldp);border-radius:6px;padding:8px;">${escH(ct.gap)}</div>
+      </div>` : ''}
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="action-btn" style="flex:1;font-size:11px;" onclick="highlightConnected('${escQ(ct.id)}')">🔗 Conectados</button>
+        <button class="action-btn primary" style="flex:1;font-size:11px;" onclick="editCT('${escQ(ct.id)}')">✏️ Editar</button>
+      </div>`;
+  } else if (d.type === 'rn') {
+    const cts = WB.items.filter(i => i.rn === d.id);
+    body.innerHTML = `
+      <div class="detail-section">
+        <div class="detail-label">Casos de Teste vinculados</div>
+        ${cts.map(ct => `<div class="detail-row">
+          <span class="detail-val">${escH(ct.id)}</span>
+          <span class="risk-chip ${ct.risco==='Alto'?'risk-a':ct.risco==='Médio'?'risk-m':'risk-b'}" style="font-size:9px;">${ct.risco}</span>
+        </div>`).join('')}
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Métricas</div>
+        <div class="detail-row"><span class="detail-key">Total CTs</span><span class="detail-val">${cts.length}</span></div>
+        <div class="detail-row"><span class="detail-key">Risco Alto</span><span class="detail-val" style="color:var(--danger);">${cts.filter(c=>c.risco==='Alto').length}</span></div>
+        <div class="detail-row"><span class="detail-key">Gaps</span><span class="detail-val" style="color:var(--gold);">${cts.filter(c=>c.gap!=='Nenhum').length}</span></div>
+        <div class="detail-row"><span class="detail-key">Automatizáveis</span><span class="detail-val" style="color:var(--success);">${cts.filter(c=>c.auto==='Sim').length}</span></div>
+      </div>`;
+  } else if (d.type === 'story') {
+    const cts = WB.items.filter(i => i.story === d.id);
+    const score = Math.max(0, 100 - cts.filter(c=>c.risco==='Alto').length*8 - cts.filter(c=>c.gap!=='Nenhum').length*12);
+    body.innerHTML = `
+      <div class="detail-section">
+        <div class="detail-label">Quality Score</div>
+        <div style="font-size:36px;font-weight:700;color:${score>=80?'var(--success)':score>=60?'var(--gold)':'var(--danger)'};margin:8px 0;">${score}%</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Resumo</div>
+        <div class="detail-row"><span class="detail-key">CTs Total</span><span class="detail-val">${cts.length}</span></div>
+        <div class="detail-row"><span class="detail-key">Risco Alto</span><span class="detail-val" style="color:var(--danger);">${cts.filter(c=>c.risco==='Alto').length}</span></div>
+        <div class="detail-row"><span class="detail-key">Gaps</span><span class="detail-val" style="color:var(--gold);">${cts.filter(c=>c.gap!=='Nenhum').length}</span></div>
+        <div class="detail-row"><span class="detail-key">Auto %</span><span class="detail-val">${Math.round(cts.filter(c=>c.auto==='Sim').length/cts.length*100)}%</span></div>
+        <div class="detail-row"><span class="detail-key">RNs</span><span class="detail-val">${[...new Set(cts.map(c=>c.rn))].length}</span></div>
+      </div>`;
+  } else {
+    body.innerHTML = `<div style="font-size:12px;color:var(--txt2);padding:8px 0;">Nó: ${escH(d.id)}</div>`;
+  }
+}
+
+function highlightStoryInGraph(storyName) {
+  if (!cy) return;
+  cy.elements().removeClass('faded highlighted');
+  const storyNode = cy.$id(storyName);
+  if (!storyNode.length) return;
+  const hood = storyNode.closedNeighborhood().closedNeighborhood().closedNeighborhood();
+  cy.elements().not(hood).addClass('faded');
+  hood.addClass('highlighted');
+  cy.animate({ fit: { eles: hood, padding: 60 }, duration: 400 });
+}
+
+function highlightConnected(ctId) {
+  if (!cy) return;
+  const node = cy.$id(ctId);
+  cy.elements().removeClass('faded highlighted');
+  const hood = node.closedNeighborhood();
+  cy.elements().not(hood).addClass('faded');
+  hood.addClass('highlighted');
+}
+
+function layoutGraph() {
+  if (!cy) return;
+  cy.elements().removeClass('faded highlighted');
+  const layout = cy.layout({
+    name: 'concentric',
+    concentric: n => {
+      const t = n.data('type');
+      return t==='story'?4 : t==='rn'?3 : t==='ca'?2 : 1;
+    },
+    levelWidth: () => 1,
+    minNodeSpacing: 30,
+    padding: 50,
+    animate: true,
+    animationDuration: 600,
+    animationEasing: 'ease-in-out-cubic',
+  });
+  layout.run();
+  toast('Layout recalculado', 'info');
+}
+
+function filterHighRisk() {
+  WB.filterRisk = !WB.filterRisk;
+  cy.elements().removeClass('faded');
+  if (WB.filterRisk) {
+    const highRiskCTs = cy.nodes().filter(n => n.data('type') === 'ct' && n.data('ct')?.risco === 'Alto');
+    const relevant = highRiskCTs.closedNeighborhood().union(highRiskCTs);
+    cy.elements().not(relevant).addClass('faded');
+    toast(`${highRiskCTs.length} CTs de alto risco destacados`, 'info');
+  }
+}
+
+// ════════════════════════════════════
+// COVERAGE CHARTS
+// ════════════════════════════════════
+function renderCoverage() {
+  if (!WB.items.length) return;
+  renderHeatmap();
+  renderDonutChart();
+  renderDimBars();
+}
+
+function renderHeatmap() {
+  const container = document.getElementById('heatmap-container');
+  const rns   = [...new Set(WB.items.map(i => i.rn))];
+  const types = ['Funcional','Exceção','Segurança','WCAG','Performance'];
+  const cols  = types.length;
+  const rows  = rns.length;
+
+  // Generate coverage matrix
+  const matrix = rns.map(rn => {
+    const cts = WB.items.filter(i => i.rn === rn);
+    return types.map((t, ti) => {
+      // Simulate coverage based on CTs count and risk
+      const base = Math.min(100, cts.length * 20);
+      const penalty = cts.filter(c=>c.gap!=='Nenhum').length * 15;
+      const val = Math.max(0, Math.min(100,
+        ti === 0 ? base - penalty :
+        ti === 1 ? base * .7 - penalty :
+        ti === 2 ? (cts.filter(c=>c.risco==='Alto').length > 0 ? base*.6 : 20) - penalty :
+        ti === 3 ? base * .5 :
+        base * .4
+      ));
+      return Math.round(val);
+    });
+  });
+
+  const cellW = Math.max(38, Math.floor((container.clientWidth - 90) / cols));
+  const cellH = 32;
+
+  const getColor = v => {
+    if (v >= 80) return `rgba(16,185,129,${.4 + v/250})`;
+    if (v >= 50) return `rgba(245,158,11,${.3 + v/300})`;
+    if (v >= 20) return `rgba(239,68,68,${.25 + v/300})`;
+    return 'rgba(239,68,68,.15)';
+  };
+
+  let html = `<div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">
+    Cobertura por RN × Tipo de Teste
+  </div>`;
+
+  // Header
+  html += `<div style="display:grid;grid-template-columns:80px ${types.map(()=>cellW+'px').join(' ')};gap:3px;margin-bottom:3px;">
+    <div></div>
+    ${types.map(t=>`<div style="font-size:9px;font-weight:700;color:var(--txt3);text-align:center;padding:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t}</div>`).join('')}
+  </div>`;
+
+  // Rows
+  html += `<div style="display:flex;flex-direction:column;gap:3px;">`;
+  matrix.forEach((row, ri) => {
+    html += `<div style="display:grid;grid-template-columns:80px ${types.map(()=>cellW+'px').join(' ')};gap:3px;align-items:center;">
+      <div style="font-size:10px;font-weight:600;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:4px;">${escH(rns[ri])}</div>
+      ${row.map((v,ci) => `
+        <div class="heatmap-cell" style="height:${cellH}px;background:${getColor(v)};color:rgba(255,255,255,.9);">
+          ${v}%
+          <div class="hm-tooltip">${rns[ri]} × ${types[ci]}: ${v}%</div>
+        </div>`).join('')}
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Legend
+  html += `<div style="display:flex;gap:8px;margin-top:12px;font-size:10px;color:var(--txt3);align-items:center;">
+    <span>Legenda:</span>
+    <span style="background:rgba(16,185,129,.7);padding:1px 8px;border-radius:3px;color:white;">≥80%</span>
+    <span style="background:rgba(245,158,11,.6);padding:1px 8px;border-radius:3px;color:white;">50-79%</span>
+    <span style="background:rgba(239,68,68,.5);padding:1px 8px;border-radius:3px;color:white;">20-49%</span>
+    <span style="background:rgba(239,68,68,.2);padding:1px 8px;border-radius:3px;color:var(--txt);">&lt;20%</span>
+  </div>`;
+
+  container.innerHTML = html;
+}
+
+function renderDonutChart() {
+  const items   = WB.items;
+  const funcCov = Math.min(100, items.length * 5);
+  const riskCov = Math.min(100, items.filter(i=>i.risco!=='Baixo').length * 8);
+  const compCov = Math.min(100, items.filter(i=>i.desc.toLowerCase().includes('wcag')||i.desc.toLowerCase().includes('lgpd')).length * 15);
+  const autoCov = Math.round(items.filter(i=>i.auto==='Sim').length / (items.length||1) * 100);
+
+  if (chartDonut) chartDonut.destroy();
+  const ctx = document.getElementById('chart-donut').getContext('2d');
+  chartDonut = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Funcional', 'Risco', 'Compliance', 'Automação'],
+      datasets: [{
+        data: [funcCov, riskCov, compCov, autoCov],
+        backgroundColor: ['#0070CC','#EF4444','#7C3AED','#10B981'],
+        borderWidth: 0,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 11, family: 'DM Sans' }, padding: 10, color: '#3A5A7A', boxWidth: 12 }
+        },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}%` }
+        }
+      }
+    }
+  });
+}
+
+function renderDimBars() {
+  const items = WB.items;
+  const dims = [
+    { label:'Caixa Preta',   val: Math.min(100, items.length * 6),    color:'#0070CC' },
+    { label:'Caixa Branca',  val: Math.min(100, items.length * 3),    color:'#7C3AED' },
+    { label:'Caixa Cinza',   val: Math.min(100, items.length * 4),    color:'#00A882' },
+    { label:'WCAG AA',       val: Math.min(100, items.filter(i=>i.desc.toLowerCase().includes('wcag')).length * 20 + 30), color:'#F59E0B' },
+    { label:'LGPD',          val: Math.min(100, items.filter(i=>i.desc.toLowerCase().includes('lgpd')||i.rn.includes('10')).length * 25 + 10), color:'#EF4444' },
+    { label:'OWASP',         val: Math.min(100, items.filter(i=>i.risco==='Alto').length * 12 + 15), color:'#F97316' },
+    { label:'Performance',   val: Math.min(100, items.length * 2 + 20), color:'#06B6D4' },
+  ];
+
+  document.getElementById('dim-bars').innerHTML = `
+    <div class="bar-list">
+      ${dims.map(d => `
+        <div class="bar-item">
+          <div class="bar-label">${escH(d.label)}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${d.val}%;background:${d.color}"></div></div>
+          <div class="bar-pct" style="color:${d.color};">${d.val}%</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ════════════════════════════════════
+// RTM TABLE
+// ════════════════════════════════════
+let _rtmSort = { field: 'id', asc: true };
+
+function renderRTMTable() {
+  const items = [...WB.items];
+  items.sort((a,b) => {
+    const va = a[_rtmSort.field]||'', vb = b[_rtmSort.field]||'';
+    const c = va.localeCompare(vb);
+    return _rtmSort.asc ? c : -c;
+  });
+
+  document.getElementById('rtm-tbody').innerHTML = items.length
+    ? items.map(ct => {
+        const riskCls = ct.risco==='Alto' ? 'risk-a' : ct.risco==='Médio' ? 'risk-m' : 'risk-b';
+        const prioCls = ct.prio ==='Alta' ? 'prio-a' : ct.prio ==='Média' ? 'prio-m' : 'prio-b';
+        return `<tr onclick="selectAndHighlight('${escQ(ct.id)}')">
+          <td><code style="font-size:11px;">${escH(ct.id)}</code></td>
+          <td><span style="font-family:var(--mono);font-size:11px;">${escH(ct.rn)}</span></td>
+          <td><span style="font-family:var(--mono);font-size:11px;">${escH(ct.ca)}</span></td>
+          <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escH(ct.desc)}">${escH(ct.desc)}</td>
+          <td><span class="risk-chip ${riskCls}">${ct.risco}</span></td>
+          <td style="font-size:11px;color:${ct.gap==='Nenhum'?'var(--txt3)':'var(--gold)'};">${ct.gap==='Nenhum'?'—':escH(ct.gap)}</td>
+          <td><span class="prio-chip ${prioCls}">${ct.prio}</span></td>
+          <td><span class="auto-chip2 ${ct.auto==='Sim'?'auto-y':'auto-n'}">${ct.auto==='Sim'?'✓ Sim':'✗ Não'}</span></td>
+          <td style="font-size:11px;color:var(--txt3);">${escH(ct.story)}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--txt3);">Sem dados. Clique em "Demo" para carregar.</td></tr>`;
+}
+
+function sortTable(field) {
+  if (_rtmSort.field === field) _rtmSort.asc = !_rtmSort.asc;
+  else { _rtmSort.field = field; _rtmSort.asc = true; }
+  renderRTMTable();
+}
+
+function selectAndHighlight(ctId) {
+  setView('graph', null);
+  setTimeout(() => {
+    const node = cy?.$id(ctId);
+    if (node?.length) {
+      node.select();
+      showNodeDetail(node);
+      cy.animate({ center: { eles: node }, duration: 400 });
+      const hood = node.closedNeighborhood();
+      cy.elements().removeClass('faded highlighted');
+      cy.elements().not(hood.union(node)).addClass('faded');
+      hood.union(node).addClass('highlighted');
+    }
+  }, 150);
+}
+
+// ════════════════════════════════════
+// ADD / EDIT CT
+// ════════════════════════════════════
+function openAddCT() {
+  ['f-id','f-story','f-rn','f-ca','f-desc','f-gap'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-gap').value = 'Nenhum';
+  document.getElementById('addct-modal').style.display = 'flex';
+  document.getElementById('f-id').focus();
+}
+
+function addCT() {
+  const ct = {
+    id:    document.getElementById('f-id').value.trim()    || `CT-${String(WB.items.length+1).padStart(3,'0')}`,
+    story: document.getElementById('f-story').value.trim() || 'Story Geral',
+    rn:    document.getElementById('f-rn').value.trim()    || 'RN-01',
+    ca:    document.getElementById('f-ca').value.trim()    || 'CA-01',
+    desc:  document.getElementById('f-desc').value.trim()  || 'Caso de teste',
+    risco: document.getElementById('f-risco').value,
+    prio:  document.getElementById('f-prio').value,
+    gap:   document.getElementById('f-gap').value.trim()   || 'Nenhum',
+    auto:  document.getElementById('f-auto').value,
+  };
+  WB.items.push(ct);
+  document.getElementById('addct-modal').style.display = 'none';
+  processData();
+  toast(`${ct.id} adicionado`, 'ok');
+}
+
+function editCT(ctId) {
+  const ct = WB.items.find(i => i.id === ctId);
+  if (!ct) return;
+  document.getElementById('f-id').value    = ct.id;
+  document.getElementById('f-story').value = ct.story;
+  document.getElementById('f-rn').value    = ct.rn;
+  document.getElementById('f-ca').value    = ct.ca;
+  document.getElementById('f-desc').value  = ct.desc;
+  document.getElementById('f-risco').value = ct.risco;
+  document.getElementById('f-prio').value  = ct.prio;
+  document.getElementById('f-gap').value   = ct.gap;
+  document.getElementById('f-auto').value  = ct.auto;
+  // Remove old, re-add on save
+  WB.items = WB.items.filter(i => i.id !== ctId);
+  document.getElementById('addct-modal').style.display = 'flex';
+}
+
+// ════════════════════════════════════
+// IMPORT / EXPORT
+// ════════════════════════════════════
+function importJSON() { document.getElementById('import-input').click(); }
+
+function onImportFile(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const items = Array.isArray(data) ? data : data.items || data.rtm || [];
+      if (!items.length) throw new Error('Array vazio');
+      WB.items = items;
+      processData();
+      toast(`${items.length} CTs importados`, 'ok');
+    } catch(err) {
+      toast('Erro ao importar: ' + err.message, 'err');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function exportAll() {
+  const data = { items: WB.items, exported_at: new Date().toISOString(), total: WB.items.length };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'aqua-qe-workbench.json' });
+  a.click();
+  toast('Exportado como JSON', 'ok');
+}
+
+function clearAll() {
+  if (!WB.items.length || confirm('Limpar todos os dados?')) {
+    WB.items = [];
+    WB.stories = {};
+    WB.activeStory = null;
+    cy?.elements().remove();
+    processData();
+    toast('Dados limpos', 'info');
+  }
+}
+
+// ════════════════════════════════════
+// GATEWAY INTEGRATION
+// ════════════════════════════════════
+async function connectGateway() {
+  const dot    = document.getElementById('gw-sdot');
+  const status = document.getElementById('gw-status-txt');
+  const sb     = document.getElementById('sb-gw');
+  dot.className = 'sdot off';
+  status.textContent = 'conectando...';
+
+  try {
+    const resp = await fetch(`${WB.gwUrl}/health`, { signal: AbortSignal.timeout(3000) });
+    const data = await resp.json();
+    if (data.status === 'ok') {
+      WB.gwOnline = true;
+      dot.className = 'sdot on';
+      status.textContent = 'gateway';
+      sb.textContent = 'online';
+      toast('Gateway conectado ✓', 'ok');
+      // Try to load RTM data from gateway logs
+      await loadFromGateway();
+    } else throw new Error();
+  } catch(e) {
+    WB.gwOnline = false;
+    dot.className = 'sdot off';
+    status.textContent = 'offline';
+    sb.textContent = 'offline';
+    toast('Gateway offline — use Demo ou importe JSON', 'info');
+  }
+}
+
+async function probeGateway() {
+  try {
+    const resp = await fetch(`${WB.gwUrl}/health`, { signal: AbortSignal.timeout(2000) });
+    const data = await resp.json();
+    if (data.status === 'ok') {
+      WB.gwOnline = true;
+      document.getElementById('gw-sdot').className = 'sdot on';
+      document.getElementById('gw-status-txt').textContent = 'gateway';
+      document.getElementById('sb-gw').textContent = 'online';
+      await loadFromGateway();
+    }
+  } catch(e) {}
+}
+
+async function loadFromGateway() {
+  try {
+    const resp = await fetch(`${WB.gwUrl}/api/v1/logs?limit=200`);
+    const data = await resp.json();
+    // Parse RTM rows from log content
+    const rtmRows = [];
+    (data.logs || []).forEach(log => {
+      // We don't have content in logs — just show the session info
+    });
+    if (rtmRows.length) {
+      WB.items = rtmRows;
+      processData();
+      toast(`${rtmRows.length} CTs carregados do gateway`, 'ok');
+    }
+  } catch(e) {}
+}
+
+// ════════════════════════════════════
+// STATUS BAR
+// ════════════════════════════════════
+function updateStatusBar() {
+  document.getElementById('sb-cts').textContent = WB.items.length;
+}
+
+// ════════════════════════════════════
+// UTILS
+// ════════════════════════════════════
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escQ(s) { return String(s||'').replace(/'/g,"\\'"); }
+
+function toast(msg, type='info') {
+  const map = { ok:'toast-ok', info:'toast-info', err:'toast-err' };
+  const el  = Object.assign(document.createElement('div'), { className:'toast '+map[type], textContent:msg });
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ════════════════════════════════════
+// INIT
+// ════════════════════════════════════
+window.addEventListener('load', init);
+window.addEventListener('resize', () => {
+  cy?.resize();
+  if (document.getElementById('view-coverage').classList.contains('active')) renderHeatmap();
+});
+</script>
+</body>
+</html>

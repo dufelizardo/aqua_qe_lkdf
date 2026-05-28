@@ -17,6 +17,10 @@ from backend.models.schemas import (
 )
 from backend.providers.registry import DEFAULT_PROVIDERS, DEFAULT_ENGINE_ROUTING
 from backend.providers.adapters import create_adapter, BaseProviderAdapter
+from backend.gateway.observability import (
+    observability, compute_confidence, classify_error, prompt_hash
+)
+from backend.gateway.security import security_gateway
 
 
 # ─────────────────────────────────────────────
@@ -250,10 +254,33 @@ class AIGateway:
     # ── Public API ──────────────────────────
 
     async def execute(self, request: GatewayRequest) -> GatewayResponse:
-        """Executa request com roteamento inteligente e fallback automático."""
+        """Executa request com roteamento inteligente, segurança e fallback automático."""
         candidates = self.router.resolve(request)
         last_response: GatewayResponse | None = None
         tried: list[ProviderName] = []
+
+        # §30 Security inspection — inspect & optionally mask content
+        user_content = " ".join(m.get("content", "") for m in request.messages)
+        sec_result = security_gateway.inspect_request(
+            content=user_content,
+            provider=str(candidates[0][0]) if candidates else "",
+            engine=str(request.engine),
+            session_id=request.metadata.get("session_id"),
+        )
+        if not sec_result["allowed"]:
+            return GatewayResponse(
+                request_id=request.id, engine=request.engine,
+                provider_used=candidates[0][0] if candidates else ProviderName.ANTHROPIC,
+                model_used="blocked", status=RequestStatus.FAILED,
+                content=f"[Bloqueado por política de segurança: {sec_result['action_taken']}]",
+                input_tokens=0, output_tokens=0, latency_ms=0, cost_usd=0,
+                error_message=f"security_block:{sec_result['action_taken']}",
+            )
+        # Apply masking if content was modified
+        if sec_result["action_taken"] == "masked" and request.messages:
+            last_msg = request.messages[-1]
+            if last_msg.get("role") == "user":
+                request.messages[-1] = {**last_msg, "content": sec_result["masked_content"]}
 
         for i, (provider_name, model) in enumerate(candidates):
             request.metadata["resolved_model"] = model
@@ -332,6 +359,14 @@ class AIGateway:
     # ── Internal ────────────────────────────
 
     def _log(self, response: GatewayResponse, request: GatewayRequest):
+        status_str = str(response.status.value if hasattr(response.status, 'value') else response.status)
+        confidence = compute_confidence(
+            status_str, response.fallback_used,
+            response.error_message, response.latency_ms,
+        )
+        error_type = classify_error(response.error_message)
+        phash      = prompt_hash(request.system_prompt)
+
         log = ExecutionLog(
             request_id=response.request_id,
             engine=response.engine,
@@ -343,9 +378,20 @@ class AIGateway:
             latency_ms=response.latency_ms,
             cost_usd=response.cost_usd,
             fallback_used=response.fallback_used,
+            fallback_from=str(response.fallback_from) if response.fallback_from else None,
             error=response.error_message,
+            # Enriched observability fields
+            confidence_score=confidence,
+            error_type=error_type,
+            prompt_hash=phash,
+            system_prompt_len=len(request.system_prompt or ''),
+            user_prompt_len=sum(len(m.get('content','')) for m in request.messages),
+            deployment_mode=str(request.deployment_mode.value if hasattr(request.deployment_mode,'value') else request.deployment_mode),
+            session_id=request.metadata.get('session_id'),
+            user_label=request.metadata.get('label'),
         )
         self.state.add_log(log)
+        observability.record(log)  # forward to observability manager
 
 
 # Singleton global

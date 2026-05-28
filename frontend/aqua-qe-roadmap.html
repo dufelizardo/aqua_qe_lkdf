@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQuA-QE LKDF — Roadmap Estratégico</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --b3: #00509E;
+  --b3l: #0070CC;
+  --b3pale: #E8F2FB;
+  --b3mid: #C5DEFF;
+  --accent: #00D4AA;
+  --accent2: #00A882;
+  --gold: #F59E0B;
+  --danger: #E83B3B;
+  --success: #10B981;
+  --purple: #7C3AED;
+  --bg: #FFFFFF;
+  --surf: #F7F9FC;
+  --surf2: #EFF3F8;
+  --bdr: #D5E3F2;
+  --bdr2: #B8CEEA;
+  --txt: #0D1F35;
+  --txt2: #3A5A7A;
+  --txt3: #6B8CAE;
+  --sans: 'Sora', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --r: 10px;
+  --rl: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--sans); background: var(--bg); color: var(--txt); font-size: 14px; }
+
+/* ===== HEADER ===== */
+.header {
+  background: var(--b3);
+  padding: 0 40px;
+  display: flex; align-items: center;
+  height: 60px;
+  position: sticky; top: 0; z-index: 100;
+  border-bottom: 2px solid var(--b3l);
+}
+.header-logo { display: flex; align-items: center; gap: 10px; }
+.logo-pill { background: white; color: var(--b3); font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.06em; }
+.header-title { color: white; font-weight: 600; font-size: 15px; margin-left: 4px; }
+.header-sep { color: rgba(255,255,255,0.3); margin: 0 8px; }
+.header-sub { color: rgba(255,255,255,0.6); font-size: 13px; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.header-stat { text-align: center; }
+.header-stat-n { color: var(--accent); font-weight: 700; font-size: 18px; line-height: 1; }
+.header-stat-l { color: rgba(255,255,255,0.5); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.header-div { width: 1px; height: 28px; background: rgba(255,255,255,0.15); }
+
+/* ===== HERO ===== */
+.hero {
+  background: linear-gradient(135deg, var(--b3) 0%, #003D7A 60%, #001F40 100%);
+  padding: 52px 40px 48px;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background-image: radial-gradient(circle at 80% 20%, rgba(0,212,170,0.12) 0%, transparent 50%),
+                    radial-gradient(circle at 20% 80%, rgba(0,112,204,0.15) 0%, transparent 50%);
+}
+.hero-content { position: relative; max-width: 1100px; margin: 0 auto; }
+.hero-eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.hero-tag { background: rgba(0,212,170,0.2); color: var(--accent); border: 1px solid rgba(0,212,170,0.35); font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.05em; text-transform: uppercase; }
+.hero-version { color: rgba(255,255,255,0.4); font-size: 11px; font-family: var(--mono); }
+.hero-title { font-size: 36px; font-weight: 700; color: white; line-height: 1.15; margin-bottom: 12px; }
+.hero-title span { color: var(--accent); }
+.hero-desc { color: rgba(255,255,255,0.65); font-size: 15px; line-height: 1.7; max-width: 680px; margin-bottom: 28px; }
+.hero-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.hero-pill { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); font-size: 12px; padding: 5px 14px; border-radius: 20px; }
+
+/* ===== LEGEND ===== */
+.legend-bar {
+  background: var(--surf); border-bottom: 1px solid var(--bdr);
+  padding: 12px 40px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+}
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--txt2); }
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+/* ===== TIMELINE WRAPPER ===== */
+.timeline-wrap { max-width: 1100px; margin: 0 auto; padding: 36px 40px 60px; }
+
+/* ===== PHASE BLOCK ===== */
+.phase {
+  display: grid; grid-template-columns: 200px 1fr;
+  gap: 0 32px; margin-bottom: 0; position: relative;
+}
+.phase::before {
+  content: '';
+  position: absolute;
+  left: 199px; top: 0; bottom: 0;
+  width: 1px; background: var(--bdr2);
+}
+
+/* Phase label */
+.phase-label {
+  padding: 24px 0 0;
+  display: flex; flex-direction: column; align-items: flex-end;
+  gap: 6px;
+  position: sticky; top: 60px; align-self: start;
+}
+.phase-badge {
+  text-align: right;
+  font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 20px;
+  white-space: nowrap;
+}
+.phase-timeline { font-size: 11px; color: var(--txt3); text-align: right; font-family: var(--mono); }
+.phase-scope { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-align: right; margin-top: 2px; }
+.scope-orig { background: #E8F2FB; color: var(--b3); }
+.scope-comp { background: #F0EBFF; color: var(--purple); }
+.scope-both { background: #FFF8E6; color: #92400E; }
+
+/* Phase content */
+.phase-content { padding: 24px 0 24px 32px; display: flex; flex-direction: column; gap: 16px; }
+
+/* Timeline connector dot */
+.phase-dot {
+  position: absolute; left: 192px;
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 3px solid white; box-shadow: 0 0 0 2px var(--bdr2);
+  top: 32px; z-index: 1;
+}
+
+/* ===== CARDS ===== */
+.card-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.card {
+  background: white; border: 1px solid var(--bdr); border-radius: var(--r);
+  padding: 16px; transition: all 0.18s; cursor: default;
+  position: relative; overflow: hidden;
+}
+.card:hover { border-color: var(--b3mid); box-shadow: 0 4px 20px rgba(0,80,158,0.1); transform: translateY(-1px); }
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.card.type-core::before { background: var(--b3); }
+.card.type-ai::before { background: var(--purple); }
+.card.type-ux::before { background: var(--accent); }
+.card.type-infra::before { background: var(--gold); }
+.card.type-gov::before { background: var(--danger); }
+.card.type-evo::before { background: var(--success); }
+
+.card-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.card-icon { font-size: 20px; flex-shrink: 0; line-height: 1; margin-top: 1px; }
+.card-title { font-size: 13px; font-weight: 600; color: var(--txt); line-height: 1.35; }
+.card-origin { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 3px; margin-top: 4px; display: inline-block; }
+.orig-base { background: #E8F2FB; color: var(--b3); }
+.orig-comp { background: #F0EBFF; color: var(--purple); }
+
+.card-items { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.card-items li { font-size: 11.5px; color: var(--txt2); display: flex; align-items: flex-start; gap: 6px; line-height: 1.4; }
+.card-items li::before { content: '·'; color: var(--b3); font-size: 14px; flex-shrink: 0; line-height: 1.2; }
+
+.card-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--bdr); }
+.ctag { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
+.ctag-blue { background: #E8F2FB; color: var(--b3); }
+.ctag-green { background: #EDFAF5; color: #065F46; }
+.ctag-purple { background: #F0EBFF; color: var(--purple); }
+.ctag-gold { background: #FFF8E6; color: #92400E; }
+.ctag-red { background: #FEF2F2; color: #991B1B; }
+
+/* ===== SECTION DIVIDER ===== */
+.section-divider {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0;
+  font-size: 11px; font-weight: 700; color: var(--txt3); text-transform: uppercase; letter-spacing: 0.08em;
+}
+.section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--bdr); }
+
+/* Big milestone */
+.milestone {
+  border: 1.5px solid var(--bdr2); border-radius: var(--rl);
+  padding: 18px 20px; background: var(--surf);
+  display: flex; align-items: center; gap: 14px;
+}
+.milestone-icon { font-size: 28px; }
+.milestone-title { font-size: 15px; font-weight: 700; color: var(--txt); }
+.milestone-sub { font-size: 12px; color: var(--txt3); margin-top: 3px; }
+.milestone-badge { margin-left: auto; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+/* ===== SUMMARY TABLE ===== */
+.summary-section { max-width: 1100px; margin: 0 auto; padding: 0 40px 60px; }
+.summary-title { font-size: 20px; font-weight: 700; color: var(--txt); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--b3pale); display: flex; align-items: center; gap: 10px; }
+.summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+.sum-card { background: white; border: 1px solid var(--bdr); border-radius: var(--r); padding: 16px; text-align: center; }
+.sum-n { font-size: 32px; font-weight: 700; color: var(--b3); line-height: 1; margin-bottom: 4px; }
+.sum-l { font-size: 11px; color: var(--txt3); text-transform: uppercase; letter-spacing: 0.05em; }
+
+.full-table { width: 100%; border-collapse: collapse; }
+.full-table thead th { background: var(--b3); color: white; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; }
+.full-table thead th:first-child { border-radius: 8px 0 0 0; }
+.full-table thead th:last-child { border-radius: 0 8px 0 0; }
+.full-table tbody td { padding: 10px 14px; border-bottom: 1px solid var(--bdr); font-size: 12px; vertical-align: middle; }
+.full-table tbody tr:hover td { background: var(--b3pale); }
+.full-table tbody tr:last-child td { border-bottom: none; }
+.status-chip { display: inline-block; padding: 3px 9px; border-radius: 5px; font-size: 10px; font-weight: 600; }
+.s-done { background: #EDFAF5; color: #065F46; }
+.s-wip { background: #FFF8E6; color: #92400E; }
+.s-next { background: #F0EBFF; color: var(--purple); }
+.s-future { background: var(--surf2); color: var(--txt3); }
+
+/* ===== FOOTER ===== */
+.footer { background: var(--b3); color: rgba(255,255,255,0.6); text-align: center; padding: 20px; font-size: 12px; }
+.footer strong { color: var(--accent); }
+
+/* Print / overflow */
+@media print { .header { position: relative; } }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">
+    <div class="logo-pill">AQuA-QE</div>
+    <span class="header-title">LKDF Platform</span>
+    <span class="header-sep">|</span>
+    <span class="header-sub">Roadmap Estratégico</span>
+  </div>
+  <div class="header-right">
+    <div class="header-stat"><div class="header-stat-n">4</div><div class="header-stat-l">Fases</div></div>
+    <div class="header-div"></div>
+    <div class="header-stat"><div class="header-stat-n">39</div><div class="header-stat-l">Módulos</div></div>
+    <div class="header-div"></div>
+    <div class="header-stat"><div class="header-stat-n">18m</div><div class="header-stat-l">Horizonte</div></div>
+    <div class="header-div"></div>
+    <div class="header-stat"><div class="header-stat-n" style="color:#F0EBFF;">+21</div><div class="header-stat-l">Novos itens</div></div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-eyebrow">
+      <span class="hero-tag">Roadmap v2.0</span>
+      <span class="hero-version">Escopo Original (§1–20) + Complementar (§21–39)</span>
+    </div>
+    <div class="hero-title">AQuA-QE LKDF<br><span>Plataforma Cognitiva de Engenharia de Qualidade</span></div>
+    <div class="hero-desc">
+      Roadmap unificado integrando o escopo original da plataforma (engines cognitivas, LKDF, workbench) com o escopo complementar de arquitetura de IA avançada, multi-provider, execução local, RAG, governança e deployment enterprise.
+    </div>
+    <div class="hero-pills">
+      <span class="hero-pill">🧠 12 Engines Cognitivas</span>
+      <span class="hero-pill">🔌 AI Gateway Multi-Provider</span>
+      <span class="hero-pill">🏠 Local / On-Premise</span>
+      <span class="hero-pill">📐 Arquitetura LKDF</span>
+      <span class="hero-pill">🔒 Governança & Compliance</span>
+      <span class="hero-pill">🧬 RAG + Knowledge Layer</span>
+    </div>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend-bar">
+  <span style="font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:0.06em;">Categorias:</span>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--b3)"></div>Core / LKDF</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Inteligência Artificial</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Frontend / UX</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Infraestrutura</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div>Governança / Compliance</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div>Evolutivo / Enterprise</div>
+  <span style="margin-left:auto;display:flex;gap:10px;">
+    <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--b3);"><span style="background:#E8F2FB;border-radius:3px;padding:1px 6px;font-weight:600;font-size:10px;">BASE</span> Escopo Original §1–20</span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--purple);"><span style="background:#F0EBFF;border-radius:3px;padding:1px 6px;font-weight:600;font-size:10px;">COMP</span> Escopo Complementar §21–39</span>
+  </span>
+</div>
+
+<!-- TIMELINE -->
+<div class="timeline-wrap">
+
+  <!-- ════════════ FASE 1 ════════════ -->
+  <div class="phase">
+    <div class="phase-dot" style="background:var(--b3);"></div>
+    <div class="phase-label">
+      <div class="phase-badge" style="background:var(--b3);color:white;">FASE 1 — MVP</div>
+      <div class="phase-timeline">Meses 1–4</div>
+      <div class="phase-scope scope-orig">Escopo Original</div>
+    </div>
+    <div class="phase-content">
+
+      <div class="milestone">
+        <div class="milestone-icon">🚀</div>
+        <div>
+          <div class="milestone-title">Foundation & Core Cognitivo</div>
+          <div class="milestone-sub">Plataforma funcional com chat, análise básica e RTM — primeiros usuários internos</div>
+        </div>
+        <div class="milestone-badge" style="background:var(--b3pale);color:var(--b3);">MVP Interno</div>
+      </div>
+
+      <div class="card-row">
+
+        <div class="card type-core">
+          <div class="card-head">
+            <div class="card-icon">🧠</div>
+            <div>
+              <div class="card-title">Conversational Cognitive Core</div>
+              <span class="card-origin orig-base">BASE §3–4</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Chat universal como entrada principal</li>
+            <li>Suporte a texto livre, US e documentos</li>
+            <li>Refinamento incremental conversacional</li>
+            <li>Formulários guiados de elicitação</li>
+            <li>Histórico de sessão e contexto</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-blue">FastAPI</span>
+            <span class="ctag ctag-blue">WebSocket</span>
+            <span class="ctag ctag-blue">SQLite MVP</span>
+          </div>
+        </div>
+
+        <div class="card type-ai">
+          <div class="card-head">
+            <div class="card-icon">⚙️</div>
+            <div>
+              <div class="card-title">Engines Cognitivas (Core Set)</div>
+              <span class="card-origin orig-base">BASE §6</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Normalize Engine — padronização semântica</li>
+            <li>Requirement Intelligence Engine</li>
+            <li>Validation & Ambiguity Engine</li>
+            <li>Business Rule Engine (RN-XX)</li>
+            <li>Acceptance Criteria Engine (CA-XX)</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-purple">LLM Orchestration</span>
+            <span class="ctag ctag-purple">Single Provider</span>
+          </div>
+        </div>
+
+        <div class="card type-core">
+          <div class="card-head">
+            <div class="card-icon">📐</div>
+            <div>
+              <div class="card-title">LKDF — Arquitetura Base</div>
+              <span class="card-origin orig-base">BASE §7–8</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>POM Layer — abstração técnica</li>
+            <li>Flow Layer — DSL semântica Gherkin</li>
+            <li>Scenario Layer — orquestração</li>
+            <li>Test Layer — parametrização</li>
+            <li>Padrão CT-XXX - RN-XX | CA-XX</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-blue">POM→FLOW→SCENARIO→TEST</span>
+          </div>
+        </div>
+
+        <div class="card type-core">
+          <div class="card-head">
+            <div class="card-icon">📊</div>
+            <div>
+              <div class="card-title">Traceability Engine + RTM</div>
+              <span class="card-origin orig-base">BASE §9–11</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>RTM vivo ponta a ponta</li>
+            <li>Vínculo RN → CA → CT</li>
+            <li>Estrutura: ID | RN | CA | Risco | Gap | Prio | Auto</li>
+            <li>Export CSV / JSON</li>
+            <li>Versionamento automático de RTM</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-blue">RTM Live</span>
+            <span class="ctag ctag-green">Export</span>
+          </div>
+        </div>
+
+        <div class="card type-ux">
+          <div class="card-head">
+            <div class="card-icon">🖥️</div>
+            <div>
+              <div class="card-title">Workbench Cognitivo MVP</div>
+              <span class="card-origin orig-base">BASE §17</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Tela conversacional (core)</li>
+            <li>Visualização RTM básica</li>
+            <li>Artifact Studio inicial</li>
+            <li>WCAG + responsividade</li>
+            <li>Cores B3 / fundo branco</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-blue">Angular</span>
+            <span class="ctag ctag-blue">TypeScript</span>
+            <span class="ctag ctag-blue">Angular Material</span>
+          </div>
+        </div>
+
+        <div class="card type-infra">
+          <div class="card-head">
+            <div class="card-icon">🗄️</div>
+            <div>
+              <div class="card-title">Infraestrutura MVP</div>
+              <span class="card-origin orig-base">BASE §18</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>SQLite como banco inicial</li>
+            <li>FastAPI backend</li>
+            <li>Single cloud provider (Anthropic)</li>
+            <li>Deploy simples / Docker</li>
+            <li>Logging básico de execução</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-gold">Python</span>
+            <span class="ctag ctag-gold">FastAPI</span>
+            <span class="ctag ctag-gold">SQLite</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ FASE 2 ════════════ -->
+  <div class="phase">
+    <div class="phase-dot" style="background:var(--purple);"></div>
+    <div class="phase-label">
+      <div class="phase-badge" style="background:var(--purple);color:white;">FASE 2 — IA AVANÇADA</div>
+      <div class="phase-timeline">Meses 5–9</div>
+      <div class="phase-scope scope-comp">Escopo Complementar</div>
+    </div>
+    <div class="phase-content">
+
+      <div class="milestone">
+        <div class="milestone-icon">🔌</div>
+        <div>
+          <div class="milestone-title">AI Gateway Layer + Multi-Provider + Engines Completas</div>
+          <div class="milestone-sub">Camada de abstração de IA desacoplada, suporte multi-provider e engines avançadas</div>
+        </div>
+        <div class="milestone-badge" style="background:#F0EBFF;color:var(--purple);">Escopo Complementar §21–27</div>
+      </div>
+
+      <div class="card-row">
+
+        <div class="card type-ai">
+          <div class="card-head">
+            <div class="card-icon">🔀</div>
+            <div>
+              <div class="card-title">AI Gateway Layer</div>
+              <span class="card-origin orig-comp">COMP §22</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Desacoplamento core ↔ modelos LLM</li>
+            <li>Roteamento inteligente por engine</li>
+            <li>Fallback automático entre providers</li>
+            <li>Controle de custo por execução</li>
+            <li>Governança e auditoria de prompts</li>
+            <li>Controle de contexto centralizado</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-purple">Multi-Provider</span>
+            <span class="ctag ctag-purple">Fallback</span>
+            <span class="ctag ctag-gold">Cost Control</span>
+          </div>
+        </div>
+
+        <div class="card type-ai">
+          <div class="card-head">
+            <div class="card-icon">☁️</div>
+            <div>
+              <div class="card-title">Cloud Providers Integration</div>
+              <span class="card-origin orig-comp">COMP §23.1</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>OpenAI (GPT-4o, reasoning geral)</li>
+            <li>Anthropic Claude (análise + ambiguidade)</li>
+            <li>Azure OpenAI (enterprise)</li>
+            <li>Google Gemini (síntese + sumarização)</li>
+            <li>Groq (alta velocidade)</li>
+            <li>Mistral AI (alta performance)</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-purple">6 Providers</span>
+            <span class="ctag ctag-blue">Adapters</span>
+          </div>
+        </div>
+
+        <div class="card type-ai">
+          <div class="card-head">
+            <div class="card-icon">🏠</div>
+            <div>
+              <div class="card-title">Local Providers (On-Premise)</div>
+              <span class="card-origin orig-comp">COMP §23.2 + §24.3</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Ollama — execução local simples</li>
+            <li>vLLM — alta performance local</li>
+            <li>LM Studio — interface amigável</li>
+            <li>llama.cpp — dispositivos limitados</li>
+            <li>Privacidade total / offline mode</li>
+            <li>Compliance corporativo isolado</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-green">On-Premise</span>
+            <span class="ctag ctag-green">Offline</span>
+            <span class="ctag ctag-red">Compliance</span>
+          </div>
+        </div>
+
+        <div class="card type-ai">
+          <div class="card-head">
+            <div class="card-icon">🎯</div>
+            <div>
+              <div class="card-title">Estratégia Multi-Model</div>
+              <span class="card-origin orig-comp">COMP §25–26</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Modelo diferente por engine cognitiva</li>
+            <li>Llama/Phi para lightweight execution</li>
+            <li>DeepSeek para geração técnica</li>
+            <li>Qwen para análise contextual</li>
+            <li>Execução paralela de modelos</li>
+            <li>Priorização por contexto e custo</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-purple">8 Modelos</span>
+            <span class="ctag ctag-purple">Paralelo</span>
+          </div>
+        </div>
+
+        <div class="card type-ai">
+          <div class="card-head">
+            <div class="card-icon">📝</div>
+            <div>
+              <div class="card-title">Prompt Management System</div>
+              <span class="card-origin orig-comp">COMP §27</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Versionamento de prompts por engine</li>
+            <li>Templates reutilizáveis categorizados</li>
+            <li>Auditoria completa de execução</li>
+            <li>Histórico e comparação de resultados</li>
+            <li>10 tipos de prompt (RTM, WCAG, risco…)</li>
+            <li>Controle de contexto por sessão</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-purple">Versionamento</span>
+            <span class="ctag ctag-gold">10 Tipos</span>
+          </div>
+        </div>
+
+        <div class="card type-ai">
+          <div class="card-head">
+            <div class="card-icon">🔄</div>
+            <div>
+              <div class="card-title">Reasoning Pipeline Architecture</div>
+              <span class="card-origin orig-comp">COMP §28</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Pipeline: Entrada → Normalização → Contextualização</li>
+            <li>→ Reasoning → Inferência → Validação</li>
+            <li>→ Síntese → Geração → Rastreabilidade</li>
+            <li>Pipelines compostos multi-etapa</li>
+            <li>Execução encadeada e paralela</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-purple">9 Etapas</span>
+            <span class="ctag ctag-purple">Event-Driven</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="border-left: 3px solid var(--purple); padding-left: 14px; margin-top: 4px;">
+        <div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Engines Cognitivas Completadas nesta fase</div>
+        <div class="card-row">
+
+          <div class="card type-ai">
+            <div class="card-head">
+              <div class="card-icon">🔍</div>
+              <div>
+                <div class="card-title">Engines Avançadas (Fase 2)</div>
+                <span class="card-origin orig-base">BASE §6.6–6.12</span>
+              </div>
+            </div>
+            <ul class="card-items">
+              <li>Risk Engine — criticidade + impacto</li>
+              <li>Coverage Validation Engine (caixa preta/branca/cinza)</li>
+              <li>Inference Engine — cenários ocultos</li>
+              <li>Synthesis Engine — visão consolidada</li>
+              <li>Consistency Engine — contradições RN↔CA</li>
+              <li>Impact Analysis Engine — regressão + RTM</li>
+              <li>Compliance Engine — WCAG / OWASP / LGPD</li>
+            </ul>
+            <div class="card-tags">
+              <span class="ctag ctag-purple">7 Engines</span>
+              <span class="ctag ctag-red">WCAG OWASP LGPD</span>
+            </div>
+          </div>
+
+          <div class="card type-infra">
+            <div class="card-head">
+              <div class="card-icon">📡</div>
+              <div>
+                <div class="card-title">Deployment Modes</div>
+                <span class="card-origin orig-comp">COMP §24</span>
+              </div>
+            </div>
+            <ul class="card-items">
+              <li>Cloud Mode — APIs externas, máxima capacidade</li>
+              <li>Hybrid Mode — local + cloud balanceado</li>
+              <li>Local/On-Premise — sem dependência externa</li>
+              <li>Configuração por ambiente</li>
+              <li>Switching dinâmico de modo</li>
+            </ul>
+            <div class="card-tags">
+              <span class="ctag ctag-gold">Cloud</span>
+              <span class="ctag ctag-gold">Hybrid</span>
+              <span class="ctag ctag-green">On-Premise</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════ FASE 3 ════════════ -->
+  <div class="phase">
+    <div class="phase-dot" style="background:var(--accent2);"></div>
+    <div class="phase-label">
+      <div class="phase-badge" style="background:var(--accent2);color:white;">FASE 3 — ENTERPRISE</div>
+      <div class="phase-timeline">Meses 10–14</div>
+      <div class="phase-scope scope-both">Base + Complementar</div>
+    </div>
+    <div class="phase-content">
+
+      <div class="milestone">
+        <div class="milestone-icon">🏢</div>
+        <div>
+          <div class="milestone-title">Workbench Completo + Observabilidade + Governança + Knowledge RAG</div>
+          <div class="milestone-sub">Plataforma enterprise pronta para produção com compliance, segurança e memória organizacional</div>
+        </div>
+        <div class="milestone-badge" style="background:#EDFAF5;color:#065F46;">Enterprise Ready</div>
+      </div>
+
+      <div class="card-row">
+
+        <div class="card type-ux">
+          <div class="card-head">
+            <div class="card-icon">🗺️</div>
+            <div>
+              <div class="card-title">RTM Graph + Coverage Workbench</div>
+              <span class="card-origin orig-base">BASE §17.3–17.4</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Cytoscape.js — grafo RN→CA→Flow→CT→Exec</li>
+            <li>Heatmaps de cobertura e criticidade</li>
+            <li>Visualização de gaps e automação</li>
+            <li>Compliance overlay visual</li>
+            <li>Drill-down por camada LKDF</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-blue">Cytoscape.js</span>
+            <span class="ctag ctag-blue">Heatmap</span>
+          </div>
+        </div>
+
+        <div class="card type-ux">
+          <div class="card-head">
+            <div class="card-icon">⚗️</div>
+            <div>
+              <div class="card-title">Story Engineering + Artifact Studio</div>
+              <span class="card-origin orig-base">BASE §17.2 + §17.5</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Monaco Editor integrado</li>
+            <li>Versões / score / risco / RTM / vínculos</li>
+            <li>Geração Robot, Playwright, Cypress, Postman</li>
+            <li>Download e integração CI/CD</li>
+            <li>Framework Adapters completos</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-blue">Monaco</span>
+            <span class="ctag ctag-green">5 Frameworks</span>
+          </div>
+        </div>
+
+        <div class="card type-ai">
+          <div class="card-head">
+            <div class="card-icon">🔭</div>
+            <div>
+              <div class="card-title">AI Observability</div>
+              <span class="card-origin orig-comp">COMP §29</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Logs de reasoning por engine</li>
+            <li>Tracing completo de prompts</li>
+            <li>Tempo de inferência por modelo</li>
+            <li>Custo real por execução</li>
+            <li>Score de confiança das respostas</li>
+            <li>Explainability e histórico de decisões</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-purple">Tracing</span>
+            <span class="ctag ctag-gold">Cost Analytics</span>
+          </div>
+        </div>
+
+        <div class="card type-gov">
+          <div class="card-head">
+            <div class="card-icon">🔒</div>
+            <div>
+              <div class="card-title">AI Security & Governance</div>
+              <span class="card-origin orig-comp">COMP §30</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Anonimização de dados sensíveis</li>
+            <li>Mascaramento automático (PII, secrets)</li>
+            <li>Isolamento de contexto por tenant</li>
+            <li>Retenção configurável de dados</li>
+            <li>Auditoria de prompts e saídas</li>
+            <li>Controle de acesso por engine</li>
+            <li>Proteção de embeddings corporativos</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-red">LGPD</span>
+            <span class="ctag ctag-red">OWASP</span>
+            <span class="ctag ctag-red">ISO</span>
+          </div>
+        </div>
+
+        <div class="card type-ai">
+          <div class="card-head">
+            <div class="card-icon">🧬</div>
+            <div>
+              <div class="card-title">Knowledge Layer Cognitivo</div>
+              <span class="card-origin orig-comp">COMP §31</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Memória organizacional viva</li>
+            <li>Aprendizado contínuo por uso</li>
+            <li>Armazenamento de padrões reutilizáveis</li>
+            <li>Relacionamento entre histórias</li>
+            <li>Evolução histórica por versão</li>
+            <li>Inferência contextual corporativa</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-purple">Semântico</span>
+            <span class="ctag ctag-purple">Contínuo</span>
+          </div>
+        </div>
+
+        <div class="card type-infra">
+          <div class="card-head">
+            <div class="card-icon">🐘</div>
+            <div>
+              <div class="card-title">Evolução de Banco de Dados</div>
+              <span class="card-origin orig-comp">COMP §33</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Migração SQLite → PostgreSQL</li>
+            <li>JSONB para dados semiestruturados</li>
+            <li>Consultas complexas de rastreabilidade</li>
+            <li>Multi-tenant com isolamento</li>
+            <li>Backup e retenção configurável</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-gold">PostgreSQL</span>
+            <span class="ctag ctag-gold">Multi-tenant</span>
+          </div>
+        </div>
+
+        <div class="card type-gov">
+          <div class="card-head">
+            <div class="card-icon">📜</div>
+            <div>
+              <div class="card-title">Compliance & Governança Corporativa</div>
+              <span class="card-origin orig-comp">COMP §38</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Trilha de rastreabilidade auditável</li>
+            <li>WCAG 2.1 AA — acessibilidade total</li>
+            <li>LGPD — proteção de dados</li>
+            <li>OWASP Top 10 — segurança</li>
+            <li>ISO 27001 / 9001 alinhamento</li>
+            <li>Relatórios de auditoria automáticos</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-red">WCAG</span>
+            <span class="ctag ctag-red">LGPD</span>
+            <span class="ctag ctag-red">ISO</span>
+          </div>
+        </div>
+
+        <div class="card type-infra">
+          <div class="card-head">
+            <div class="card-icon">🌐</div>
+            <div>
+              <div class="card-title">Arquitetura Enterprise</div>
+              <span class="card-origin orig-comp">COMP §37</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>SaaS — cloud gerenciado</li>
+            <li>Self-hosted — controle total</li>
+            <li>On-Premise — dados internos</li>
+            <li>Hybrid — melhor dos dois</li>
+            <li>Multi-tenant com isolamento</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-gold">SaaS</span>
+            <span class="ctag ctag-gold">Self-hosted</span>
+            <span class="ctag ctag-green">On-Prem</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ FASE 4 ════════════ -->
+  <div class="phase">
+    <div class="phase-dot" style="background:var(--success);"></div>
+    <div class="phase-label">
+      <div class="phase-badge" style="background:var(--success);color:white;">FASE 4 — COGNITIVO</div>
+      <div class="phase-timeline">Meses 15–18+</div>
+      <div class="phase-scope scope-comp">Escopo Complementar</div>
+    </div>
+    <div class="phase-content">
+
+      <div class="milestone">
+        <div class="milestone-icon">🌟</div>
+        <div>
+          <div class="milestone-title">Plataforma Cognitiva Universal — RAG + Graph DB + Execução Inteligente</div>
+          <div class="milestone-sub">Visão final: memória semântica corporativa, grafo de conhecimento, recuperação contextual e aprendizado autônomo</div>
+        </div>
+        <div class="milestone-badge" style="background:#EDFAF5;color:#065F46;">Visão Final §39</div>
+      </div>
+
+      <div class="card-row">
+
+        <div class="card type-evo">
+          <div class="card-head">
+            <div class="card-icon">🔎</div>
+            <div>
+              <div class="card-title">RAG Architecture</div>
+              <span class="card-origin orig-comp">COMP §32</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Recuperação contextual semântica</li>
+            <li>Reutilização inteligente de engenharia</li>
+            <li>Consulta por similaridade (embeddings)</li>
+            <li>Fontes: histórias, RTMs, RNs, CAs, flows</li>
+            <li>Contextualização organizacional automática</li>
+            <li>Documentos corporativos como base RAG</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-green">Qdrant / Weaviate</span>
+            <span class="ctag ctag-green">Embeddings</span>
+          </div>
+        </div>
+
+        <div class="card type-evo">
+          <div class="card-head">
+            <div class="card-icon">🕸️</div>
+            <div>
+              <div class="card-title">Graph Database — Neo4j</div>
+              <span class="card-origin orig-comp">COMP §33</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Grafo de relacionamento entre entidades</li>
+            <li>RN ↔ CA ↔ CT ↔ Story ↔ Defeito</li>
+            <li>Análise de impacto em grafo</li>
+            <li>Clusters de conhecimento semântico</li>
+            <li>Visualização Cytoscape.js avançada</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-green">Neo4j</span>
+            <span class="ctag ctag-green">Graph Queries</span>
+          </div>
+        </div>
+
+        <div class="card type-evo">
+          <div class="card-head">
+            <div class="card-icon">🧪</div>
+            <div>
+              <div class="card-title">Vector Database</div>
+              <span class="card-origin orig-comp">COMP §33</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Qdrant ou Weaviate para embeddings</li>
+            <li>Memória semântica de requisitos</li>
+            <li>Busca por similaridade de contexto</li>
+            <li>Armazenamento de padrões vetorizados</li>
+            <li>Integração com RAG pipeline</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-green">Vector Search</span>
+            <span class="ctag ctag-green">Semantic Memory</span>
+          </div>
+        </div>
+
+        <div class="card type-evo">
+          <div class="card-head">
+            <div class="card-icon">📚</div>
+            <div>
+              <div class="card-title">Knowledge Layer Explorer Avançado</div>
+              <span class="card-origin orig-base">BASE §17.6 + COMP §31</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Exploração semântica de padrões</li>
+            <li>Histórias relacionadas por similaridade</li>
+            <li>Insights históricos de qualidade</li>
+            <li>Linha do tempo de evolução</li>
+            <li>Reutilização automática de flows</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-green">Semântico</span>
+            <span class="ctag ctag-green">Auto-aprendizado</span>
+          </div>
+        </div>
+
+        <div class="card type-evo">
+          <div class="card-head">
+            <div class="card-icon">🤖</div>
+            <div>
+              <div class="card-title">LKDF Execução Inteligente</div>
+              <span class="card-origin orig-comp">COMP §36</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Rastreabilidade executável completa</li>
+            <li>Integração CI/CD (GitHub Actions, Jenkins)</li>
+            <li>Feedback loop execução → requisito</li>
+            <li>Adapters customizados plug-in</li>
+            <li>Relatórios de execução IA-driven</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-green">CI/CD</span>
+            <span class="ctag ctag-blue">5+ Frameworks</span>
+          </div>
+        </div>
+
+        <div class="card type-evo">
+          <div class="card-head">
+            <div class="card-icon">🧩</div>
+            <div>
+              <div class="card-title">Backend Cognitivo Completo</div>
+              <span class="card-origin orig-comp">COMP §35</span>
+            </div>
+          </div>
+          <ul class="card-items">
+            <li>Event-driven processing (Kafka/RabbitMQ)</li>
+            <li>WebSocket para análise em tempo real</li>
+            <li>Orquestrador LKDF completo</li>
+            <li>Pipelines IA com observabilidade</li>
+            <li>APIs abertas para integrações externas</li>
+          </ul>
+          <div class="card-tags">
+            <span class="ctag ctag-gold">Event-Driven</span>
+            <span class="ctag ctag-gold">Real-time</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /timeline-wrap -->
+
+<!-- SUMMARY TABLE -->
+<div class="summary-section">
+
+  <div class="summary-title">
+    📋 Visão Consolidada do Roadmap
+  </div>
+
+  <div class="summary-grid">
+    <div class="sum-card"><div class="sum-n">4</div><div class="sum-l">Fases de entrega</div></div>
+    <div class="sum-card"><div class="sum-n">39</div><div class="sum-l">Módulos totais</div></div>
+    <div class="sum-card"><div class="sum-n">12</div><div class="sum-l">Engines cognitivas</div></div>
+    <div class="sum-card" style="border-left:3px solid var(--b3);"><div class="sum-n" style="color:var(--b3);">20</div><div class="sum-l">Itens escopo original</div></div>
+    <div class="sum-card" style="border-left:3px solid var(--purple);"><div class="sum-n" style="color:var(--purple);">19</div><div class="sum-l">Itens escopo complementar</div></div>
+    <div class="sum-card"><div class="sum-n">18m</div><div class="sum-l">Horizonte total</div></div>
+  </div>
+
+  <table class="full-table">
+    <thead>
+      <tr>
+        <th>Módulo / Funcionalidade</th>
+        <th>Fase</th>
+        <th>Origem</th>
+        <th>Categoria</th>
+        <th>§ Referência</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Conversational Cognitive Core</td><td>Fase 1</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>Core</td><td>§3–4</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Engines Cognitivas — Set Core (Normalize, Req, Val, RN, CA)</td><td>Fase 1</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>IA</td><td>§6.1–6.5</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>LKDF Arquitetura Base (POM→FLOW→SCENARIO→TEST)</td><td>Fase 1</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>Core</td><td>§7–8</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Traceability Engine + RTM Vivo</td><td>Fase 1</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>Core</td><td>§9–11</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Workbench Cognitivo MVP (Angular)</td><td>Fase 1</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>Frontend</td><td>§17</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Artifact Studio MVP (Robot, Playwright, Cypress, Postman)</td><td>Fase 1</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>Core</td><td>§12–13</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Quality Score Engine</td><td>Fase 1</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>Core</td><td>§16</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Knowledge Layer básico</td><td>Fase 1</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>IA</td><td>§14</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Versionamento Contínuo</td><td>Fase 1</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>Core</td><td>§15</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>SQLite + FastAPI + Deploy básico</td><td>Fase 1</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>Infra</td><td>§18–19</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+
+      <tr><td>AI Gateway Layer (desacoplamento + roteamento)</td><td>Fase 2</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>IA</td><td>§22</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Cloud Providers (OpenAI, Azure, Gemini, Groq, Mistral)</td><td>Fase 2</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>IA</td><td>§23.1</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Local Providers (Ollama, vLLM, LM Studio, llama.cpp)</td><td>Fase 2</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>IA</td><td>§23.2</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Deployment Modes (Cloud / Hybrid / On-Premise)</td><td>Fase 2</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>Infra</td><td>§24</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Estratégia Multi-Model (8 modelos, paralelo, roteamento)</td><td>Fase 2</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>IA</td><td>§25–26</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Prompt Management System (versionamento + 10 tipos)</td><td>Fase 2</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>IA</td><td>§27</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Reasoning Pipeline Architecture (9 etapas)</td><td>Fase 2</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>IA</td><td>§28</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Engines Avançadas (Risk, Coverage, Inference, Synthesis, Consistency, Impact, Compliance)</td><td>Fase 2</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>IA</td><td>§6.6–6.12</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+
+      <tr><td>RTM Graph (Cytoscape.js) + Coverage Workbench</td><td>Fase 3</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>Frontend</td><td>§17.3–17.4</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Story Engineering Screen (Monaco Editor)</td><td>Fase 3</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>Frontend</td><td>§17.2</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>AI Observability (logs, tracing, custo, explainability)</td><td>Fase 3</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>IA</td><td>§29</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>AI Security & Governance (anonimização, mascaramento, auditoria)</td><td>Fase 3</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>Gov</td><td>§30</td><td><span class="status-chip s-next">⏳ Futuro</span></td></tr>
+      <tr><td>Knowledge Layer Cognitivo (memória organizacional viva)</td><td>Fase 3</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>IA</td><td>§31</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Compliance & Governança Corporativa (WCAG, LGPD, OWASP, ISO)</td><td>Fase 3</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>Gov</td><td>§38</td><td><span class="status-chip s-next">⏳ Futuro</span></td></tr>
+      <tr><td>PostgreSQL + Multi-tenant + Enterprise Deployment</td><td>Fase 3</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>Infra</td><td>§33 + §37</td><td><span class="status-chip s-wip" style="background:#F0EBFF;color:#7C3AED;">⏸ SQLite OK por ora</span></td></tr>
+
+      <tr><td>RAG Architecture (recuperação semântica contextual)</td><td>Fase 4</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>IA Evolutivo</td><td>§32</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Graph Database Neo4j (grafo de conhecimento)</td><td>Fase 4</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>Infra</td><td>§33</td><td><span class="status-chip s-done">✅ Entregue (SQLite Graph)</span></td></tr>
+      <tr><td>Vector Database (Qdrant / Weaviate + embeddings)</td><td>Fase 4</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>Infra</td><td>§33</td><td><span class="status-chip s-done">✅ Entregue (TF-IDF RAG)</span></td></tr>
+      <tr><td>Knowledge Layer Explorer Avançado</td><td>Fase 4</td><td><span class="card-origin orig-base" style="font-size:10px;">BASE</span></td><td>Frontend</td><td>§17.6</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>LKDF Execução Inteligente + CI/CD Integration</td><td>Fase 4</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>Core</td><td>§36</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+      <tr><td>Backend Cognitivo Completo (Event-driven + WebSocket)</td><td>Fase 4</td><td><span class="card-origin orig-comp" style="font-size:10px;">COMP</span></td><td>Infra</td><td>§35</td><td><span class="status-chip s-done">✅ Entregue</span></td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <strong>AQuA-QE LKDF</strong> — Plataforma Cognitiva de Engenharia de Qualidade Orientada por IA
+  <span style="margin:0 12px;opacity:0.3;">|</span>
+  Roadmap v2.0 — Escopo §1–39 Unificado
+  <span style="margin:0 12px;opacity:0.3;">|</span>
+  Gerado pelo AQuA-QE LKDF Platform
+</div>
+
+</body>
+</html>

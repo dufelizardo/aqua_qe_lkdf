@@ -191,19 +191,51 @@ class GatewayResponse(BaseModel):
 # ─────────────────────────────────────────────
 
 class ExecutionLog(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    request_id: str
-    engine: EngineType
-    provider: ProviderName
-    model: str
-    status: RequestStatus
-    input_tokens: int
-    output_tokens: int
-    latency_ms: float
-    cost_usd: float
-    fallback_used: bool
-    error: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    """Log completo de uma execução — §29 AI Observability."""
+    id:          str = Field(default_factory=lambda: str(uuid.uuid4()))
+    request_id:  str
+    trace_id:    str = Field(default_factory=lambda: str(uuid.uuid4())[:8])
+
+    # What
+    engine:      EngineType
+    provider:    ProviderName
+    model:       str
+    status:      RequestStatus
+
+    # Performance
+    input_tokens:  int   = 0
+    output_tokens: int   = 0
+    latency_ms:    float = 0.0
+    ttft_ms:       float = 0.0   # Time To First Token
+    cost_usd:      float = 0.0
+
+    # Quality
+    confidence_score: float = 1.0   # 0–1, estimated from status/fallback
+    fallback_used:    bool  = False
+    fallback_from:    Optional[str] = None
+    retry_count:      int   = 0
+
+    # Prompt observability
+    prompt_hash:      str  = ""     # SHA8 do system prompt
+    prompt_type:      str  = ""     # elicitation, rtm, risk, etc.
+    system_prompt_len: int = 0
+    user_prompt_len:   int = 0
+
+    # Reasoning trace (simplified)
+    reasoning_steps:   list[str] = []   # engine pipeline steps
+    engine_chain:      list[str] = []   # engines invoked in sequence
+
+    # Error
+    error:       Optional[str] = None
+    error_type:  Optional[str] = None   # timeout, auth, rate_limit, model_error
+
+    # Context
+    deployment_mode: str = "cloud"
+    session_id:      Optional[str] = None
+    user_label:      Optional[str] = None   # custom tag from caller
+
+    timestamp:   datetime = Field(default_factory=datetime.utcnow)
+    completed_at: Optional[datetime] = None
 
 
 class GatewayStats(BaseModel):

@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQuA-QE — AI Observability · §29</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+:root {
+  --b3:#00509E;--b3l:#0070CC;--b3d:#003D7A;--b3pale:#E8F2FB;--b3mid:#C5DEFF;
+  --acc:#00D4AA;--acc2:#00A882;
+  --gold:#F59E0B;--goldp:#FFF8E6;
+  --red:#EF4444;--redp:#FEF2F2;
+  --grn:#10B981;--grnp:#ECFDF5;
+  --pur:#7C3AED;--purp:#F0EBFF;
+  --cyan:#06B6D4;--cyanp:#ECFEFF;
+  --bg:#F0F4FA;--wh:#FFFFFF;
+  --s1:#F7F9FC;--s2:#EFF3F8;
+  --bd:#D5E3F2;--bd2:#B8CEEA;
+  --t1:#0D1F35;--t2:#3A5A7A;--t3:#6B8CAE;
+  --fn:'DM Sans',sans-serif;--fm:'IBM Plex Mono',monospace;
+  --r:8px;--rl:14px;--sh:0 1px 8px rgba(0,80,158,.08);--sh2:0 4px 24px rgba(0,80,158,.13);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;overflow:hidden;}
+.obs{display:grid;grid-template-rows:52px 1fr 28px;height:100vh;}
+
+/* TOPBAR */
+.tb{background:var(--b3d);display:flex;align-items:center;padding:0 16px;gap:12px;
+  background-image:linear-gradient(var(--b3d),var(--b3d)),linear-gradient(90deg,transparent,var(--acc),var(--b3l),transparent);
+  background-origin:border-box;background-clip:padding-box,border-box;border-bottom:2px solid transparent;}
+.lpill{background:linear-gradient(135deg,var(--b3l),var(--acc));color:white;font-weight:700;font-size:11px;padding:3px 10px;border-radius:5px;letter-spacing:.07em;}
+.tb-t{color:white;font-weight:600;font-size:14px;}
+.tb-sep{color:rgba(255,255,255,.2);}
+.tb-sub{color:rgba(255,255,255,.5);font-size:12px;}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.tb-metric{text-align:center;}
+.tb-n{color:var(--acc);font-weight:700;font-size:15px;line-height:1;font-family:var(--fm);}
+.tb-l{color:rgba(255,255,255,.4);font-size:9px;text-transform:uppercase;letter-spacing:.07em;margin-top:1px;}
+.tb-div{width:1px;height:24px;background:rgba(255,255,255,.1);}
+.tb-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.8);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-family:var(--fn);transition:all .15s;}
+.tb-btn:hover{background:rgba(255,255,255,.16);}
+.tb-sdot{width:7px;height:7px;border-radius:50%;}
+.tb-sdot.on{background:var(--acc);box-shadow:0 0 5px var(--acc);animation:sdp 2s infinite;}
+.tb-sdot.off{background:var(--gold);}
+@keyframes sdp{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* BODY */
+.body{display:grid;grid-template-columns:200px 1fr;overflow:hidden;}
+
+/* SIDEBAR */
+.sb{background:var(--wh);border-right:1px solid var(--bd);padding:10px 0;display:flex;flex-direction:column;gap:2px;}
+.sbs{padding:10px 14px 4px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;}
+.nav{display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;color:var(--t2);font-size:13px;transition:all .12s;border-left:3px solid transparent;}
+.nav:hover{background:var(--b3pale);color:var(--b3);}
+.nav.active{background:var(--b3pale);color:var(--b3);border-left-color:var(--b3);font-weight:500;}
+.nav-icon{font-size:15px;width:18px;text-align:center;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);margin-left:auto;animation:live 1.5s infinite;}
+@keyframes live{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+/* MAIN */
+.main{overflow:hidden;display:flex;flex-direction:column;background:var(--bg);}
+.view{display:none;flex:1;overflow:auto;padding:14px;}
+.view.active{display:block;}
+
+/* CARDS */
+.card{background:var(--wh);border:1px solid var(--bd);border-radius:var(--rl);box-shadow:var(--sh);}
+.ch{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;background:var(--s1);}
+.ct{font-size:13px;font-weight:700;color:var(--t1);}
+.csub{font-size:10px;color:var(--t3);margin-top:2px;}
+.cb{padding:14px 16px;}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+
+/* METRIC CARDS */
+.mc{background:var(--wh);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.mc.blue::before{background:var(--b3);}
+.mc.green::before{background:var(--grn);}
+.mc.gold::before{background:var(--gold);}
+.mc.red::before{background:var(--red);}
+.mc.purple::before{background:var(--pur);}
+.mc.cyan::before{background:var(--cyan);}
+.ml{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.mv{font-size:28px;font-weight:700;line-height:1;color:var(--t1);font-family:var(--fm);}
+.msub{font-size:11px;color:var(--t3);margin-top:5px;}
+.mbar{height:4px;background:var(--s2);border-radius:2px;margin-top:8px;overflow:hidden;}
+.mfill{height:100%;border-radius:2px;transition:width .5s;}
+
+/* PERCENTILE TABLE */
+.pct-table{width:100%;border-collapse:collapse;font-size:12px;}
+.pct-table td{padding:5px 10px;border-bottom:1px solid var(--bd);}
+.pct-table tr:last-child td{border-bottom:none;}
+.pct-label{color:var(--t3);font-size:11px;}
+.pct-val{font-family:var(--fm);font-weight:600;color:var(--t1);text-align:right;}
+.pct-bar-wrap{width:80px;}
+.pct-bar{height:6px;border-radius:3px;background:var(--b3);}
+
+/* TRACE TABLE */
+.trace-tbl{width:100%;border-collapse:collapse;}
+.trace-tbl th{background:var(--b3d);color:rgba(255,255,255,.85);padding:8px 10px;text-align:left;font-size:10px;font-weight:500;letter-spacing:.04em;white-space:nowrap;}
+.trace-tbl th:first-child{border-radius:7px 0 0 0;}
+.trace-tbl th:last-child{border-radius:0 7px 0 0;}
+.trace-tbl td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:11px;vertical-align:middle;}
+.trace-tbl tr:hover td{background:var(--b3pale);}
+.trace-tbl tr:last-child td{border-bottom:none;}
+
+/* Status chips */
+.chip{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;}
+.c-ok{background:var(--grnp);color:#065F46;}
+.c-fb{background:var(--goldp);color:#92400E;}
+.c-err{background:var(--redp);color:var(--red);}
+.c-pur{background:var(--purp);color:var(--pur);}
+.c-gray{background:var(--s2);color:var(--t3);}
+
+/* Confidence bar */
+.conf-bar{display:inline-block;width:60px;height:6px;background:var(--s2);border-radius:3px;vertical-align:middle;overflow:hidden;}
+.conf-fill{height:100%;border-radius:3px;transition:width .3s;}
+
+/* Heatmap */
+.hm-grid{display:grid;gap:3px;}
+.hm-cell{border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:var(--fm);cursor:default;transition:all .15s;min-height:32px;}
+.hm-cell:hover{transform:scale(1.08);box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:10;position:relative;}
+.hm-label{font-size:10px;color:var(--t2);font-weight:600;display:flex;align-items:center;}
+
+/* Error types */
+.err-type{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--bd);}
+.err-type:last-child{border-bottom:none;}
+.err-name{font-size:12px;color:var(--t2);width:100px;}
+.err-bar-wrap{flex:1;height:8px;background:var(--s2);border-radius:4px;overflow:hidden;}
+.err-bar{height:100%;border-radius:4px;background:var(--red);}
+.err-count{font-size:11px;font-family:var(--fm);font-weight:600;color:var(--t2);width:28px;text-align:right;}
+
+/* Provider cards */
+.prov-card{border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;transition:all .12s;}
+.prov-card:hover{border-color:var(--b3mid);box-shadow:var(--sh);}
+.prov-name{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.prov-row{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:1px solid var(--bd);}
+.prov-row:last-child{border-bottom:none;}
+.prow-k{color:var(--t3);}
+.prow-v{font-family:var(--fm);font-weight:500;color:var(--t1);}
+
+/* Section divider */
+.sdiv{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--bd);}
+
+/* STATUSBAR */
+.statusbar{background:var(--b3d);display:flex;align-items:center;padding:0 14px;gap:16px;font-size:10px;color:rgba(255,255,255,.45);font-family:var(--fm);border-top:1px solid rgba(255,255,255,.06);}
+.sb-val{color:rgba(255,255,255,.75);font-weight:600;}
+
+/* Chart containers */
+.chart-wrap{position:relative;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:10px;}
+
+/* Toast */
+#toasts{position:fixed;bottom:36px;right:16px;display:flex;flex-direction:column;gap:6px;z-index:9999;}
+.toast{padding:8px 14px;border-radius:7px;font-size:12px;font-weight:500;box-shadow:var(--sh2);animation:ti .2s ease;}
+@keyframes ti{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.t-ok{background:var(--grn);color:white;}.t-inf{background:var(--b3);color:white;}.t-err{background:var(--red);color:white;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .7s linear infinite;display:inline-block;}
+</style>
+</head>
+<body>
+<div class="obs">
+
+<!-- TOPBAR -->
+<div class="tb">
+  <div class="lpill">AQuA-QE</div>
+  <span class="tb-t">AI Observability</span>
+  <span class="tb-sep">·</span>
+  <span class="tb-sub">§29 — Fase 3 · Tracing · Latência · Custo · Confidence</span>
+  <div class="tb-r">
+    <div class="tb-metric"><div class="tb-n" id="tb-reqs">0</div><div class="tb-l">Requests</div></div>
+    <div class="tb-div"></div>
+    <div class="tb-metric"><div class="tb-n" id="tb-suc" style="color:var(--acc)">—%</div><div class="tb-l">Success</div></div>
+    <div class="tb-div"></div>
+    <div class="tb-metric"><div class="tb-n" id="tb-p95">—ms</div><div class="tb-l">P95 Lat</div></div>
+    <div class="tb-div"></div>
+    <div class="tb-metric"><div class="tb-n" id="tb-cost" style="color:var(--grn)">$0</div><div class="tb-l">Custo</div></div>
+    <div class="tb-div"></div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,.5);">
+      <div class="tb-sdot off" id="gw-dot"></div>
+      <span id="gw-txt">gateway</span>
+    </div>
+    <button class="tb-btn" onclick="refresh()">↻ Refresh</button>
+    <button class="tb-btn" onclick="toggleLive()" id="live-btn">▶ Live</button>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- SIDEBAR -->
+  <div class="sb">
+    <div class="sbs">Observabilidade</div>
+    <div class="nav active" onclick="showView('overview',this)"><span class="nav-icon">📊</span>Overview <span class="live-dot" id="live-ind" style="display:none;"></span></div>
+    <div class="nav" onclick="showView('traces',this)"><span class="nav-icon">🔍</span>Traces</div>
+    <div class="nav" onclick="showView('latency',this)"><span class="nav-icon">⏱</span>Latência</div>
+    <div class="nav" onclick="showView('cost',this)"><span class="nav-icon">💰</span>Custo</div>
+    <div class="nav" onclick="showView('providers',this)"><span class="nav-icon">🔌</span>Providers</div>
+    <div class="nav" onclick="showView('heatmap',this)"><span class="nav-icon">🔥</span>Heatmap</div>
+    <div class="nav" onclick="showView('confidence',this)"><span class="nav-icon">🎯</span>Confidence</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- OVERVIEW -->
+    <div class="view active" id="view-overview">
+      <div class="g5" style="margin-bottom:14px;">
+        <div class="mc blue"><div class="ml">Total Requests</div><div class="mv" id="ov-reqs">0</div><div class="msub" id="ov-reqs-sub">—</div></div>
+        <div class="mc green"><div class="ml">Success Rate</div><div class="mv" id="ov-suc">—%</div><div class="mbar"><div class="mfill" id="ov-suc-bar" style="width:0%;background:var(--grn)"></div></div></div>
+        <div class="mc gold"><div class="ml">Fallback Rate</div><div class="mv" id="ov-fb">—%</div><div class="mbar"><div class="mfill" id="ov-fb-bar" style="width:0%;background:var(--gold)"></div></div></div>
+        <div class="mc red"><div class="ml">Error Rate</div><div class="mv" id="ov-err">—%</div><div class="mbar"><div class="mfill" id="ov-err-bar" style="width:0%;background:var(--red)"></div></div></div>
+        <div class="mc cyan"><div class="ml">Custo Total</div><div class="mv" id="ov-cost" style="font-size:20px;">$0</div><div class="msub" id="ov-tokens">0 tokens</div></div>
+      </div>
+
+      <div class="g2" style="margin-bottom:14px;">
+        <div class="card">
+          <div class="ch"><div class="ct">⏱ Distribuição de Latência</div><div class="csub">P50 · P75 · P95 · P99</div></div>
+          <div class="cb"><div class="chart-wrap" style="height:180px;"><canvas id="chart-lat-dist"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ct">📈 Requests por Hora</div><div class="csub">Últimas 24h</div></div>
+          <div class="cb"><div class="chart-wrap" style="height:180px;"><canvas id="chart-hourly"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="ch"><div class="ct">🔌 Requests por Provider</div></div>
+          <div class="cb" id="ov-by-provider"><div style="color:var(--t3);font-size:12px;">Carregando...</div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ct">⚙️ Requests por Engine</div></div>
+          <div class="cb" id="ov-by-engine"><div style="color:var(--t3);font-size:12px;">Carregando...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRACES -->
+    <div class="view" id="view-traces">
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+        <input id="trace-search" placeholder="🔍 Filtrar por engine, provider, status..." oninput="filterTraces()"
+          style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--bd);border-radius:7px;font-family:var(--fn);font-size:12px;outline:none;background:var(--wh);">
+        <select id="trace-status" onchange="filterTraces()" style="padding:8px 10px;border:1px solid var(--bd);border-radius:7px;font-family:var(--fn);font-size:12px;">
+          <option value="">Todos os status</option>
+          <option value="success">✓ Success</option>
+          <option value="fallback">⚡ Fallback</option>
+          <option value="failed">✗ Failed</option>
+        </select>
+        <select id="trace-provider" onchange="filterTraces()" style="padding:8px 10px;border:1px solid var(--bd);border-radius:7px;font-family:var(--fn);font-size:12px;">
+          <option value="">Todos providers</option>
+          <option value="anthropic">Anthropic</option>
+          <option value="openai">OpenAI</option>
+          <option value="google_gemini">Gemini</option>
+          <option value="groq">Groq</option>
+          <option value="mistral">Mistral</option>
+          <option value="ollama">Ollama</option>
+        </select>
+        <span id="trace-count" style="font-size:11px;color:var(--t3);white-space:nowrap;"></span>
+      </div>
+      <div class="card" style="overflow:hidden;">
+        <table class="trace-tbl">
+          <thead><tr>
+            <th>Trace ID</th><th>Timestamp</th><th>Engine</th><th>Provider</th>
+            <th>Modelo</th><th>Status</th><th>Latência</th><th>Tokens</th>
+            <th>Custo</th><th>Conf.</th><th>Fallback</th><th>Erro</th>
+          </tr></thead>
+          <tbody id="trace-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LATENCY -->
+    <div class="view" id="view-latency">
+      <div class="g4" style="margin-bottom:14px;">
+        <div class="mc blue"><div class="ml">P50 (Mediana)</div><div class="mv" id="lat-p50">—ms</div></div>
+        <div class="mc cyan"><div class="ml">P75</div><div class="mv" id="lat-p75">—ms</div></div>
+        <div class="mc gold"><div class="ml">P95</div><div class="mv" id="lat-p95">—ms</div></div>
+        <div class="mc red"><div class="ml">P99</div><div class="mv" id="lat-p99">—ms</div></div>
+      </div>
+      <div class="g2" style="margin-bottom:14px;">
+        <div class="card">
+          <div class="ch"><div class="ct">⏱ Latência P95 por Hora</div><div class="csub">Últimas 24h</div></div>
+          <div class="cb"><div style="height:200px;"><canvas id="chart-lat-hourly"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ct">📊 Distribuição</div><div class="csub">Percentis</div></div>
+          <div class="cb">
+            <table class="pct-table" id="pct-table"></table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct">🔌 Latência por Provider</div><div class="csub">P50 e P95</div></div>
+        <div class="cb" id="lat-by-provider"></div>
+      </div>
+    </div>
+
+    <!-- COST -->
+    <div class="view" id="view-cost">
+      <div class="g3" style="margin-bottom:14px;">
+        <div class="mc green"><div class="ml">Custo Total</div><div class="mv" id="cost-total" style="font-size:22px;">$0</div></div>
+        <div class="mc cyan"><div class="ml">Tokens Input</div><div class="mv" id="cost-tin">0</div></div>
+        <div class="mc blue"><div class="ml">Tokens Output</div><div class="mv" id="cost-tout">0</div></div>
+      </div>
+      <div class="g2" style="margin-bottom:14px;">
+        <div class="card">
+          <div class="ch"><div class="ct">💰 Custo por Hora</div><div class="csub">Últimas 24h</div></div>
+          <div class="cb"><div style="height:200px;"><canvas id="chart-cost-hourly"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ct">🥧 Custo por Modelo</div></div>
+          <div class="cb"><div style="height:200px;"><canvas id="chart-cost-model"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROVIDERS -->
+    <div class="view" id="view-providers">
+      <div class="sdiv">Métricas por Provider</div>
+      <div class="g2" id="providers-grid"></div>
+    </div>
+
+    <!-- HEATMAP -->
+    <div class="view" id="view-heatmap">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="ch"><div class="ct">🔥 Latência Média — Provider × Engine</div><div class="csub">Médias em ms · verde=rápido · vermelho=lento</div></div>
+        <div class="cb">
+          <div id="heatmap-wrap" style="overflow-x:auto;">
+            <div style="color:var(--t3);font-size:12px;">Carregando heatmap...</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct">⚙️ Latência por Engine</div></div>
+        <div class="cb" id="engine-bars"></div>
+      </div>
+    </div>
+
+    <!-- CONFIDENCE -->
+    <div class="view" id="view-confidence">
+      <div class="sdiv">Distribuição de Confidence Score</div>
+      <div class="g2" style="margin-bottom:14px;">
+        <div class="card">
+          <div class="ch"><div class="ct">🎯 Confidence por Faixa</div><div class="csub">0–100%</div></div>
+          <div class="cb"><div style="height:220px;"><canvas id="chart-conf"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ct">🔍 Tipos de Erro</div><div class="csub">Classificação automática</div></div>
+          <div class="cb" id="error-types"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct">📖 Explainability — Últimos Traces</div><div class="csub">Reasoning steps · Engine chain · Error type</div></div>
+        <div class="cb" id="explainability-list" style="max-height:320px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /body -->
+
+<!-- STATUSBAR -->
+<div class="statusbar">
+  <span>AQuA-QE AI Observability · §29</span>
+  <span style="color:rgba(255,255,255,.15)">|</span>
+  <span>Traces: <span class="sb-val" id="sb-traces">0</span></span>
+  <span>Providers: <span class="sb-val" id="sb-provs">0</span></span>
+  <span>Engines: <span class="sb-val" id="sb-engs">0</span></span>
+  <span style="color:rgba(255,255,255,.15)">|</span>
+  <span>Gateway: <span class="sb-val" id="sb-gw">offline</span></span>
+  <span style="margin-left:auto;" id="sb-last">—</span>
+</div>
+
+</div><!-- /obs -->
+<div id="toasts"></div>
+
+<script>
+// ════════════════════════════════════
+// CONFIG & STATE
+// ════════════════════════════════════
+const GW_URL = 'http://localhost:8080';
+const OBS = { online:false, liveTimer:null, isLive:false, data:{}, allTraces:[], charts:{} };
+
+// ════════════════════════════════════
+// INIT
+// ════════════════════════════════════
+async function init() {
+  await probeGateway();
+  if (OBS.online) await refresh();
+  else loadMockData();
+}
+
+async function probeGateway() {
+  try {
+    const r = await fetch(`${GW_URL}/health`, { signal: AbortSignal.timeout(2500) });
+    const d = await r.json();
+    if (d.status === 'ok') {
+      OBS.online = true;
+      document.getElementById('gw-dot').className = 'tb-sdot on';
+      document.getElementById('gw-txt').textContent = 'gateway online';
+      document.getElementById('sb-gw').textContent = 'online ✓';
+      toast('Gateway conectado', 'ok');
+    }
+  } catch(e) {
+    document.getElementById('sb-gw').textContent = 'offline (mock)';
+  }
+}
+
+async function refresh() {
+  try {
+    const [summary, byProv, byEng, trend, traces, heatmap, cost, conf] = await Promise.all([
+      api('/observability/summary'),
+      api('/observability/by-provider'),
+      api('/observability/by-engine'),
+      api('/observability/hourly-trend'),
+      api('/observability/traces?limit=100'),
+      api('/observability/latency-heatmap'),
+      api('/observability/cost-breakdown'),
+      api('/observability/confidence'),
+    ]);
+    OBS.data = { summary, byProv, byEng, trend, heatmap, cost, conf };
+    OBS.allTraces = traces.traces || [];
+    renderAll();
+    document.getElementById('sb-last').textContent = 'atualizado ' + new Date().toLocaleTimeString('pt-BR');
+  } catch(e) {
+    toast('Erro ao carregar dados: ' + e.message, 'err');
+    loadMockData();
+  }
+}
+
+// ════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════
+function showView(id, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  renderView(id);
+}
+
+function renderView(id) {
+  if (!OBS.data.summary) return;
+  if (id === 'overview')    renderOverview();
+  if (id === 'traces')      renderTraces();
+  if (id === 'latency')     renderLatency();
+  if (id === 'cost')        renderCost();
+  if (id === 'providers')   renderProviders();
+  if (id === 'heatmap')     renderHeatmap();
+  if (id === 'confidence')  renderConfidence();
+}
+
+function renderAll() {
+  renderOverview();
+  renderTraces();
+  renderLatency();
+  renderCost();
+  renderProviders();
+  renderHeatmap();
+  renderConfidence();
+  updateTopbar();
+}
+
+// ════════════════════════════════════
+// TOPBAR
+// ════════════════════════════════════
+function updateTopbar() {
+  const s = OBS.data.summary || {};
+  document.getElementById('tb-reqs').textContent = s.total_requests || 0;
+  document.getElementById('tb-suc').textContent  = (s.success_rate || 0).toFixed(1) + '%';
+  document.getElementById('tb-p95').textContent  = (s.latency_percentiles?.p95 || 0).toFixed(0) + 'ms';
+  document.getElementById('tb-cost').textContent = '$' + (s.total_cost_usd || 0).toFixed(4);
+  document.getElementById('sb-traces').textContent = OBS.allTraces.length;
+  document.getElementById('sb-provs').textContent  = Object.keys(OBS.data.byProv || {}).length;
+  document.getElementById('sb-engs').textContent   = Object.keys(OBS.data.byEng  || {}).length;
+}
+
+// ════════════════════════════════════
+// OVERVIEW
+// ════════════════════════════════════
+function renderOverview() {
+  const s = OBS.data.summary || {};
+  const t = OBS.data.trend?.trend || [];
+  const bp = OBS.data.byProv || {};
+  const be = OBS.data.byEng  || {};
+
+  // Metric cards
+  const reqs = s.total_requests || 0;
+  document.getElementById('ov-reqs').textContent     = reqs;
+  document.getElementById('ov-reqs-sub').textContent = reqs + ' execuções registradas';
+  document.getElementById('ov-suc').textContent      = (s.success_rate || 0).toFixed(1) + '%';
+  document.getElementById('ov-fb').textContent       = (s.fallback_rate || 0).toFixed(1) + '%';
+  document.getElementById('ov-err').textContent      = (s.error_rate || 0).toFixed(1) + '%';
+  document.getElementById('ov-cost').textContent     = '$' + (s.total_cost_usd || 0).toFixed(6);
+  document.getElementById('ov-tokens').textContent   = ((s.total_input_tokens||0) + (s.total_output_tokens||0)).toLocaleString() + ' tokens';
+  document.getElementById('ov-suc-bar').style.width  = (s.success_rate || 0) + '%';
+  document.getElementById('ov-fb-bar').style.width   = Math.min(s.fallback_rate || 0, 100) + '%';
+  document.getElementById('ov-err-bar').style.width  = Math.min(s.error_rate || 0, 100) + '%';
+
+  // Latency distribution chart
+  const lp = s.latency_percentiles || {};
+  makeChart('chart-lat-dist', 'bar', {
+    labels: ['P50', 'P75', 'P95', 'P99', 'Max'],
+    datasets: [{
+      data: [lp.p50||0, lp.p75||0, lp.p95||0, lp.p99||0, lp.max||0],
+      backgroundColor: ['#00D4AA','#0070CC','#F59E0B','#EF4444','#7C3AED'],
+      borderRadius: 4, borderSkipped: false,
+    }]
+  }, { indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{ticks:{callback:v=>v+'ms'}}} });
+
+  // Hourly chart
+  makeChart('chart-hourly', 'line', {
+    labels: t.map(h => h.label),
+    datasets: [{
+      label: 'Requests',
+      data: t.map(h => h.requests),
+      borderColor: '#00509E', backgroundColor: 'rgba(0,80,158,.1)',
+      fill: true, tension: 0.4, pointRadius: 3,
+    }]
+  }, { plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} });
+
+  // By provider bars
+  renderBarList('ov-by-provider', bp, 'requests', 'var(--b3)', v => v + ' req');
+  renderBarList('ov-by-engine',   be, 'requests', 'var(--pur)', v => v + ' req');
+}
+
+// ════════════════════════════════════
+// TRACES
+// ════════════════════════════════════
+function filterTraces() {
+  const q    = (document.getElementById('trace-search').value || '').toLowerCase();
+  const st   = document.getElementById('trace-status').value;
+  const prov = document.getElementById('trace-provider').value;
+  const filt = OBS.allTraces.filter(t => {
+    if (st   && t.status !== st)     return false;
+    if (prov && t.provider !== prov) return false;
+    if (q && ![t.engine,t.provider,t.model,t.status,t.error||''].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  document.getElementById('trace-count').textContent = filt.length + ' de ' + OBS.allTraces.length;
+  renderTracesTable(filt);
+}
+
+function renderTraces() {
+  filterTraces();
+}
+
+function renderTracesTable(traces) {
+  const tbody = document.getElementById('trace-tbody');
+  if (!traces.length) {
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--t3);">Nenhum trace encontrado. Execute requests no chat ou gateway-panel.</td></tr>';
+    return;
+  }
+  const statusChip = s => `<span class="chip ${s==='success'?'c-ok':s==='fallback'?'c-fb':s==='failed'?'c-err':'c-gray'}">${s}</span>`;
+  const confBar = c => `<div style="display:flex;align-items:center;gap:5px;"><div class="conf-bar"><div class="conf-fill" style="width:${c*100}%;background:${c>.85?'var(--grn)':c>.6?'var(--gold)':'var(--red)'}"></div></div><span style="font-size:10px;font-family:var(--fm);">${(c*100).toFixed(0)}%</span></div>`;
+  tbody.innerHTML = traces.slice(0, 100).map(t => {
+    const lat = t.latency_ms || 0;
+    const latColor = lat < 1000 ? 'var(--grn)' : lat < 5000 ? 'var(--gold)' : 'var(--red)';
+    const ts  = (t.timestamp || '').substring(11, 23);
+    return `<tr>
+      <td><span style="font-family:var(--fm);font-size:10px;color:var(--t3);">${t.trace_id || t.id}</span></td>
+      <td style="font-family:var(--fm);font-size:10px;color:var(--t3);white-space:nowrap;">${ts}</td>
+      <td><span style="font-family:var(--fm);font-size:11px;">${t.engine}</span></td>
+      <td><span class="chip c-pur">${t.provider}</span></td>
+      <td style="font-family:var(--fm);font-size:10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.model}">${t.model}</td>
+      <td>${statusChip(t.status)}</td>
+      <td style="font-family:var(--fm);color:${latColor};font-weight:600;">${lat.toFixed(0)}ms</td>
+      <td style="font-family:var(--fm);font-size:10px;">${t.input_tokens}+${t.output_tokens}</td>
+      <td style="font-family:var(--fm);color:var(--grn);font-size:10px;">$${(t.cost_usd||0).toFixed(6)}</td>
+      <td>${confBar(t.confidence||1)}</td>
+      <td>${t.fallback ? `<span class="chip c-fb">⚡ ${t.fallback_from||'—'}</span>` : '<span style="color:var(--t3);">—</span>'}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--red);" title="${t.error||''}">${t.error ? `<span class="chip c-err">${t.error_type||'err'}</span>` : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════
+// LATENCY
+// ════════════════════════════════════
+function renderLatency() {
+  const s  = OBS.data.summary || {};
+  const t  = OBS.data.trend?.trend || [];
+  const bp = OBS.data.byProv || {};
+  const lp = s.latency_percentiles || {};
+
+  document.getElementById('lat-p50').textContent = (lp.p50||0).toFixed(0) + 'ms';
+  document.getElementById('lat-p75').textContent = (lp.p75||0).toFixed(0) + 'ms';
+  document.getElementById('lat-p95').textContent = (lp.p95||0).toFixed(0) + 'ms';
+  document.getElementById('lat-p99').textContent = (lp.p99||0).toFixed(0) + 'ms';
+
+  // P95 hourly
+  makeChart('chart-lat-hourly', 'line', {
+    labels: t.map(h => h.label),
+    datasets: [
+      { label:'P95', data: t.map(h => h.p95_latency), borderColor:'#EF4444', tension:.4, fill:false, pointRadius:2 },
+      { label:'Média', data: t.map(h => h.avg_latency), borderColor:'#0070CC', tension:.4, fill:false, pointRadius:2 },
+    ]
+  }, { plugins:{legend:{position:'top',labels:{font:{size:11}}}}, scales:{y:{ticks:{callback:v=>v+'ms'}}} });
+
+  // Percentile table
+  const rows = [
+    ['Mínimo',   lp.min||0],
+    ['P50',      lp.p50||0],
+    ['P75',      lp.p75||0],
+    ['P95',      lp.p95||0],
+    ['P99',      lp.p99||0],
+    ['Máximo',   lp.max||0],
+    ['Média',    lp.mean||0],
+  ];
+  const maxLat = lp.max || 1;
+  document.getElementById('pct-table').innerHTML = rows.map(([l,v]) => `
+    <tr>
+      <td class="pct-label">${l}</td>
+      <td><div class="pct-bar-wrap"><div class="pct-bar" style="width:${v/maxLat*100}%;height:6px;border-radius:3px;background:var(--b3);"></div></div></td>
+      <td class="pct-val">${v.toFixed(0)}ms</td>
+    </tr>`).join('');
+
+  // By provider latency bars
+  const provLatencies = Object.entries(bp).map(([p, d]) => [p, d.avg_latency||0, d.p95_latency||0]);
+  const maxProvLat = Math.max(...provLatencies.map(r=>r[2]), 1);
+  document.getElementById('lat-by-provider').innerHTML = provLatencies
+    .sort((a,b)=>b[1]-a[1])
+    .map(([p,avg,p95]) => `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--t2);width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p}</div>
+        <div style="flex:1;">
+          <div style="height:7px;background:var(--s2);border-radius:4px;overflow:hidden;position:relative;">
+            <div style="height:100%;width:${p95/maxProvLat*100}%;background:var(--gold);border-radius:4px;"></div>
+            <div style="position:absolute;top:0;left:0;height:100%;width:${avg/maxProvLat*100}%;background:var(--b3);border-radius:4px;"></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:2px;font-size:10px;color:var(--t3);">
+            <span style="color:var(--b3);">avg ${avg.toFixed(0)}ms</span>
+            <span style="color:var(--gold);">P95 ${p95.toFixed(0)}ms</span>
+          </div>
+        </div>
+      </div>`).join('');
+}
+
+// ════════════════════════════════════
+// COST
+// ════════════════════════════════════
+function renderCost() {
+  const s  = OBS.data.summary || {};
+  const c  = OBS.data.cost || {};
+  const t  = OBS.data.trend?.trend || [];
+
+  document.getElementById('cost-total').textContent = '$' + (s.total_cost_usd||0).toFixed(6);
+  document.getElementById('cost-tin').textContent   = (s.total_input_tokens ||0).toLocaleString();
+  document.getElementById('cost-tout').textContent  = (s.total_output_tokens||0).toLocaleString();
+
+  // Hourly cost
+  const byHour = c.by_hour || {};
+  const hours  = t.map(h => h.hour);
+  makeChart('chart-cost-hourly', 'bar', {
+    labels: t.map(h => h.label),
+    datasets: [{ label:'Custo ($)', data: hours.map(h => byHour[h]||0), backgroundColor:'rgba(16,185,129,.7)', borderRadius:3 }]
+  }, { plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>'$'+v.toFixed(4)}}} });
+
+  // Cost by model pie
+  const byModel = c.by_model || {};
+  const models  = Object.keys(byModel).slice(0,8);
+  const colors  = ['#00509E','#0070CC','#00D4AA','#7C3AED','#F59E0B','#EF4444','#06B6D4','#10B981'];
+  makeChart('chart-cost-model', 'doughnut', {
+    labels: models.map(m => m.substring(0,20)),
+    datasets: [{ data: models.map(m => byModel[m]), backgroundColor: colors, borderWidth:0, hoverOffset:5 }]
+  }, { plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:10}}}, cutout:'60%' });
+}
+
+// ════════════════════════════════════
+// PROVIDERS
+// ════════════════════════════════════
+function renderProviders() {
+  const bp = OBS.data.byProv || {};
+  const icons = { anthropic:'🤖', openai:'🟢', google_gemini:'🔴', groq:'⚡', mistral:'🌪️', ollama:'🦙', vllm:'🚀', lm_studio:'🖥️' };
+  document.getElementById('providers-grid').innerHTML = Object.entries(bp).map(([prov, d]) => `
+    <div class="prov-card">
+      <div class="prov-name">${icons[prov]||'🔌'} ${prov}</div>
+      <div class="prov-row"><span class="prow-k">Requests</span><span class="prow-v">${d.requests}</span></div>
+      <div class="prov-row"><span class="prow-k">Latência média</span><span class="prow-v">${(d.avg_latency||0).toFixed(0)}ms</span></div>
+      <div class="prov-row"><span class="prow-k">P95 Latência</span><span class="prow-v">${(d.p95_latency||0).toFixed(0)}ms</span></div>
+      <div class="prov-row"><span class="prow-k">Custo total</span><span class="prow-v" style="color:var(--grn);">$${(d.total_cost||0).toFixed(6)}</span></div>
+      <div class="prov-row"><span class="prow-k">Custo médio</span><span class="prow-v">$${(d.avg_cost||0).toFixed(6)}</span></div>
+      <div class="prov-row"><span class="prow-k">Tokens</span><span class="prow-v">${(d.total_tokens||0).toLocaleString()}</span></div>
+      <div class="prov-row"><span class="prow-k">Taxa erro</span><span class="prow-v" style="color:${(d.error_rate||0)>5?'var(--red)':'var(--grn)'};">${(d.error_rate||0).toFixed(1)}%</span></div>
+      <div class="prov-row"><span class="prow-k">Fallbacks</span><span class="prow-v">${d.fallbacks||0}</span></div>
+    </div>`).join('') || '<div style="color:var(--t3);font-size:13px;padding:20px;">Nenhum dado de provider ainda. Execute requests para ver métricas.</div>';
+}
+
+// ════════════════════════════════════
+// HEATMAP
+// ════════════════════════════════════
+function renderHeatmap() {
+  const hm = OBS.data.heatmap || { providers:[], engines:[], matrix:[] };
+  const be = OBS.data.byEng || {};
+  const wrap = document.getElementById('heatmap-wrap');
+
+  if (!hm.providers.length) {
+    wrap.innerHTML = '<div style="color:var(--t3);font-size:12px;padding:20px;">Sem dados suficientes para o heatmap. Execute requests em diferentes engines e providers.</div>';
+  } else {
+    const getColor = v => {
+      if (v === null) return 'rgba(0,0,0,.05)';
+      if (v < 500)  return `rgba(16,185,129,${.4+v/2000})`;
+      if (v < 2000) return `rgba(245,158,11,${.4+v/8000})`;
+      return `rgba(239,68,68,${.4+Math.min(v/10000,.5)})`;
+    };
+    const cellW = 80;
+    let html = `<div style="display:grid;grid-template-columns:100px ${hm.engines.map(()=>cellW+'px').join(' ')};gap:3px;min-width:max-content;">
+      <div></div>
+      ${hm.engines.map(e=>`<div class="hm-label" style="justify-content:center;font-size:9px;margin-bottom:4px;">${e}</div>`).join('')}
+    `;
+    hm.matrix.forEach((row, ri) => {
+      html += `<div class="hm-label">${hm.providers[ri]}</div>`;
+      row.forEach((v,ci) => {
+        html += `<div class="hm-cell" style="background:${getColor(v)};color:${v!==null?'rgba(255,255,255,.9)':'rgba(0,0,0,.2)'};"
+          title="${hm.providers[ri]} × ${hm.engines[ci]}: ${v!==null?v+'ms':'—'}">${v!==null?v+'ms':'—'}</div>`;
+      });
+    });
+    html += '</div>';
+    wrap.innerHTML = html;
+  }
+
+  // Engine bars
+  const maxLat = Math.max(...Object.values(be).map(d=>d.avg_latency||0), 1);
+  document.getElementById('engine-bars').innerHTML = Object.entries(be)
+    .sort((a,b)=>(b[1].avg_latency||0)-(a[1].avg_latency||0))
+    .map(([eng, d]) => `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--t2);width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${eng}</div>
+        <div style="flex:1;height:8px;background:var(--s2);border-radius:4px;overflow:hidden;">
+          <div style="height:100%;width:${(d.avg_latency||0)/maxLat*100}%;background:var(--b3);border-radius:4px;transition:width .5s;"></div>
+        </div>
+        <div style="font-size:11px;font-family:var(--fm);color:var(--t2);width:55px;text-align:right;">${(d.avg_latency||0).toFixed(0)}ms</div>
+        <div style="font-size:10px;color:var(--t3);width:36px;">${d.requests}req</div>
+      </div>`).join('') || '<div style="color:var(--t3);font-size:12px;">Sem dados</div>';
+}
+
+// ════════════════════════════════════
+// CONFIDENCE
+// ════════════════════════════════════
+function renderConfidence() {
+  const conf = OBS.data.conf || {'0-50':0,'50-70':0,'70-85':0,'85-95':0,'95-100':0};
+
+  makeChart('chart-conf', 'doughnut', {
+    labels: ['0–50%','50–70%','70–85%','85–95%','95–100%'],
+    datasets:[{ data:[conf['0-50'],conf['50-70'],conf['70-85'],conf['85-95'],conf['95-100']],
+      backgroundColor:['#EF4444','#F97316','#F59E0B','#0070CC','#10B981'], borderWidth:0, hoverOffset:5 }]
+  }, { plugins:{legend:{position:'right',labels:{font:{size:11},padding:8,boxWidth:10}}}, cutout:'55%' });
+
+  // Error types from traces
+  const errCounts = {};
+  OBS.allTraces.filter(t=>t.error_type).forEach(t => { errCounts[t.error_type] = (errCounts[t.error_type]||0)+1; });
+  const maxErr = Math.max(...Object.values(errCounts), 1);
+  document.getElementById('error-types').innerHTML = Object.keys(errCounts).length
+    ? Object.entries(errCounts).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
+        <div class="err-type">
+          <div class="err-name">${k}</div>
+          <div class="err-bar-wrap"><div class="err-bar" style="width:${v/maxErr*100}%"></div></div>
+          <div class="err-count">${v}</div>
+        </div>`).join('')
+    : '<div style="color:var(--grn);font-size:12px;padding:8px 0;">✓ Nenhum erro classificado</div>';
+
+  // Explainability list
+  document.getElementById('explainability-list').innerHTML = OBS.allTraces.slice(0,10).map(t => `
+    <div style="padding:10px 0;border-bottom:1px solid var(--bd);">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:5px;">
+        <span style="font-family:var(--fm);font-size:10px;color:var(--t3);">${t.trace_id}</span>
+        <span class="chip ${t.status==='success'?'c-ok':t.status==='fallback'?'c-fb':'c-err'}">${t.status}</span>
+        <span style="font-size:11px;color:var(--t2);">${t.engine} → ${t.provider}</span>
+        <span style="margin-left:auto;font-size:11px;font-family:var(--fm);color:${t.confidence>.85?'var(--grn)':t.confidence>.6?'var(--gold)':'var(--red)'};">${(t.confidence*100).toFixed(0)}%</span>
+      </div>
+      ${t.reasoning?.length ? `<div style="font-size:11px;color:var(--t3);">🔗 Steps: ${t.reasoning.join(' → ')}</div>` : ''}
+      ${t.engine_chain?.length ? `<div style="font-size:11px;color:var(--pur);">⚙️ Chain: ${t.engine_chain.join(' → ')}</div>` : ''}
+      ${t.error ? `<div style="font-size:11px;color:var(--red);">❌ ${t.error_type||'err'}: ${(t.error||'').substring(0,80)}</div>` : ''}
+      ${t.fallback ? `<div style="font-size:11px;color:var(--gold);">⚡ Fallback de ${t.fallback_from||'—'} → ${t.provider}</div>` : ''}
+    </div>`).join('') || '<div style="color:var(--t3);font-size:12px;padding:12px 0;">Sem traces com dados de explainability.</div>';
+}
+
+// ════════════════════════════════════
+// MOCK DATA (offline)
+// ════════════════════════════════════
+function loadMockData() {
+  const providers = ['anthropic','google_gemini','groq','mistral','ollama'];
+  const engines   = ['requirement','risk','coverage','compliance','inference','artifact'];
+  const statuses  = ['success','success','success','fallback','failed'];
+  const models    = { anthropic:'claude-sonnet-4-5', google_gemini:'gemini-2.0-flash', groq:'llama-3.3-70b-versatile', mistral:'mistral-large-latest', ollama:'llama3.1:8b' };
+
+  OBS.allTraces = Array.from({length:60}, (_,i) => {
+    const prov = providers[i%5];
+    const eng  = engines[i%6];
+    const st   = statuses[i%5];
+    const lat  = 300 + Math.random()*4000;
+    const conf = st==='success' ? .85+Math.random()*.15 : st==='fallback' ? .65+Math.random()*.2 : .1+Math.random()*.3;
+    return {
+      id: 'mock-' + i, trace_id: (Math.random().toString(36).slice(2,10)),
+      timestamp: new Date(Date.now() - i*180000).toISOString(),
+      engine: eng, provider: prov, model: models[prov] || 'model',
+      status: st, latency_ms: lat, ttft_ms: lat*.3,
+      input_tokens: 200+Math.floor(Math.random()*800),
+      output_tokens: 400+Math.floor(Math.random()*1200),
+      cost_usd: Math.random()*.015,
+      confidence: conf, fallback: st==='fallback',
+      fallback_from: st==='fallback' ? providers[(i+2)%5] : null,
+      error: st==='failed' ? 'HTTP 503: Service overloaded' : null,
+      error_type: st==='failed' ? 'overload' : null,
+      deployment: 'cloud', reasoning:[], engine_chain:[],
+    };
+  });
+
+  // Build summary
+  const lats = OBS.allTraces.map(t=>t.latency_ms).sort((a,b)=>a-b);
+  const pct  = p => lats[Math.min(Math.floor(lats.length*p/100), lats.length-1)] || 0;
+  const success = OBS.allTraces.filter(t=>t.status==='success').length;
+  const fallback = OBS.allTraces.filter(t=>t.status==='fallback').length;
+  const failed   = OBS.allTraces.filter(t=>t.status==='failed').length;
+  const total    = OBS.allTraces.length;
+  const totalCost = OBS.allTraces.reduce((s,t)=>s+t.cost_usd,0);
+
+  OBS.data = {
+    summary: {
+      total_requests: total,
+      success_rate:   Math.round(success/total*100),
+      fallback_rate:  Math.round(fallback/total*100),
+      error_rate:     Math.round(failed/total*100),
+      total_cost_usd: totalCost,
+      total_input_tokens:  OBS.allTraces.reduce((s,t)=>s+t.input_tokens,0),
+      total_output_tokens: OBS.allTraces.reduce((s,t)=>s+t.output_tokens,0),
+      latency_percentiles: { p50:pct(50),p75:pct(75),p95:pct(95),p99:pct(99),min:lats[0],max:lats[lats.length-1],mean:Math.round(lats.reduce((a,b)=>a+b,0)/lats.length) },
+      cost_percentiles: {},
+    },
+    byProv: Object.fromEntries(providers.map(p => {
+      const pts = OBS.allTraces.filter(t=>t.provider===p);
+      const pLats = pts.map(t=>t.latency_ms).sort((a,b)=>a-b);
+      return [p, {
+        requests: pts.length,
+        errors: pts.filter(t=>t.status==='failed').length,
+        fallbacks: pts.filter(t=>t.fallback).length,
+        error_rate: Math.round(pts.filter(t=>t.status==='failed').length/Math.max(pts.length,1)*100),
+        avg_latency: Math.round(pLats.reduce((a,b)=>a+b,0)/Math.max(pLats.length,1)),
+        p95_latency: pLats[Math.floor(pLats.length*.95)]||0,
+        total_cost:  pts.reduce((s,t)=>s+t.cost_usd,0),
+        avg_cost:    pts.reduce((s,t)=>s+t.cost_usd,0)/Math.max(pts.length,1),
+        total_tokens:pts.reduce((s,t)=>s+t.input_tokens+t.output_tokens,0),
+      }];
+    })),
+    byEng: Object.fromEntries(engines.map(e => {
+      const ets = OBS.allTraces.filter(t=>t.engine===e);
+      const eLats = ets.map(t=>t.latency_ms);
+      return [e, {
+        requests: ets.length,
+        avg_latency: Math.round(eLats.reduce((a,b)=>a+b,0)/Math.max(eLats.length,1)),
+        p95_latency: [...eLats].sort((a,b)=>a-b)[Math.floor(eLats.length*.95)]||0,
+        total_cost: ets.reduce((s,t)=>s+t.cost_usd,0),
+        error_rate: Math.round(ets.filter(t=>t.status==='failed').length/Math.max(ets.length,1)*100),
+      }];
+    })),
+    trend: { trend: Array.from({length:24},(_,i)=>({ hour:'',label:`${String(23-i).padStart(2,'0')}:00`, requests:Math.floor(Math.random()*8), avg_latency:500+Math.random()*3000, p95_latency:1000+Math.random()*5000, total_cost:Math.random()*.05 })) },
+    heatmap: buildMockHeatmap(providers,engines,OBS.allTraces),
+    cost: {
+      by_model: Object.fromEntries(Object.entries(models).map(([p,m])=>[m,OBS.allTraces.filter(t=>t.provider===p).reduce((s,t)=>s+t.cost_usd,0)])),
+      by_hour: {},
+    },
+    conf: {'0-50':failed*2,'50-70':Math.floor(fallback*.3),'70-85':Math.floor(fallback*.7),'85-95':Math.floor(success*.3),'95-100':Math.floor(success*.7)},
+  };
+
+  renderAll();
+  toast('Modo offline — dados simulados (60 traces)', 'inf');
+}
+
+function buildMockHeatmap(providers, engines, traces) {
+  const matrix = providers.map(p =>
+    engines.map(e => {
+      const ts = traces.filter(t=>t.provider===p&&t.engine===e);
+      return ts.length ? Math.round(ts.reduce((s,t)=>s+t.latency_ms,0)/ts.length) : null;
+    })
+  );
+  return { providers, engines, matrix };
+}
+
+// ════════════════════════════════════
+// CHARTS
+// ════════════════════════════════════
+function makeChart(id, type, data, options={}) {
+  if (OBS.charts[id]) { OBS.charts[id].destroy(); }
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  OBS.charts[id] = new Chart(ctx, {
+    type,
+    data,
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ font:{size:11,family:'DM Sans'}, color:'#3A5A7A', padding:10, boxWidth:12 }}, tooltip:{ titleFont:{size:11}, bodyFont:{size:11} }},
+      ...options
+    }
+  });
+}
+
+// ════════════════════════════════════
+// BAR LIST HELPER
+// ════════════════════════════════════
+function renderBarList(elId, data, field, color, labelFn) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const entries = Object.entries(data).sort((a,b)=>(b[1][field]||0)-(a[1][field]||0));
+  const max = entries[0]?.[1]?.[field] || 1;
+  el.innerHTML = entries.length
+    ? entries.map(([k,v]) => `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;">
+          <div style="font-size:12px;color:var(--t2);width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k}</div>
+          <div style="flex:1;height:7px;background:var(--s2);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${(v[field]||0)/max*100}%;background:${color};border-radius:4px;transition:width .5s;"></div>
+          </div>
+          <div style="font-size:11px;font-family:var(--fm);color:var(--t2);width:50px;text-align:right;">${labelFn(v[field]||0)}</div>
+        </div>`).join('')
+    : '<div style="color:var(--t3);font-size:12px;">Sem dados</div>';
+}
+
+// ════════════════════════════════════
+// LIVE MODE
+// ════════════════════════════════════
+function toggleLive() {
+  OBS.isLive = !OBS.isLive;
+  const btn = document.getElementById('live-btn');
+  const ind = document.getElementById('live-ind');
+  if (OBS.isLive) {
+    btn.textContent = '⏸ Live';
+    btn.style.background = 'rgba(0,212,170,.3)';
+    ind.style.display = 'block';
+    OBS.liveTimer = setInterval(() => { if (OBS.online) refresh(); }, 5000);
+    toast('Live mode ativado (5s)', 'ok');
+  } else {
+    btn.textContent = '▶ Live';
+    btn.style.background = '';
+    ind.style.display = 'none';
+    clearInterval(OBS.liveTimer);
+  }
+}
+
+// ════════════════════════════════════
+// UTILS
+// ════════════════════════════════════
+async function api(path) {
+  const r = await fetch(`${GW_URL}/api/v1${path}`);
+  if (!r.ok) throw new Error(r.statusText);
+  return r.json();
+}
+
+function toast(msg, type='inf') {
+  const map = {ok:'t-ok',inf:'t-inf',err:'t-err'};
+  const el = Object.assign(document.createElement('div'),{className:'toast '+(map[type]||'t-inf'),textContent:msg});
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
+
+// ════════════════════════════════════
+// BOOT
+// ════════════════════════════════════
+window.addEventListener('load', init);
+</script>
+</body>
+</html>

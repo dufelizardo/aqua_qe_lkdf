@@ -1,13 +1,14 @@
 """
 AQuA-QE LKDF — AI Gateway Layer
 Provider Adapters: implementações para cada provider
+Inclui streaming real (SSE) para todos os providers.
 """
 from __future__ import annotations
 import time
 import json
 import asyncio
 from abc import ABC, abstractmethod
-from typing import AsyncIterator
+from typing import AsyncIterator, Optional
 import httpx
 
 from backend.models.schemas import (
@@ -31,6 +32,17 @@ class BaseProviderAdapter(ABC):
     async def complete(self, request: GatewayRequest) -> GatewayResponse:
         """Executa uma completion e retorna a resposta padronizada."""
         ...
+
+    async def stream(self, request: GatewayRequest) -> AsyncIterator[str]:
+        """
+        Streaming real de tokens.
+        Yield: chunks de texto à medida que chegam do provider.
+        Default: fallback para complete() + yield por palavra (providers sem streaming nativo).
+        """
+        response = await self.complete(request)
+        for word in response.content.split(" "):
+            yield word + " "
+            await asyncio.sleep(0.008)
 
     @abstractmethod
     async def health_check(self) -> bool:
@@ -68,46 +80,45 @@ class BaseProviderAdapter(ABC):
 
 
 # ─────────────────────────────────────────────
-# Anthropic Adapter
+# Anthropic Adapter — streaming nativo
 # ─────────────────────────────────────────────
 
 class AnthropicAdapter(BaseProviderAdapter):
-    """Adapter para Anthropic Claude API."""
+    """Adapter para Anthropic Claude API com streaming real."""
 
-    async def complete(self, request: GatewayRequest) -> GatewayResponse:
-        model = request.metadata.get("resolved_model", self.config.default_model)
-        start = time.monotonic()
-
-        payload = {
-            "model": model,
-            "max_tokens": request.max_tokens,
-            "messages": request.messages,
-        }
-        if request.system_prompt:
-            payload["system"] = request.system_prompt
-
-        headers = {
+    def _headers(self) -> dict:
+        return {
             "x-api-key": self.config.api_key or "",
             "anthropic-version": "2023-06-01",
             "content-type": "application/json",
         }
 
+    def _payload(self, request: GatewayRequest, stream: bool = False) -> dict:
+        model = request.metadata.get("resolved_model", self.config.default_model)
+        p: dict = {
+            "model": model,
+            "max_tokens": request.max_tokens,
+            "messages": request.messages,
+            "stream": stream,
+        }
+        if request.system_prompt:
+            p["system"] = request.system_prompt
+        return p
+
+    async def complete(self, request: GatewayRequest) -> GatewayResponse:
+        start = time.monotonic()
         async with httpx.AsyncClient(timeout=self.config.timeout_seconds) as client:
             resp = await client.post(
                 f"{self.config.base_url}/v1/messages",
-                json=payload,
-                headers=headers,
+                json=self._payload(request),
+                headers=self._headers(),
             )
-
         latency_ms = (time.monotonic() - start) * 1000
-
         if resp.status_code != 200:
             return self._build_response(
-                request, "", 0, 0, latency_ms,
-                RequestStatus.FAILED,
+                request, "", 0, 0, latency_ms, RequestStatus.FAILED,
                 f"HTTP {resp.status_code}: {resp.text[:200]}",
             )
-
         data = resp.json()
         content = data["content"][0]["text"]
         usage = data.get("usage", {})
@@ -118,19 +129,45 @@ class AnthropicAdapter(BaseProviderAdapter):
             latency_ms,
         )
 
+    async def stream(self, request: GatewayRequest) -> AsyncIterator[str]:
+        """Streaming nativo via Anthropic SSE."""
+        async with httpx.AsyncClient(timeout=self.config.timeout_seconds) as client:
+            async with client.stream(
+                "POST",
+                f"{self.config.base_url}/v1/messages",
+                json=self._payload(request, stream=True),
+                headers=self._headers(),
+            ) as resp:
+                if resp.status_code != 200:
+                    error_body = await resp.aread()
+                    raise RuntimeError(f"Anthropic {resp.status_code}: {error_body[:200]}")
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    raw = line[5:].strip()
+                    if raw == "[DONE]" or not raw:
+                        continue
+                    try:
+                        event = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
+                    etype = event.get("type", "")
+                    if etype == "content_block_delta":
+                        delta = event.get("delta", {})
+                        text = delta.get("text", "")
+                        if text:
+                            yield text
+                    elif etype == "message_stop":
+                        break
+
     async def health_check(self) -> bool:
         try:
-            headers = {
-                "x-api-key": self.config.api_key or "",
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            }
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.post(
                     f"{self.config.base_url}/v1/messages",
                     json={"model": self.config.default_model, "max_tokens": 10,
                           "messages": [{"role": "user", "content": "ping"}]},
-                    headers=headers,
+                    headers=self._headers(),
                 )
             return resp.status_code == 200
         except Exception:
@@ -138,23 +175,22 @@ class AnthropicAdapter(BaseProviderAdapter):
 
 
 # ─────────────────────────────────────────────
-# OpenAI-Compatible Adapter (OpenAI, Azure, Groq, Mistral, vLLM, LM Studio)
+# OpenAI-Compatible Adapter — streaming nativo
 # ─────────────────────────────────────────────
 
 class OpenAICompatAdapter(BaseProviderAdapter):
-    """Adapter genérico para qualquer API compatível com OpenAI."""
+    """Adapter genérico para qualquer API compatível com OpenAI, com streaming real."""
 
     def _get_headers(self) -> dict:
         headers = {"content-type": "application/json"}
         if self.config.api_key:
             headers["Authorization"] = f"Bearer {self.config.api_key}"
-        # Azure usa header diferente
         if self.config.name == ProviderName.AZURE and self.config.api_key:
             headers["api-key"] = self.config.api_key
             headers.pop("Authorization", None)
         return headers
 
-    def _get_url(self) -> str:
+    def _get_url(self, stream: bool = False) -> str:
         base = self.config.base_url or ""
         if self.config.name == ProviderName.AZURE:
             model = self.config.default_model.replace(".", "")
@@ -162,34 +198,30 @@ class OpenAICompatAdapter(BaseProviderAdapter):
             return f"{base}/openai/deployments/{model}/chat/completions?api-version={version}"
         return f"{base}/chat/completions"
 
+    def _build_messages(self, request: GatewayRequest) -> list:
+        msgs = []
+        if request.system_prompt:
+            msgs.append({"role": "system", "content": request.system_prompt})
+        msgs.extend(request.messages)
+        return msgs
+
     async def complete(self, request: GatewayRequest) -> GatewayResponse:
         model = request.metadata.get("resolved_model", self.config.default_model)
         start = time.monotonic()
-
-        messages = []
-        if request.system_prompt:
-            messages.append({"role": "system", "content": request.system_prompt})
-        messages.extend(request.messages)
-
         payload = {
             "model": model,
-            "messages": messages,
+            "messages": self._build_messages(request),
             "max_tokens": request.max_tokens,
             "temperature": request.temperature,
         }
-
         async with httpx.AsyncClient(timeout=self.config.timeout_seconds) as client:
             resp = await client.post(self._get_url(), json=payload, headers=self._get_headers())
-
         latency_ms = (time.monotonic() - start) * 1000
-
         if resp.status_code != 200:
             return self._build_response(
-                request, "", 0, 0, latency_ms,
-                RequestStatus.FAILED,
+                request, "", 0, 0, latency_ms, RequestStatus.FAILED,
                 f"HTTP {resp.status_code}: {resp.text[:200]}",
             )
-
         data = resp.json()
         content = data["choices"][0]["message"]["content"]
         usage = data.get("usage", {})
@@ -200,6 +232,39 @@ class OpenAICompatAdapter(BaseProviderAdapter):
             latency_ms,
         )
 
+    async def stream(self, request: GatewayRequest) -> AsyncIterator[str]:
+        """Streaming nativo OpenAI SSE."""
+        model = request.metadata.get("resolved_model", self.config.default_model)
+        payload = {
+            "model": model,
+            "messages": self._build_messages(request),
+            "max_tokens": request.max_tokens,
+            "temperature": request.temperature,
+            "stream": True,
+        }
+        async with httpx.AsyncClient(timeout=self.config.timeout_seconds) as client:
+            async with client.stream(
+                "POST", self._get_url(),
+                json=payload, headers=self._get_headers(),
+            ) as resp:
+                if resp.status_code != 200:
+                    body = await resp.aread()
+                    raise RuntimeError(f"{self.config.name} {resp.status_code}: {body[:200]}")
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    raw = line[5:].strip()
+                    if raw == "[DONE]" or not raw:
+                        continue
+                    try:
+                        event = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
+                    delta = event.get("choices", [{}])[0].get("delta", {})
+                    text = delta.get("content", "")
+                    if text:
+                        yield text
+
     async def health_check(self) -> bool:
         try:
             async with httpx.AsyncClient(timeout=8) as client:
@@ -207,60 +272,85 @@ class OpenAICompatAdapter(BaseProviderAdapter):
                     f"{self.config.base_url}/models",
                     headers=self._get_headers(),
                 )
-            return resp.status_code in (200, 401)  # 401 = auth ok, provider ok
+            return resp.status_code in (200, 401)
         except Exception:
             return False
 
 
 # ─────────────────────────────────────────────
-# Ollama Adapter
+# Ollama Adapter — streaming nativo
 # ─────────────────────────────────────────────
 
 class OllamaAdapter(BaseProviderAdapter):
-    """Adapter nativo para Ollama local."""
+    """Adapter nativo para Ollama local com streaming real."""
+
+    def _build_messages(self, request: GatewayRequest) -> list:
+        msgs = []
+        if request.system_prompt:
+            msgs.append({"role": "system", "content": request.system_prompt})
+        msgs.extend(request.messages)
+        return msgs
 
     async def complete(self, request: GatewayRequest) -> GatewayResponse:
         model = request.metadata.get("resolved_model", self.config.default_model)
         start = time.monotonic()
-
-        # Montar prompt unificado (Ollama chat API)
-        messages = []
-        if request.system_prompt:
-            messages.append({"role": "system", "content": request.system_prompt})
-        messages.extend(request.messages)
-
         payload = {
             "model": model,
-            "messages": messages,
+            "messages": self._build_messages(request),
             "stream": False,
             "options": {
                 "num_predict": request.max_tokens,
                 "temperature": request.temperature,
             },
         }
-
         async with httpx.AsyncClient(timeout=self.config.timeout_seconds) as client:
-            resp = await client.post(
-                f"{self.config.base_url}/api/chat",
-                json=payload,
-            )
-
+            resp = await client.post(f"{self.config.base_url}/api/chat", json=payload)
         latency_ms = (time.monotonic() - start) * 1000
-
         if resp.status_code != 200:
             return self._build_response(
-                request, "", 0, 0, latency_ms,
-                RequestStatus.FAILED,
+                request, "", 0, 0, latency_ms, RequestStatus.FAILED,
                 f"Ollama HTTP {resp.status_code}: {resp.text[:200]}",
             )
-
         data = resp.json()
         content = data.get("message", {}).get("content", "")
-        # Ollama reporta tokens em eval_count / prompt_eval_count
-        input_tokens  = data.get("prompt_eval_count", 0)
-        output_tokens = data.get("eval_count", 0)
+        return self._build_response(
+            request, content,
+            data.get("prompt_eval_count", 0),
+            data.get("eval_count", 0),
+            latency_ms,
+        )
 
-        return self._build_response(request, content, input_tokens, output_tokens, latency_ms)
+    async def stream(self, request: GatewayRequest) -> AsyncIterator[str]:
+        """Streaming nativo Ollama (NDJSON)."""
+        model = request.metadata.get("resolved_model", self.config.default_model)
+        payload = {
+            "model": model,
+            "messages": self._build_messages(request),
+            "stream": True,
+            "options": {
+                "num_predict": request.max_tokens,
+                "temperature": request.temperature,
+            },
+        }
+        async with httpx.AsyncClient(timeout=self.config.timeout_seconds) as client:
+            async with client.stream(
+                "POST", f"{self.config.base_url}/api/chat", json=payload,
+            ) as resp:
+                if resp.status_code != 200:
+                    body = await resp.aread()
+                    raise RuntimeError(f"Ollama {resp.status_code}: {body[:200]}")
+                async for line in resp.aiter_lines():
+                    if not line.strip():
+                        continue
+                    try:
+                        event = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    text = event.get("message", {}).get("content", "")
+                    if text:
+                        yield text
+                    if event.get("done"):
+                        break
 
     async def health_check(self) -> bool:
         try:
@@ -271,64 +361,51 @@ class OllamaAdapter(BaseProviderAdapter):
             return False
 
     async def list_models(self) -> list[str]:
-        """Lista modelos instalados no Ollama."""
         try:
             async with httpx.AsyncClient(timeout=5) as client:
                 resp = await client.get(f"{self.config.base_url}/api/tags")
             if resp.status_code == 200:
-                data = resp.json()
-                return [m["name"] for m in data.get("models", [])]
+                return [m["name"] for m in resp.json().get("models", [])]
         except Exception:
             pass
         return []
 
 
 # ─────────────────────────────────────────────
-# Google Gemini Adapter
+# Google Gemini Adapter — streaming nativo
 # ─────────────────────────────────────────────
 
 class GeminiAdapter(BaseProviderAdapter):
-    """
-    Adapter para Google Gemini API (v1beta).
-    Usa a REST API nativa do Gemini (não OpenAI-compat) com:
-    - systemInstruction separado (não concatenado no conteúdo)
-    - contents[] com role 'user' / 'model' (não 'assistant')
-    - API key como query param ?key=...
-    """
+    """Adapter para Google Gemini API com streaming real."""
 
-    # Aliases apenas para erros de digitação históricos conhecidos
-    # NÃO mapear modelos novos — deixar passar direto para a API
     _MODEL_ALIASES: dict[str, str] = {
-        "gemini-pro":    "gemini-1.5-pro",   # nome antigo descontinuado
-        "gemini-flash":  "gemini-2.0-flash",  # nome antigo descontinuado
+        "gemini-pro":              "gemini-1.5-pro",
+        "gemini-flash":            "gemini-2.0-flash",
+        "gemini-1.5-flash":        "gemini-2.0-flash",
+        "gemini-1.5-flash-8b":     "gemini-2.0-flash-lite",
+        "gemini-1.5-flash-latest": "gemini-2.0-flash",
     }
 
     def _resolve_model(self, model: str) -> str:
-        """Normaliza apenas aliases históricos descontinuados. Demais passam direto."""
+        model = model.strip().replace(" ", "-")
         return self._MODEL_ALIASES.get(model, model)
 
     def _base_url(self) -> str:
         return (self.config.base_url or "https://generativelanguage.googleapis.com").rstrip("/")
 
-    async def complete(self, request: GatewayRequest) -> GatewayResponse:
+    def _build_payload(self, request: GatewayRequest, stream: bool = False) -> tuple[str, dict]:
+        """Returns (url, payload)."""
         raw_model = request.metadata.get("resolved_model", self.config.default_model)
-        model     = self._resolve_model(raw_model)
-        start     = time.monotonic()
+        model = self._resolve_model(raw_model)
+        action = "streamGenerateContent" if stream else "generateContent"
+        url = f"{self._base_url()}/v1beta/models/{model}:{action}?key={self.config.api_key}"
+        if stream:
+            url += "&alt=sse"
 
-        if not self.config.api_key:
-            return self._build_response(
-                request, "", 0, 0, 0,
-                RequestStatus.FAILED,
-                "Gemini API key não configurada. Acesse Providers e insira a chave.",
-            )
-
-        # ── Montar contents[] com role correto (user / model) ──
         contents = []
         for msg in request.messages:
             role = "model" if msg["role"] == "assistant" else "user"
             contents.append({"role": role, "parts": [{"text": msg["content"]}]})
-
-        # Gemini exige que o primeiro turn seja 'user'
         if not contents or contents[0]["role"] != "user":
             contents.insert(0, {"role": "user", "parts": [{"text": "Olá"}]})
 
@@ -336,49 +413,40 @@ class GeminiAdapter(BaseProviderAdapter):
             "contents": contents,
             "generationConfig": {
                 "maxOutputTokens": request.max_tokens,
-                "temperature":     request.temperature,
+                "temperature": request.temperature,
             },
         }
-
-        # ── System instruction — campo separado (não dentro de contents) ──
         if request.system_prompt:
-            payload["systemInstruction"] = {
-                "parts": [{"text": request.system_prompt}]
-            }
+            payload["systemInstruction"] = {"parts": [{"text": request.system_prompt}]}
 
-        url = (f"{self._base_url()}/v1beta/models/{model}:generateContent"
-               f"?key={self.config.api_key}")
+        return url, payload
 
-        async with httpx.AsyncClient(timeout=self.config.timeout_seconds) as client:
-            resp = await client.post(
-                url,
-                json=payload,
-                headers={"Content-Type": "application/json"},
+    async def complete(self, request: GatewayRequest) -> GatewayResponse:
+        if not self.config.api_key:
+            return self._build_response(
+                request, "", 0, 0, 0, RequestStatus.FAILED,
+                "Gemini API key não configurada. Acesse Providers e insira a chave.",
             )
-
+        start = time.monotonic()
+        url, payload = self._build_payload(request)
+        async with httpx.AsyncClient(timeout=self.config.timeout_seconds) as client:
+            resp = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
         latency_ms = (time.monotonic() - start) * 1000
-
         if resp.status_code != 200:
-            # Tenta extrair a mensagem de erro do JSON do Gemini
             try:
-                err_body = resp.json()
-                err_msg  = err_body.get("error", {}).get("message", resp.text[:300])
+                err_msg = resp.json().get("error", {}).get("message", resp.text[:300])
             except Exception:
                 err_msg = resp.text[:300]
             return self._build_response(
-                request, "", 0, 0, latency_ms,
-                RequestStatus.FAILED,
+                request, "", 0, 0, latency_ms, RequestStatus.FAILED,
                 f"Gemini HTTP {resp.status_code}: {err_msg}",
             )
-
         data = resp.json()
         try:
             content = data["candidates"][0]["content"]["parts"][0]["text"]
         except (KeyError, IndexError):
-            # Pode haver blockReason em vez de candidates
             block = data.get("promptFeedback", {}).get("blockReason", "")
-            content = f"[Resposta bloqueada pelo Gemini: {block}]" if block else ""
-
+            content = f"[Bloqueado pelo Gemini: {block}]" if block else ""
         usage = data.get("usageMetadata", {})
         return self._build_response(
             request, content,
@@ -387,18 +455,48 @@ class GeminiAdapter(BaseProviderAdapter):
             latency_ms,
         )
 
+    async def stream(self, request: GatewayRequest) -> AsyncIterator[str]:
+        """Streaming nativo Gemini via SSE."""
+        if not self.config.api_key:
+            raise RuntimeError("Gemini API key não configurada.")
+        url, payload = self._build_payload(request, stream=True)
+        async with httpx.AsyncClient(timeout=self.config.timeout_seconds) as client:
+            async with client.stream(
+                "POST", url,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+            ) as resp:
+                if resp.status_code != 200:
+                    body = await resp.aread()
+                    try:
+                        err = json.loads(body).get("error", {}).get("message", body[:200])
+                    except Exception:
+                        err = body[:200]
+                    raise RuntimeError(f"Gemini {resp.status_code}: {err}")
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    raw = line[5:].strip()
+                    if not raw:
+                        continue
+                    try:
+                        event = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
+                    try:
+                        text = event["candidates"][0]["content"]["parts"][0]["text"]
+                        if text:
+                            yield text
+                    except (KeyError, IndexError):
+                        pass
+
     async def health_check(self) -> bool:
-        """
-        Verifica se a API key é válida listando os modelos disponíveis.
-        Retorna False silenciosamente se a key não estiver configurada.
-        """
         if not self.config.api_key:
             return False
         try:
             url = f"{self._base_url()}/v1beta/models?key={self.config.api_key}"
             async with httpx.AsyncClient(timeout=8) as client:
                 resp = await client.get(url)
-            # 200 = ok, 400 = key inválida, 403 = key sem permissão
             return resp.status_code == 200
         except Exception:
             return False
@@ -409,12 +507,10 @@ class GeminiAdapter(BaseProviderAdapter):
 # ─────────────────────────────────────────────
 
 def create_adapter(config: ProviderConfig) -> BaseProviderAdapter:
-    """Factory: cria o adapter correto para cada provider."""
     mapping = {
         ProviderName.ANTHROPIC:  AnthropicAdapter,
         ProviderName.GOOGLE:     GeminiAdapter,
         ProviderName.OLLAMA:     OllamaAdapter,
-        # OpenAI-compat
         ProviderName.OPENAI:     OpenAICompatAdapter,
         ProviderName.AZURE:      OpenAICompatAdapter,
         ProviderName.GROQ:       OpenAICompatAdapter,
@@ -425,3 +521,9 @@ def create_adapter(config: ProviderConfig) -> BaseProviderAdapter:
     }
     cls = mapping.get(config.name, OpenAICompatAdapter)
     return cls(config)
+
+
+
+# ─────────────────────────────────────────────
+# Base Adapter
+# ─────────────────────────────────────────────

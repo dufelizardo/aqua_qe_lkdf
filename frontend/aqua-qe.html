@@ -103,13 +103,117 @@
   .msg-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
   .msg-avatar.ai { background: var(--b3-blue); color: white; font-weight: 600; font-size: 11px; }
   .msg-avatar.user { background: var(--surface2); font-size: 14px; }
-  .msg-bubble { max-width: 78%; padding: 12px 16px; border-radius: var(--radius-lg); line-height: 1.6; font-size: 13.5px; }
+  .msg-bubble { max-width: 78%; padding: 12px 16px; border-radius: var(--radius-lg); line-height: 1.7; font-size: 13.5px; }
   .msg.user .msg-bubble { background: var(--b3-blue); color: white; border-bottom-right-radius: 4px; }
   .msg.ai .msg-bubble { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; color: var(--text); }
+
+  /* Markdown typography */
   .msg-bubble strong { font-weight: 600; }
-  .msg-bubble code { background: rgba(0,80,158,0.1); padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 12px; }
-  .msg.user .msg-bubble code { background: rgba(255,255,255,0.2); }
-  .msg-bubble pre { background: #0D1F35; color: #A8D8FF; padding: 12px; border-radius: 8px; overflow-x: auto; margin-top: 8px; font-family: var(--mono); font-size: 12px; line-height: 1.6; }
+  .msg-bubble em     { font-style: italic; color: inherit; }
+  .msg-bubble h1,.msg-bubble h2,.msg-bubble h3 { font-weight: 700; color: var(--b3-blue); margin: 10px 0 4px; font-size: 14px; }
+  .msg-bubble h1 { font-size: 16px; }
+  .msg-bubble ul,.msg-bubble ol { padding-left: 20px; margin: 6px 0; }
+  .msg-bubble li { margin: 3px 0; line-height: 1.6; }
+  .msg-bubble ol { list-style: decimal; }
+  .msg-bubble ul { list-style: disc; }
+  .msg-bubble blockquote { border-left: 3px solid var(--b3-blue); padding: 4px 12px; margin: 6px 0; background: var(--b3-pale); border-radius: 0 6px 6px 0; color: var(--text2); font-style: italic; font-size: 13px; }
+  .msg-bubble hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+  .msg-bubble p  { margin: 5px 0; }
+  .msg-bubble a  { color: var(--b3-blue); text-decoration: underline; }
+  .msg-bubble table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 12px; }
+  .msg-bubble th { background: var(--b3-blue); color: white; padding: 5px 10px; text-align: left; font-size: 11px; }
+  .msg-bubble td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  .msg-bubble tr:hover td { background: var(--b3-pale); }
+
+  /* Inline code */
+  .msg-bubble code { background: rgba(0,80,158,0.1); padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 12px; color: var(--b3-blue); }
+  .msg.user .msg-bubble code { background: rgba(255,255,255,0.2); color: white; }
+
+  /* Code blocks with header */
+  .code-block { position: relative; margin: 10px 0; border-radius: 8px; overflow: hidden; }
+  .code-block-header {
+    display: flex; align-items: center; gap: 8px;
+    background: #1a2d45; padding: 6px 12px;
+    font-family: var(--mono); font-size: 11px;
+  }
+  .code-block-lang { color: #7dd3fc; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .code-block-actions { margin-left: auto; display: flex; gap: 4px; }
+  .code-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7); padding: 2px 8px; border-radius: 4px;
+    cursor: pointer; font-size: 10px; font-family: var(--sans); transition: all .12s;
+  }
+  .code-btn:hover { background: rgba(255,255,255,0.18); color: white; }
+  .code-btn.copied { background: rgba(16,185,129,.25); color: #6ee7b7; border-color: rgba(16,185,129,.3); }
+  .code-block pre {
+    background: #0D1F35; color: #A8D8FF; padding: 14px 16px; margin: 0;
+    overflow-x: auto; font-family: var(--mono); font-size: 12px; line-height: 1.7;
+    white-space: pre; tab-size: 2;
+  }
+
+  /* Syntax highlight tokens */
+  .hl-kw   { color: #C792EA; font-weight: 600; }  /* keywords */
+  .hl-str  { color: #C3E88D; }                     /* strings */
+  .hl-cm   { color: #546e7a; font-style: italic; } /* comments */
+  .hl-num  { color: #F78C6C; }                     /* numbers */
+  .hl-fn   { color: #82AAFF; }                     /* functions */
+  .hl-var  { color: #EEFFFF; }                     /* variables */
+  .hl-tag  { color: #80CBC4; }                     /* tags (gherkin/robot) */
+  .hl-dec  { color: #FFCB6B; }                     /* decorators/annotations */
+  .hl-op   { color: #89DDFF; }                     /* operators */
+
+  /* Artifact cards */
+  .artifact-card {
+    background: white; border: 1px solid var(--border);
+    border-radius: var(--radius); margin-top: 10px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,80,158,0.06);
+  }
+  .artifact-header {
+    background: var(--surf); padding: 8px 12px 8px 14px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 500; color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    border-left: 3px solid var(--b3-blue);
+  }
+  .artifact-header.gherkin-hdr { border-left-color: #F59E0B; }
+  .artifact-header.risk-hdr    { border-left-color: var(--danger); }
+  .artifact-actions { margin-left: auto; display: flex; gap: 5px; }
+  .art-btn {
+    background: none; border: 1px solid var(--border); color: var(--text3);
+    padding: 2px 9px; border-radius: 5px; cursor: pointer;
+    font-size: 10px; font-family: var(--sans); transition: all .12s; font-weight: 500;
+  }
+  .art-btn:hover { background: var(--b3-pale); color: var(--b3-blue); border-color: var(--b3-mid); }
+  .art-btn.copied { background: var(--successpale); color: var(--success); border-color: #6EE7B7; }
+  .artifact-tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 600; }
+  .tag-rtm     { background: #EEF6FF; color: #0052CC; }
+  .tag-ct      { background: #EDFAF5; color: #006644; }
+  .tag-gherkin { background: #FFF8E6; color: #974F0C; }
+  .tag-risk    { background: #FEECEC; color: #AE1414; }
+  .artifact-body { padding: 12px; font-family: var(--mono); font-size: 12px; line-height: 1.7; max-height: 280px; overflow-y: auto; }
+  .artifact-body.dark { background: #0D1F35; color: #A8D8FF; padding: 14px 16px; }
+  .artifact-footer { padding: 8px 12px; background: var(--surf2); border-top: 1px solid var(--border); display: flex; gap: 6px; }
+
+  /* RTM table inside artifact */
+  .rtm-table { width: 100%; border-collapse: collapse; }
+  .rtm-table th { background: var(--surf2); padding: 5px 8px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text3); border-bottom: 1px solid var(--border); }
+  .rtm-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); color: var(--text); font-size: 11px; }
+  .rtm-table tr:last-child td { border-bottom: none; }
+  .rtm-table tr:hover td { background: var(--b3-pale); }
+  .risk-alto { color: var(--danger); font-weight: 600; }
+  .risk-medio { color: var(--warn); font-weight: 600; }
+  .risk-baixo { color: var(--success); font-weight: 600; }
+  .badge-prio { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .prio-alta   { background: #FEECEC; color: #AE1414; }
+  .prio-media  { background: #FFF8E6; color: #974F0C; }
+  .prio-baixa  { background: #EDFAF5; color: #006644; }
+  .auto-chip   { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .auto-sim    { background: #EDFAF5; color: #006644; }
+  .auto-nao    { background: var(--surf2); color: var(--text3); }
+
+  /* Copy toast micro-feedback */
+  .copy-flash { animation: copyFlash .4s ease; }
+  @keyframes copyFlash { 0%{opacity:.5} 50%{opacity:1} 100%{opacity:1} }
 
   /* Artifact cards in chat */
   .artifact-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); margin-top: 8px; overflow: hidden; }
@@ -250,7 +354,33 @@
   .kn-sub { font-size: 11px; color: var(--text3); line-height: 1.5; }
   .kn-meta { display: flex; gap: 12px; margin-top: 10px; font-size: 11px; color: var(--text3); }
 
-  /* ── GATEWAY BAR ── */
+  /* ── STREAMING ── */
+  .stream-cursor {
+    display: inline-block; width: 2px; height: 1em;
+    background: var(--b3-blue); margin-left: 1px;
+    animation: blink .7s steps(1) infinite;
+    vertical-align: text-bottom;
+  }
+  @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+  .stream-meta {
+    display: flex; gap: 10px; align-items: center;
+    font-size: 11px; color: var(--text3); margin-top: 6px;
+    font-family: var(--mono);
+  }
+  .stream-meta .sm-prov { color: var(--b3-blue); font-weight: 600; }
+  .stream-meta .sm-cost { color: var(--success); }
+  .stream-meta .sm-lat  { color: var(--text3); }
+  .stream-meta .sm-fb   { color: var(--warn); font-weight: 600; }
+
+  /* Streaming indicator in engine chips */
+  .chip.streaming {
+    background: var(--b3-blue); color: white;
+    border-color: var(--b3-blue);
+    animation: streamPulse 1s ease-in-out infinite;
+  }
+  @keyframes streamPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.8;transform:scale(1.04)} }
+
+
   .gw-bar {
     display: flex; align-items: center; gap: 8px;
     background: rgba(0,0,0,0.18); border-radius: 8px;
@@ -309,6 +439,24 @@
   .spin-sm { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(0,80,158,.2); border-top-color: var(--b3-blue); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 4px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+
+  /* ── SESSIONS PANEL ── */
+  .session-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 15px; cursor: pointer; transition: all .15s; border-left: 3px solid transparent; }
+  .session-card:hover { border-color: var(--b3-blue-mid); background: var(--b3-blue-pale); border-left-color: var(--b3-blue); }
+  .session-card.active-session { border-left-color: var(--accent); background: #E8FFF9; border-color: #A0E9D8; }
+  .session-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .session-meta  { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; font-size: 11px; color: var(--text3); }
+  .session-badge { padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .session-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .sessions-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .ss-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; text-align: center; }
+  .ss-n { font-size: 22px; font-weight: 700; color: var(--b3-blue); font-family: var(--mono); line-height: 1; }
+  .ss-l { font-size: 10px; color: var(--text3); margin-top: 3px; text-transform: uppercase; letter-spacing: .05em; }
+  .autosave-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px; vertical-align: middle; }
+  .autosave-dot.saving  { background: var(--warn); animation: pulse 1s infinite; }
+  .autosave-dot.saved   { background: var(--success); }
+  .autosave-dot.unsaved { background: var(--text3); }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
 
   ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 10px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
@@ -433,7 +581,12 @@
           <div class="gw-field" style="margin-top:8px;">
             <label>Modelo Customizado (override)</label>
             <input type="text" id="gw-gw-model-custom" placeholder="ex: gemini-2.5-flash-lite" style="font-family:var(--mono);font-size:12px;">
-            <div class="gw-field-hint">Deixe vazio para usar o modelo do seletor acima</div>
+            <div class="gw-field-hint">Espaços são convertidos automaticamente em hífens</div>
+          </div>
+          <div class="gw-field" style="margin-top:8px;">
+            <label>API Key do Provider (salva no gateway)</label>
+            <input type="password" id="gw-gw-apikey" placeholder="sk-... / AIza... / gsk_...">
+            <div class="gw-field-hint">Será persistida no backend para uso pelo adapter do provider selecionado.</div>
           </div>
           <div class="gw-field-row" style="margin-top:8px;">
             <div class="gw-field">
@@ -545,6 +698,10 @@
     <div class="sidebar-section">Conhecimento</div>
     <div class="nav-item" onclick="showPanel('knowledge', this)">
       <span class="nav-icon">📚</span> Knowledge Layer
+    </div>
+    <div class="nav-item" onclick="showPanel('sessions', this)">
+      <span class="nav-icon">🕐</span> Sessões
+      <span class="nav-badge" id="sessions-count">0</span>
     </div>
   </div>
 
@@ -775,6 +932,52 @@
       </div>
     </div>
 
+    <!-- SESSIONS PANEL -->
+    <div class="panel" id="panel-sessions">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">🕐 Histórico de Sessões</div>
+          <div class="panel-sub">Conversas salvas · Retomar de onde parou · SQLite local</div>
+        </div>
+        <div class="panel-actions">
+          <span id="autosave-status" style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;">
+            <span class="autosave-dot unsaved" id="autosave-dot"></span>
+            <span id="autosave-label">não salvo</span>
+          </span>
+          <button class="btn-sm" onclick="saveCurrentSession()">💾 Salvar agora</button>
+          <button class="btn-sm btn-primary" onclick="newSession()">+ Nova sessão</button>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <!-- Stats -->
+        <div class="sessions-stats" id="sessions-stats">
+          <div class="ss-card"><div class="ss-n" id="ss-total">0</div><div class="ss-l">Sessões</div></div>
+          <div class="ss-card"><div class="ss-n" id="ss-cts">0</div><div class="ss-l">CTs gerados</div></div>
+          <div class="ss-card"><div class="ss-n" id="ss-tokens">0</div><div class="ss-l">Tokens</div></div>
+          <div class="ss-card"><div class="ss-n" id="ss-cost">$0</div><div class="ss-l">Custo total</div></div>
+        </div>
+
+        <!-- Search -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;align-items:center;">
+          <span style="color:var(--text3);">🔍</span>
+          <input id="sessions-search" placeholder="Buscar sessões..." oninput="searchSessions()"
+            style="border:none;outline:none;background:transparent;font-family:var(--sans);font-size:13px;flex:1;color:var(--text);">
+          <button class="btn-sm" onclick="loadSessions()">↻</button>
+        </div>
+
+        <!-- Sessions list -->
+        <div id="sessions-list" style="display:flex;flex-direction:column;gap:10px;">
+          <div style="text-align:center;padding:30px;color:var(--text3);">
+            <div style="font-size:36px;margin-bottom:10px;">🕐</div>
+            <div>Nenhuma sessão salva ainda.</div>
+            <div style="font-size:12px;margin-top:6px;">Inicie uma conversa e clique em 💾 Salvar.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div><!-- /main -->
 </div><!-- /app -->
 
@@ -993,7 +1196,8 @@ function saveGatewayConfig() {
   GW.gatewayUrl    = document.getElementById('gw-url').value.trim();
   GW.gwProvider    = document.getElementById('gw-gw-provider').value;
   GW.gwModel       = document.getElementById('gw-gw-model').value;
-  GW.gwModelCustom = document.getElementById('gw-gw-model-custom').value.trim();
+  // Sanitize model custom: espaços → hífens
+  GW.gwModelCustom = (document.getElementById('gw-gw-model-custom').value || '').trim().replace(/\s+/g, '-');
   GW.gwDeployment  = document.getElementById('gw-deployment').value;
   GW.gwEngine      = document.getElementById('gw-engine').value;
   GW.directProvider = document.getElementById('gw-direct-provider').value;
@@ -1001,9 +1205,37 @@ function saveGatewayConfig() {
   GW.directKey     = document.getElementById('gw-direct-key').value;
   GW.directTokens  = parseInt(document.getElementById('gw-direct-tokens').value) || 4000;
   GW.directTemp    = parseFloat(document.getElementById('gw-direct-temp').value) || 0.3;
+
   document.getElementById('gw-modal-overlay').classList.remove('open');
   updateGwBar();
-  if (GW.connMode === 'gateway') testGatewayConn().then(updateGwBar);
+
+  // Se modo gateway: testa conexão e persiste a key do provider no backend
+  if (GW.connMode === 'gateway' && GW.isOnline) {
+    pushKeyToGateway();
+  } else if (GW.connMode === 'gateway') {
+    testGatewayConn().then(() => {
+      if (GW.isOnline) pushKeyToGateway();
+      updateGwBar();
+    });
+  }
+}
+
+async function pushKeyToGateway() {
+  // Persiste a API key do provider selecionado no gateway backend
+  const prov = GW.gwProvider;
+  const key  = GW.gwApiKey;  // key do campo dedicado na seção gateway
+  if (!prov || !key) return;
+  const gwUrl = (GW.gatewayUrl || 'http://localhost:8080').replace(/\/$/, '');
+  try {
+    await fetch(`${gwUrl}/api/v1/providers/${prov}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ api_key: key }),
+    });
+    console.log(`[AQuA-QE] API key de ${prov} persistida no gateway`);
+  } catch(e) {
+    console.warn('[AQuA-QE] Não foi possível persistir key no gateway:', e.message);
+  }
 }
 
 function updateGwBar() {
@@ -1043,9 +1275,21 @@ async function callClaude(messages) {
   }
 }
 
-// ── 1. Gateway backend ──────────────────────────────────────
+// ── 1. Gateway backend — STREAMING REAL ────────────────────
 async function callViaGateway(messages) {
+  // Se SSE disponível e modo gateway online → usa streaming
+  if (GW.isOnline && typeof EventSource !== 'undefined') {
+    return callViaGatewayStream(messages);
+  }
+  return callViaGatewayFetch(messages);
+}
+
+// Streaming real via SSE fetch (ReadableStream)
+async function callViaGatewayStream(messages) {
   const url = (GW.gatewayUrl || 'http://localhost:8080').replace(/\/$/, '');
+  const sanitizeModel = m => (m || '').trim().toLowerCase().replace(/\s+/g, '-');
+  const modelOverride = sanitizeModel(GW.gwModelCustom) || sanitizeModel(GW.gwModel) || '';
+
   const payload = {
     engine:          GW.gwEngine || 'requirement',
     content:         messages[messages.length - 1]?.content || '',
@@ -1054,18 +1298,112 @@ async function callViaGateway(messages) {
     max_tokens:      4000,
     temperature:     0.3,
   };
-  if (GW.gwProvider)    payload.force_provider = GW.gwProvider;
-  if (GW.gwModelCustom) payload.model_override = GW.gwModelCustom;
-  else if (GW.gwModel)  payload.model_override = GW.gwModel;
-
-  // Include full conversation context for multi-turn
+  if (GW.gwProvider)  payload.force_provider = GW.gwProvider;
+  if (modelOverride)  payload.model_override = modelOverride;
   if (messages.length > 1) {
     payload.content = messages.map(m =>
       `[${m.role === 'user' ? 'User' : 'Assistant'}]: ${m.content}`
     ).join('\n\n');
   }
 
-  const resp = await fetch(url + '/api/v1/analyze', {
+  const resp = await fetch(`${url}/api/v1/analyze/stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(120000),
+  });
+
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`Gateway stream ${resp.status}: ${err.substring(0, 150)}`);
+  }
+
+  // Create streaming bubble
+  const { bubbleId, metaId } = createStreamBubble();
+  let fullText = '';
+  let doneData = null;
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';  // keep incomplete line
+
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        const raw = line.slice(5).trim();
+        if (!raw) continue;
+
+        let event;
+        try { event = JSON.parse(raw); } catch(e) { continue; }
+
+        switch (event.event) {
+          case 'start':
+            updateStreamMeta(metaId, { provider: event.provider, model: event.model, streaming: true });
+            break;
+
+          case 'token':
+            fullText += event.token;
+            updateStreamBubble(bubbleId, fullText);
+            break;
+
+          case 'fallback':
+            updateStreamMeta(metaId, { fallback: event.from });
+            break;
+
+          case 'done':
+            doneData = event;
+            GW.sessionReqs++;
+            GW.sessionCost   += event.cost_usd   || 0;
+            GW.sessionTokens += (event.input_tokens || 0) + (event.output_tokens || 0);
+            GW.isOnline = true;
+            finalizeStreamBubble(bubbleId, metaId, fullText, event);
+            updateGwBar();
+            break;
+
+          case 'error':
+            finalizeStreamError(bubbleId, metaId, event.message);
+            throw new Error(event.message);
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return fullText;
+}
+
+// Fallback: fetch normal (quando streaming não disponível)
+async function callViaGatewayFetch(messages) {
+  const url = (GW.gatewayUrl || 'http://localhost:8080').replace(/\/$/, '');
+  const sanitizeModel = m => (m || '').trim().toLowerCase().replace(/\s+/g, '-');
+  const modelOverride = sanitizeModel(GW.gwModelCustom) || sanitizeModel(GW.gwModel) || '';
+
+  const payload = {
+    engine:          GW.gwEngine || 'requirement',
+    content:         messages[messages.length - 1]?.content || '',
+    system_prompt:   SYSTEM_PROMPT,
+    deployment_mode: GW.gwDeployment || 'cloud',
+    max_tokens:      4000,
+    temperature:     0.3,
+  };
+  if (GW.gwProvider)  payload.force_provider = GW.gwProvider;
+  if (modelOverride)  payload.model_override = modelOverride;
+  if (messages.length > 1) {
+    payload.content = messages.map(m =>
+      `[${m.role === 'user' ? 'User' : 'Assistant'}]: ${m.content}`
+    ).join('\n\n');
+  }
+
+  const resp = await fetch(`${url}/api/v1/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -1073,22 +1411,105 @@ async function callViaGateway(messages) {
   });
 
   if (!resp.ok) {
-    const err = await resp.text();
-    throw new Error(`Gateway ${resp.status}: ${err.substring(0,120)}`);
+    const errText = await resp.text();
+    let detail = errText.substring(0, 200);
+    try { detail = JSON.parse(errText).detail || detail; } catch(e) {}
+    throw new Error(`Gateway ${resp.status}: ${detail}`);
   }
   const data = await resp.json();
-  if (data.status === 'failed') throw new Error(data.error || 'Gateway returned failed status');
+  if (data.status === 'failed') throw new Error(data.error || 'Gateway retornou status "failed"');
 
-  // Update session metrics
-  const m = data.metrics || {};
   GW.sessionReqs++;
-  GW.sessionCost   += m.cost_usd   || 0;
-  GW.sessionTokens += (m.input_tokens || 0) + (m.output_tokens || 0);
+  GW.sessionCost   += data.metrics?.cost_usd   || 0;
+  GW.sessionTokens += (data.metrics?.input_tokens || 0) + (data.metrics?.output_tokens || 0);
   GW.isOnline = true;
-
   updateGwBar();
-  updateSessionBadge(data, m);
+  updateSessionBadge(data, data.metrics || {});
   return data.content;
+}
+
+// ── Streaming bubble helpers ─────────────────────────────────
+
+let _streamChunkCount = 0;
+
+function createStreamBubble() {
+  const bubbleId = 'stream-bubble-' + Date.now();
+  const metaId   = 'stream-meta-' + Date.now();
+  const el = document.createElement('div');
+  el.className = 'msg ai';
+  el.id = 'stream-msg-' + Date.now();
+  el.innerHTML = `
+    <div class="msg-avatar ai">AQ</div>
+    <div style="flex:1;max-width:78%">
+      <div class="msg-bubble" id="${bubbleId}"><span class="stream-cursor"></span></div>
+      <div class="stream-meta" id="${metaId}">
+        <span class="sm-prov" id="${metaId}-prov">conectando...</span>
+        <span id="${metaId}-tokens" style="display:none"></span>
+        <span id="${metaId}-cost" class="sm-cost" style="display:none"></span>
+        <span id="${metaId}-lat"  class="sm-lat"  style="display:none"></span>
+        <span id="${metaId}-fb"   class="sm-fb"   style="display:none">⚡ fallback</span>
+      </div>
+    </div>`;
+  document.getElementById('messages').appendChild(el);
+  scrollBottom();
+  _streamChunkCount = 0;
+  return { bubbleId, metaId };
+}
+
+function updateStreamBubble(bubbleId, text) {
+  const el = document.getElementById(bubbleId);
+  if (!el) return;
+  // Render markdown incrementally every 15 chunks to avoid thrashing
+  _streamChunkCount++;
+  const rendered = (_streamChunkCount % 15 === 0)
+    ? markdownToHtml(text) + '<span class="stream-cursor"></span>'
+    : escHtml(text).replace(/\n/g, '<br>') + '<span class="stream-cursor"></span>';
+  el.innerHTML = rendered;
+  scrollBottom();
+}
+
+function updateStreamMeta(metaId, info) {
+  if (info.provider) {
+    const el = document.getElementById(metaId + '-prov');
+    if (el) el.textContent = `${info.provider}${info.model ? ' · ' + info.model : ''}`;
+  }
+  if (info.fallback) {
+    const el = document.getElementById(metaId + '-fb');
+    if (el) { el.style.display = 'inline'; el.textContent = `⚡ fallback de ${info.fallback}`; }
+  }
+}
+
+function finalizeStreamBubble(bubbleId, metaId, fullText, doneEvent) {
+  const el = document.getElementById(bubbleId);
+  if (!el) return;
+  // Final render — full markdown
+  el.innerHTML = markdownToHtml(fullText);
+
+  // Show metrics
+  const lat   = document.getElementById(metaId + '-lat');
+  const cost  = document.getElementById(metaId + '-cost');
+  const toks  = document.getElementById(metaId + '-tokens');
+
+  if (lat)  { lat.style.display  = 'inline'; lat.textContent  = doneEvent.latency_ms?.toFixed(0) + 'ms'; }
+  if (cost) { cost.style.display = 'inline'; cost.textContent = '$' + (doneEvent.cost_usd || 0).toFixed(6); }
+  if (toks) {
+    toks.style.display = 'inline';
+    toks.textContent   = `${doneEvent.input_tokens || 0}+${doneEvent.output_tokens || 0} tok`;
+  }
+
+  // Update cost badge
+  const badge = document.getElementById('session-cost-badge');
+  if (badge) {
+    badge.textContent = '$' + GW.sessionCost.toFixed(4);
+    badge.className = 'gw-cost-badge' + (GW.sessionCost > 0.1 ? ' warn' : '');
+  }
+}
+
+function finalizeStreamError(bubbleId, metaId, message) {
+  const el = document.getElementById(bubbleId);
+  if (el) el.innerHTML = `❌ <strong>Erro no streaming:</strong> ${escHtml(message)}`;
+  const prov = document.getElementById(metaId + '-prov');
+  if (prov) { prov.style.color = 'var(--danger)'; prov.textContent = 'Erro'; }
 }
 
 // ── 2. Direct provider call — via gateway proxy (sem CORS) ──────
@@ -1208,20 +1629,31 @@ async function sendMessage() {
   appendUserMessage(text);
   state.history.push({ role: 'user', content: text });
 
-  // Show thinking
-  const thinkId = showThinking();
-
   // Animate engines
   animateEngines(text);
 
+  // Gateway streaming creates its own bubble — skip thinking indicator
+  const useStreaming = GW.connMode === 'gateway' && GW.isOnline;
+  const thinkId = useStreaming ? null : showThinking();
+
   try {
     const response = await callClaude(state.history);
-    hideThinking(thinkId);
+
+    if (thinkId) hideThinking(thinkId);
     state.history.push({ role: 'assistant', content: response });
 
-    // Parse and display
+    // Parse RTM/Gherkin from full response
     const parsed = parseResponse(response);
-    appendAIMessage(parsed.display, parsed.rtmRows, parsed.gherkin);
+
+    // Non-streaming modes: render the bubble now
+    if (!useStreaming) {
+      appendAIMessage(parsed.display, parsed.rtmRows, parsed.gherkin);
+    } else {
+      // Streaming: bubble already rendered — append artifact cards after it
+      if (parsed.rtmRows.length || parsed.gherkin) {
+        appendStreamArtifacts(parsed);
+      }
+    }
 
     // Update RTM
     if (parsed.rtmRows.length) {
@@ -1231,33 +1663,50 @@ async function sendMessage() {
       updateRTMBadge();
     }
 
-    // Update artifacts
-    if (parsed.gherkin) {
-      updateArtifacts(parsed.gherkin, text);
-    }
+    // Update artifacts studio
+    if (parsed.gherkin) updateArtifacts(parsed.gherkin, text);
 
     // Update knowledge
     state.analysisCount++;
     addKnowledgeItem(text, parsed);
+    markDirty();  // trigger auto-save
 
   } catch (err) {
-    hideThinking(thinkId);
+    if (thinkId) hideThinking(thinkId);
     const msg = err.message || 'Erro desconhecido';
-    // Detect common error types and give actionable guidance
     let hint = '';
     if (msg.includes('API key não configurada') || msg.includes('x-api-key') || msg.includes('Bearer')) {
-      hint = '\n\n💡 **Solução:** Clique em **⚙️ Gateway** na barra superior e configure a API key do provider escolhido.';
+      hint = '\n\n💡 **Solução:** Clique em **⚙️ Gateway** e configure a API key do provider escolhido.';
     } else if (msg.includes('gateway backend rodando') || msg.includes('Failed to fetch') || msg.includes('offline')) {
-      hint = '\n\n💡 **Solução:** Execute `python main.py` na pasta do gateway, ou mude para modo **Mock** em ⚙️ Gateway para testar sem backend.';
+      hint = '\n\n💡 **Solução:** Execute `python main.py` na pasta do gateway, ou use modo **Mock** em ⚙️ Gateway.';
     } else if (msg.includes('503') || msg.includes('high demand') || msg.includes('overloaded')) {
-      hint = '\n\n💡 **Solução:** O provider está sobrecarregado. Aguarde alguns segundos e tente novamente, ou troque de modelo em ⚙️ Gateway.';
+      hint = '\n\n💡 **Solução:** Provider sobrecarregado. Aguarde e tente novamente, ou troque de modelo.';
     } else if (msg.includes('401') || msg.includes('authentication') || msg.includes('invalid')) {
-      hint = '\n\n💡 **Solução:** A API key está inválida ou expirada. Verifique em ⚙️ Gateway.';
+      hint = '\n\n💡 **Solução:** API key inválida ou expirada. Verifique em ⚙️ Gateway.';
     }
-    appendAIMessage(`❌ **Erro:** ${msg}${hint}`, [], null);
+    if (!useStreaming) {
+      appendAIMessage(`❌ **Erro:** ${msg}${hint}`, [], null);
+    }
+    // In streaming mode, error is already shown in the bubble by finalizeStreamError
   }
 
   document.getElementById('send-btn').disabled = false;
+}
+
+function appendStreamArtifacts(parsed) {
+  // Append RTM/Gherkin artifact cards to the last stream bubble
+  const msgs = document.getElementById('messages');
+  const lastMsg = msgs.lastElementChild;
+  if (!lastMsg) return;
+  const container = lastMsg.querySelector('[style*="max-width:78%"]') || lastMsg;
+
+  if (parsed.rtmRows.length) {
+    container.insertAdjacentHTML('beforeend', buildRTMCard(parsed.rtmRows));
+  }
+  if (parsed.gherkin) {
+    container.insertAdjacentHTML('beforeend', buildGherkinCard(parsed.gherkin));
+  }
+  scrollBottom();
 }
 
 function appendUserMessage(text) {
@@ -1368,78 +1817,338 @@ function parseResponse(text) {
   return { display: html, rtmRows, gherkin };
 }
 
+// =================== MARKDOWN ENGINE ===================
+
+// Syntax highlight per language
+function syntaxHighlight(code, lang) {
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let s = esc(code);
+
+  if (lang === 'python') {
+    s = s
+      .replace(/(#[^\n]*)/g, '<span class="hl-cm">$1</span>')
+      .replace(/\b(def|class|import|from|return|if|elif|else|for|while|in|not|and|or|try|except|finally|with|as|pass|break|continue|raise|yield|lambda|async|await|True|False|None)\b/g, '<span class="hl-kw">$1</span>')
+      .replace(/("""[\s\S]*?"""|'''[\s\S]*?'''|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')/g, '<span class="hl-str">$1</span>')
+      .replace(/\b(\d+\.?\d*)\b/g, '<span class="hl-num">$1</span>')
+      .replace(/\b([A-Za-z_]\w*)\s*(?=\()/g, '<span class="hl-fn">$1</span>')
+      .replace(/(@\w+)/g, '<span class="hl-dec">$1</span>');
+  } else if (lang === 'javascript' || lang === 'js' || lang === 'typescript' || lang === 'ts') {
+    s = s
+      .replace(/(\/\/[^\n]*)/g, '<span class="hl-cm">$1</span>')
+      .replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="hl-cm">$1</span>')
+      .replace(/\b(const|let|var|function|class|return|if|else|for|while|do|switch|case|break|continue|new|this|typeof|instanceof|import|export|default|async|await|try|catch|finally|throw|true|false|null|undefined|from|of|in)\b/g, '<span class="hl-kw">$1</span>')
+      .replace(/("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|`[^`]*`)/g, '<span class="hl-str">$1</span>')
+      .replace(/\b(\d+\.?\d*)\b/g, '<span class="hl-num">$1</span>')
+      .replace(/\b([A-Za-z_$][\w$]*)\s*(?=\()/g, '<span class="hl-fn">$1</span>');
+  } else if (lang === 'robot') {
+    s = s
+      .replace(/(#[^\n]*)/g, '<span class="hl-cm">$1</span>')
+      .replace(/^(\*\*\*[^*\n]+\*\*\*)/gm, '<span class="hl-tag">$1</span>')
+      .replace(/\b(Library|Resource|Suite Setup|Suite Teardown|Test Setup|Test Teardown|Variables|Settings|Keywords|Test Cases)\b/g, '<span class="hl-kw">$1</span>')
+      .replace(/(\$\{[^}]+\})/g, '<span class="hl-num">$1</span>')
+      .replace(/("([^"]*)")/g, '<span class="hl-str">$1</span>');
+  } else if (lang === 'sql') {
+    s = s
+      .replace(/(--[^\n]*)/g, '<span class="hl-cm">$1</span>')
+      .replace(/\b(SELECT|FROM|WHERE|JOIN|LEFT|RIGHT|INNER|OUTER|ON|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TABLE|INDEX|VIEW|AND|OR|NOT|IN|LIKE|IS|NULL|AS|ORDER|BY|GROUP|HAVING|LIMIT|OFFSET|DISTINCT|COUNT|SUM|AVG|MAX|MIN|CASE|WHEN|THEN|ELSE|END)\b/gi, '<span class="hl-kw">$1</span>')
+      .replace(/('([^']*)')/g, '<span class="hl-str">$1</span>')
+      .replace(/\b(\d+)\b/g, '<span class="hl-num">$1</span>');
+  } else if (lang === 'json') {
+    s = s
+      .replace(/("([^"\\]|\\.)*")\s*:/g, '<span class="hl-fn">$1</span>:')
+      .replace(/:\s*("([^"\\]|\\.)*")/g, ': <span class="hl-str">$1</span>')
+      .replace(/\b(true|false|null)\b/g, '<span class="hl-kw">$1</span>')
+      .replace(/\b(\d+\.?\d*)\b/g, '<span class="hl-num">$1</span>');
+  } else if (lang === 'bash' || lang === 'sh') {
+    s = s
+      .replace(/(#[^\n]*)/g, '<span class="hl-cm">$1</span>')
+      .replace(/\b(if|then|else|elif|fi|for|while|do|done|case|esac|function|return|exit|echo|export|source|cd|ls|mkdir|rm|cp|mv|grep|sed|awk|cat|chmod|sudo)\b/g, '<span class="hl-kw">$1</span>')
+      .replace(/("([^"\\]|\\.)*"|'([^'\\]|\\.)*')/g, '<span class="hl-str">$1</span>')
+      .replace(/(\$\w+|\$\{[^}]+\})/g, '<span class="hl-num">$1</span>');
+  }
+  return s;
+}
+
+// Full markdown → HTML
 function markdownToHtml(text) {
-  return text
-    .replace(/```[\w]*\n[\s\S]*?```/g, m => {
-      const code = m.replace(/```[\w]*\n/, '').replace(/```$/, '').trim();
-      const lang = (m.match(/```(\w+)/) || ['',''])[1];
-      if (lang === 'rtm') return ''; // handled separately
-      if (lang === 'gherkin') {
-        const lines = code.split('\n').map(l => {
-          if (/^(Funcionalidade|Feature):/i.test(l.trim())) return `<span class="gherkin-kw">${escHtml(l)}</span>`;
-          if (/^\s*(Dado|Given|Quando|When|Então|Then|E|And|Mas|But|Cenário|Scenario|Como|Quero|Para)/.test(l)) {
-            return l.replace(/^(\s*)(Dado|Given|Quando|When|Então|Then|E|And|Mas|But|Cenário|Scenario|Como|Quero|Para)/, (_, sp, kw) =>
-              `${sp}<span class="gherkin-kw">${kw}</span>`);
-          }
-          return escHtml(l);
-        }).join('\n');
-        return `<pre><code>${lines}</code></pre>`;
-      }
-      return `<pre><code>${escHtml(code)}</code></pre>`;
-    })
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/^#{1,3} (.+)$/gm, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>');
+  if (!text) return '';
+
+  // 1. Fence code blocks (before anything else)
+  text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    if (lang === 'rtm') return '';  // handled by buildRTMCard
+    lang = lang.toLowerCase().trim();
+    const id = 'cb-' + Math.random().toString(36).slice(2, 8);
+    const highlighted = lang ? syntaxHighlight(code.trim(), lang) : escHtml(code.trim());
+    const labelMap = { python:'Python', javascript:'JavaScript', js:'JavaScript',
+      typescript:'TypeScript', ts:'TypeScript', robot:'Robot Framework',
+      gherkin:'Gherkin', sql:'SQL', json:'JSON', bash:'Bash', sh:'Shell',
+      html:'HTML', css:'CSS', yaml:'YAML', xml:'XML' };
+    const label = labelMap[lang] || (lang || 'code');
+    return `<div class="code-block" id="${id}">
+  <div class="code-block-header">
+    <span class="code-block-lang">${escHtml(label)}</span>
+    <div class="code-block-actions">
+      <button class="code-btn" onclick="copyCodeBlock('${id}')">📋 Copiar</button>
+    </div>
+  </div>
+  <pre>${highlighted}</pre>
+</div>`;
+  });
+
+  // 2. Headings
+  text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  text = text.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
+  text = text.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+
+  // 3. Bold / italic
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*(.+?)\*\*/g,     '<strong>$1</strong>');
+  text = text.replace(/\*(.+?)\*/g,         '<em>$1</em>');
+  text = text.replace(/__(.+?)__/g,         '<strong>$1</strong>');
+
+  // 4. Inline code
+  text = text.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+
+  // 5. Blockquote
+  text = text.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  text = text.replace(/^> (.+)$/gm,    '<blockquote>$1</blockquote>');
+
+  // 6. Horizontal rule
+  text = text.replace(/^---+$/gm, '<hr>');
+
+  // 7. Unordered lists
+  text = text.replace(/((?:^[-*•] .+\n?)+)/gm, block => {
+    const items = block.trim().split('\n').map(l => `<li>${l.replace(/^[-*•] /, '')}</li>`).join('');
+    return `<ul>${items}</ul>`;
+  });
+
+  // 8. Ordered lists
+  text = text.replace(/((?:^\d+\. .+\n?)+)/gm, block => {
+    const items = block.trim().split('\n').map(l => `<li>${l.replace(/^\d+\. /, '')}</li>`).join('');
+    return `<ol>${items}</ol>`;
+  });
+
+  // 9. Tables (simple | | |)
+  text = text.replace(/((?:^\|.+\|\n?)+)/gm, block => {
+    const rows = block.trim().split('\n').filter(r => r.trim());
+    if (rows.length < 2) return block;
+    const isHeaderSep = i => /^\|[-:| ]+\|$/.test(rows[i]);
+    let html = '<table>';
+    let inBody = false;
+    for (let i = 0; i < rows.length; i++) {
+      if (isHeaderSep(i)) { html += '<tbody>'; inBody = true; continue; }
+      const cells = rows[i].split('|').filter((_,j,a) => j > 0 && j < a.length-1);
+      const tag = (!inBody && i === 0) ? 'th' : 'td';
+      html += '<tr>' + cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('') + '</tr>';
+    }
+    html += '</table>';
+    return html;
+  });
+
+  // 10. Line breaks (double newline → paragraph break, single → <br>)
+  text = text.replace(/\n\n+/g, '<br><br>');
+  text = text.replace(/\n/g, '<br>');
+
+  return text;
 }
 
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// =================== ARTIFACT CARDS IN CHAT ===================
+// Copy code block content
+function copyCodeBlock(id) {
+  const block = document.getElementById(id);
+  if (!block) return;
+  const pre = block.querySelector('pre');
+  const text = pre ? pre.innerText : '';
+  const btn = block.querySelector('.code-btn');
+  navigator.clipboard?.writeText(text).then(() => {
+    if (btn) { btn.textContent = '✓ Copiado!'; btn.classList.add('copied'); }
+    setTimeout(() => { if (btn) { btn.textContent = '📋 Copiar'; btn.classList.remove('copied'); } }, 2000);
+  });
+}
+
+// =================== ARTIFACT CARDS ===================
+
+let _artifactCounter = 0;
+
 function buildRTMCard(rows) {
-  const rowsHtml = rows.map(r => `
-    <tr>
-      <td><code>${r.id}</code></td>
-      <td>${r.rn}</td>
-      <td>${r.ca}</td>
-      <td>${r.desc}</td>
-      <td class="risk-${r.risco.toLowerCase().includes('alto') ? 'alto' : r.risco.toLowerCase().includes('médio') || r.risco.toLowerCase().includes('medio') ? 'medio' : 'baixo'}">${r.risco}</td>
-      <td>${r.gap === 'Nenhum' ? '—' : r.gap}</td>
-      <td><span class="badge-prio prio-${r.prio.toLowerCase().includes('alta') ? 'alta' : r.prio.toLowerCase().includes('média') || r.prio.toLowerCase().includes('media') ? 'media' : 'baixa'}">${r.prio}</span></td>
-      <td><span class="auto-chip ${r.auto.toLowerCase().includes('sim') ? 'auto-sim' : 'auto-nao'}">${r.auto}</span></td>
-    </tr>`).join('');
-  return `
-    <div class="artifact-card" style="margin-top:8px;">
-      <div class="artifact-header"><span class="artifact-tag tag-rtm">📊 RTM</span> Traceability Matrix — ${rows.length} caso(s)</div>
-      <div class="artifact-body" style="padding:0;overflow-x:auto;">
-        <table class="rtm-table">
-          <thead><tr><th>ID</th><th>RN</th><th>CA</th><th>Descrição</th><th>Risco</th><th>Gap</th><th>Prioridade</th><th>Auto</th></tr></thead>
-          <tbody>${rowsHtml}</tbody>
-        </table>
+  const id = 'rtm-' + (++_artifactCounter);
+  const rowsHtml = rows.map(r => {
+    const riskCls = r.risco?.toLowerCase().includes('alto') ? 'alto'
+                  : r.risco?.toLowerCase().includes('médio') || r.risco?.toLowerCase().includes('medio') ? 'medio' : 'baixo';
+    const prioCls = r.prio?.toLowerCase().includes('alta') ? 'alta'
+                  : r.prio?.toLowerCase().includes('média') || r.prio?.toLowerCase().includes('media') ? 'media' : 'baixa';
+    return `<tr>
+      <td><code>${escHtml(r.id||'')}</code></td>
+      <td>${escHtml(r.rn||'')}</td>
+      <td>${escHtml(r.ca||'')}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.desc||r.description||'')}">${escHtml(r.desc||r.description||'')}</td>
+      <td class="risk-${riskCls}">${escHtml(r.risco||'')}</td>
+      <td>${r.gap === 'Nenhum' ? '—' : escHtml(r.gap||'')}</td>
+      <td><span class="badge-prio prio-${prioCls}">${escHtml(r.prio||'')}</span></td>
+      <td><span class="auto-chip ${(r.auto||'').toLowerCase().includes('sim') ? 'auto-sim' : 'auto-nao'}">${escHtml(r.auto||'')}</span></td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="artifact-card" id="${id}">
+    <div class="artifact-header">
+      <span class="artifact-tag tag-rtm">📊 RTM</span>
+      Traceability Matrix — ${rows.length} caso(s)
+      <div class="artifact-actions">
+        <button class="art-btn" onclick="copyArtifactTSV('${id}')">📋 Copiar</button>
+        <button class="art-btn" onclick="exportArtifactCSV('${id}')">⬇ CSV</button>
+        <button class="art-btn" onclick="sendToRTMPanel('${id}')">📊 Ver RTM</button>
       </div>
-    </div>`;
+    </div>
+    <div class="artifact-body" style="padding:0;overflow-x:auto;">
+      <table class="rtm-table">
+        <thead><tr><th>ID</th><th>RN</th><th>CA</th><th>Descrição</th><th>Risco</th><th>Gap</th><th>Prioridade</th><th>Auto</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+    <div class="artifact-footer" style="display:none;" id="${id}-data">${escHtml(JSON.stringify(rows))}</div>
+  </div>`;
 }
 
 function buildGherkinCard(gherkin) {
-  const lines = gherkin.split('\n').map(l => {
-    const kws = ['Funcionalidade','Feature','Cenário','Scenario','Dado','Given','Quando','When','Então','Then','E','And','Como','Quero','Para'];
+  const id = 'gherkin-' + (++_artifactCounter);
+
+  const highlighted = gherkin.split('\n').map(l => {
+    const kws = [
+      'Funcionalidade','Feature','Esquema do Cenário','Scenario Outline',
+      'Cenário','Scenario','Contexto','Background',
+      'Dado','Given','Quando','When','Então','Then',
+      'E ','And ','Mas ','But ','Como','Quero','Para',
+      'Exemplos','Examples'
+    ];
+    const trimmed = l.trim();
     for (const kw of kws) {
-      if (l.trim().startsWith(kw)) {
-        return `<span class="gherkin-kw">${escHtml(l)}</span>`;
+      if (trimmed.startsWith(kw)) {
+        const indent = l.match(/^(\s*)/)[1];
+        const rest   = escHtml(l.slice(indent.length));
+        // Color the keyword differently from the rest
+        const kwEsc  = escHtml(kw.trim());
+        const restTxt = rest.slice(kwEsc.length);
+        return `${indent}<span class="hl-tag">${kwEsc}</span><span style="color:#EEFFFF">${restTxt}</span>`;
       }
     }
+    if (trimmed.startsWith('#')) return `<span class="hl-cm">${escHtml(l)}</span>`;
+    if (trimmed.startsWith('|'))  return `<span class="hl-str">${escHtml(l)}</span>`;
+    if (trimmed.startsWith('@'))  return `<span class="hl-dec">${escHtml(l)}</span>`;
     return `<span style="color:#C3E88D">${escHtml(l)}</span>`;
   }).join('\n');
 
-  return `
-    <div class="artifact-card" style="margin-top:8px;">
-      <div class="artifact-header"><span class="artifact-tag tag-gherkin">🥒 Gherkin</span> Flow Layer — LKDF</div>
-      <div class="artifact-body" style="background:#0D1F35;color:#A8D8FF;font-family:var(--mono);">
-        <pre style="background:none;padding:0;margin:0;">${lines}</pre>
+  return `<div class="artifact-card" id="${id}">
+    <div class="artifact-header gherkin-hdr">
+      <span class="artifact-tag tag-gherkin">🥒 Gherkin</span>
+      Flow Layer — LKDF
+      <div class="artifact-actions">
+        <button class="art-btn" onclick="copyGherkin('${id}')">📋 Copiar</button>
+        <button class="art-btn" onclick="downloadGherkin('${id}')">⬇ .feature</button>
+        <button class="art-btn" onclick="sendToStudio('${id}')">⚙️ Studio</button>
       </div>
-    </div>`;
+    </div>
+    <div class="artifact-body dark">
+      <pre style="background:none;padding:0;margin:0;white-space:pre-wrap;">${highlighted}</pre>
+    </div>
+    <div style="display:none;" id="${id}-raw">${escHtml(gherkin)}</div>
+  </div>`;
+}
+
+// ── Artifact action helpers ──────────────────────────────────
+
+function copyArtifactTSV(id) {
+  const dataEl = document.getElementById(id + '-data');
+  if (!dataEl) return;
+  try {
+    const rows = JSON.parse(dataEl.textContent || '[]');
+    const tsv = ['ID\tRN\tCA\tDescrição\tRisco\tGap\tPrioridade\tAuto',
+      ...rows.map(r => [r.id,r.rn,r.ca,r.desc||r.description,r.risco,r.gap,r.prio,r.auto].join('\t'))
+    ].join('\n');
+    _copyAndFlash(tsv, id);
+  } catch(e) { console.warn(e); }
+}
+
+function exportArtifactCSV(id) {
+  const dataEl = document.getElementById(id + '-data');
+  if (!dataEl) return;
+  try {
+    const rows = JSON.parse(dataEl.textContent || '[]');
+    const header = 'ID,RN,CA,Descrição,Risco,Gap,Prioridade,Automatizável\n';
+    const csv = rows.map(r => [r.id,r.rn,r.ca,`"${(r.desc||r.description||'').replace(/"/g,'""')}"`,r.risco,r.gap,r.prio,r.auto].join(',')).join('\n');
+    _dlBlob(header + csv, 'aqua-qe-rtm.csv', 'text/csv');
+    _flashBtn(id, 'export');
+  } catch(e) { console.warn(e); }
+}
+
+function sendToRTMPanel(id) {
+  showPanel('rtm', document.querySelectorAll('.nav-item')[1]);
+  _flashBtn(id, 'rtm');
+}
+
+function copyGherkin(id) {
+  const rawEl = document.getElementById(id + '-raw');
+  if (!rawEl) return;
+  const text = rawEl.textContent.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+  _copyAndFlash(text, id);
+}
+
+function downloadGherkin(id) {
+  const rawEl = document.getElementById(id + '-raw');
+  if (!rawEl) return;
+  const text = rawEl.textContent.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+  _dlBlob(text, 'aqua-qe-scenario.feature', 'text/plain');
+}
+
+function sendToStudio(id) {
+  const rawEl = document.getElementById(id + '-raw');
+  if (!rawEl) return;
+  const gherkin = rawEl.textContent.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+  state.artifacts = state.artifacts || {};
+  state.artifacts.gherkin = gherkin;
+  updateArtifacts(gherkin, '');
+  showPanel('studio', document.querySelector('[onclick*="studio"]'));
+  _flashBtn(id, 'studio');
+}
+
+function _copyAndFlash(text, id) {
+  navigator.clipboard?.writeText(text).then(() => {
+    const card = document.getElementById(id);
+    card?.classList.add('copy-flash');
+    setTimeout(() => card?.classList.remove('copy-flash'), 400);
+    // Flash the copy button text
+    const btns = card?.querySelectorAll('.art-btn');
+    if (btns?.[0]) {
+      const orig = btns[0].textContent;
+      btns[0].textContent = '✓ Copiado!';
+      btns[0].classList.add('copied');
+      setTimeout(() => { btns[0].textContent = orig; btns[0].classList.remove('copied'); }, 2000);
+    }
+  });
+}
+
+function _flashBtn(id, type) {
+  const card = document.getElementById(id);
+  const btns = card?.querySelectorAll('.art-btn');
+  // Find the relevant button by index based on type
+  const map = { copy:0, export:1, rtm:2, studio:2 };
+  const btn = btns?.[map[type] ?? 0];
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+  }
+}
+
+function _dlBlob(content, name, mime) {
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([content], { type: mime })),
+    download: name,
+  });
+  a.click();
 }
 
 // =================== ENGINE ANIMATION ===================
@@ -1708,10 +2417,358 @@ function showPanel(id, navEl) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + id).classList.add('active');
   if (navEl) navEl.classList.add('active');
+  if (id === 'sessions') loadSessions();
 }
 
 function showAttachNote() {
   alert('Em produção: suporte a PDF, DOCX, Markdown, imagens e Confluence.\nDigite o conteúdo diretamente no chat por ora.');
+}
+
+// =================== SESSION MANAGER ===================
+
+const SESSION = {
+  currentId:    null,   // ID da sessão ativa no backend
+  autoSaveTimer: null,
+  lastSaved:    null,
+  isDirty:      false,
+  gwUrl:        'http://localhost:8080',
+};
+
+// ── Auto-save ─────────────────────────────────────────────────
+
+function markDirty() {
+  SESSION.isDirty = true;
+  setAutosaveDot('unsaved', 'não salvo');
+  clearTimeout(SESSION.autoSaveTimer);
+  // Auto-save after 8s of inactivity
+  SESSION.autoSaveTimer = setTimeout(() => {
+    if (SESSION.isDirty && GW?.isOnline) autoSave();
+  }, 8000);
+}
+
+async function autoSave() {
+  if (!GW?.isOnline || !state.history.length) return;
+  setAutosaveDot('saving', 'salvando…');
+  try {
+    if (SESSION.currentId) {
+      await apiCall('PATCH', `/sessions/${SESSION.currentId}`, buildSessionPayload());
+    } else {
+      const data = await apiCall('POST', '/sessions', buildSessionPayload());
+      SESSION.currentId = data.id;
+    }
+    SESSION.isDirty  = false;
+    SESSION.lastSaved = new Date();
+    setAutosaveDot('saved', 'salvo ' + timeAgo(SESSION.lastSaved));
+  } catch(e) {
+    setAutosaveDot('unsaved', 'erro ao salvar');
+  }
+}
+
+async function saveCurrentSession() {
+  if (!state.history.length) { toast('Nada para salvar — inicie uma conversa', 'info'); return; }
+  if (!GW?.isOnline) {
+    // Offline: save to localStorage as fallback
+    saveToLocalStorage();
+    return;
+  }
+  setAutosaveDot('saving', 'salvando…');
+  try {
+    if (SESSION.currentId) {
+      await apiCall('PATCH', `/sessions/${SESSION.currentId}`, buildSessionPayload());
+    } else {
+      const data = await apiCall('POST', '/sessions', buildSessionPayload());
+      SESSION.currentId = data.id;
+    }
+    SESSION.isDirty  = false;
+    SESSION.lastSaved = new Date();
+    setAutosaveDot('saved', 'salvo ✓');
+    toast('Sessão salva ✓', 'ok');
+    loadSessions();
+  } catch(e) {
+    setAutosaveDot('unsaved', 'erro');
+    toast('Erro ao salvar: ' + e.message, 'err');
+  }
+}
+
+function buildSessionPayload() {
+  return {
+    messages:  state.history,
+    rtm_items: state.rtmItems,
+    provider:  GW?.directProvider || GW?.gwProvider || '',
+    model:     GW?.directModel    || GW?.gwModel    || GW?.gwModelCustom || '',
+    engine:    GW?.gwEngine       || 'requirement',
+    metadata: {
+      msg_count:   state.history.filter(m => m.role === 'user').length,
+      ct_count:    state.rtmItems.length,
+      rn_count:    [...new Set(state.rtmItems.map(r => r.rn).filter(Boolean))].length,
+      cost_usd:    GW?.sessionCost   || 0,
+      tokens:      GW?.sessionTokens || 0,
+      analysis_count: state.analysisCount,
+    },
+  };
+}
+
+function setAutosaveDot(state, label) {
+  const dot = document.getElementById('autosave-dot');
+  const lbl = document.getElementById('autosave-label');
+  if (dot) dot.className = 'autosave-dot ' + state;
+  if (lbl) lbl.textContent = label;
+}
+
+// ── Session list ──────────────────────────────────────────────
+
+async function loadSessions() {
+  if (!GW?.isOnline) {
+    loadFromLocalStorage();
+    return;
+  }
+  try {
+    const data = await apiCall('GET', '/sessions?limit=50');
+    renderSessionsList(data.sessions || []);
+    // Load stats
+    const stats = await apiCall('GET', '/sessions/stats/summary').catch(() => null);
+    if (stats) renderSessionsStats(stats);
+    document.getElementById('sessions-count').textContent = data.total || 0;
+  } catch(e) {
+    loadFromLocalStorage();
+  }
+}
+
+async function searchSessions() {
+  const q = document.getElementById('sessions-search').value.trim();
+  if (!GW?.isOnline) return;
+  try {
+    const url = q ? `/sessions?q=${encodeURIComponent(q)}` : '/sessions?limit=50';
+    const data = await apiCall('GET', url);
+    renderSessionsList(data.sessions || []);
+  } catch(e) {}
+}
+
+function renderSessionsList(sessions) {
+  const el = document.getElementById('sessions-list');
+  if (!sessions.length) {
+    el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3);">
+      <div style="font-size:36px;margin-bottom:10px;">🕐</div>
+      <div>Nenhuma sessão encontrada.</div>
+    </div>`;
+    return;
+  }
+
+  const provIcons = { anthropic:'🤖', openai:'🟢', google_gemini:'🔴', groq:'⚡', mistral:'🌪️', ollama:'🦙', mock:'🎭' };
+
+  el.innerHTML = sessions.map(s => {
+    const isActive = s.id === SESSION.currentId;
+    const icon     = provIcons[s.provider] || '🔌';
+    const ctBadge  = s.ct_count ? `<span class="session-badge" style="background:var(--b3-blue-pale);color:var(--b3-blue);">${s.ct_count} CTs</span>` : '';
+    const costBadge = s.cost_usd ? `<span class="session-badge" style="background:var(--successpale);color:var(--success);">$${Number(s.cost_usd).toFixed(4)}</span>` : '';
+    const msgBadge  = s.msg_count ? `<span class="session-badge" style="background:var(--surface2);color:var(--text3);">${s.msg_count} msgs</span>` : '';
+
+    return `<div class="session-card ${isActive ? 'active-session' : ''}" id="sc-${s.id}">
+      <div class="session-title" title="${escHtml(s.title)}">${isActive ? '▶ ' : ''}${escHtml(s.title || 'Sessão sem título')}</div>
+      <div class="session-meta">
+        <span>${icon} ${escHtml(s.provider || 'offline')}</span>
+        ${ctBadge}${msgBadge}${costBadge}
+        <span style="margin-left:auto;font-size:10px;color:var(--text3);font-family:var(--mono);">${formatDate(s.updated_at)}</span>
+      </div>
+      ${s.summary ? `<div style="font-size:11px;color:var(--text3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(s.summary)}</div>` : ''}
+      <div class="session-actions">
+        <button class="btn-sm btn-primary" style="font-size:11px;" onclick="resumeSession('${s.id}')">▶ Retomar</button>
+        <button class="btn-sm" style="font-size:11px;" onclick="previewSession('${s.id}')">👁 Preview</button>
+        <button class="btn-sm" style="font-size:11px;" onclick="exportSession('${s.id}')">⬇ Exportar</button>
+        <button class="btn-sm" style="font-size:11px;color:var(--danger);border-color:#FCA5A5;" onclick="deleteSession('${s.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSessionsStats(stats) {
+  document.getElementById('ss-total').textContent  = stats.total_sessions || 0;
+  document.getElementById('ss-cts').textContent    = stats.total_cts      || 0;
+  document.getElementById('ss-tokens').textContent = stats.total_tokens   ? (stats.total_tokens / 1000).toFixed(1) + 'K' : '0';
+  document.getElementById('ss-cost').textContent   = '$' + (stats.total_cost_usd || 0).toFixed(4);
+}
+
+// ── Session actions ───────────────────────────────────────────
+
+async function resumeSession(sessionId) {
+  if (!GW?.isOnline) { toast('Gateway offline — não é possível retomar', 'err'); return; }
+  try {
+    const session = await apiCall('GET', `/sessions/${sessionId}`);
+    if (!session) return;
+
+    // Ask if should save current first
+    if (SESSION.isDirty && state.history.length) {
+      if (!confirm('Salvar sessão atual antes de retomar?')) {
+        // Discard current
+      } else {
+        await saveCurrentSession();
+      }
+    }
+
+    // Restore state
+    state.history   = session.messages  || [];
+    state.rtmItems  = session.rtm_items || [];
+    SESSION.currentId = sessionId;
+    SESSION.isDirty   = false;
+
+    // Update GW settings from session
+    if (session.provider && GW) {
+      GW.gwProvider = session.provider;
+      GW.gwEngine   = session.engine || 'requirement';
+      updateGwBar?.();
+    }
+
+    // Rebuild UI
+    rebuildChatFromHistory(session.messages || []);
+    if (state.rtmItems.length) {
+      updateRTMPanel();
+      updateRTMBadge();
+    }
+
+    setAutosaveDot('saved', 'retomado ✓');
+    showPanel('chat', document.querySelector('.nav-item'));
+    toast(`Sessão "${session.title}" retomada`, 'ok');
+  } catch(e) {
+    toast('Erro ao retomar: ' + e.message, 'err');
+  }
+}
+
+function rebuildChatFromHistory(messages) {
+  const messagesEl = document.getElementById('messages');
+  // Keep only the welcome message (first child)
+  const welcome = messagesEl.firstElementChild;
+  messagesEl.innerHTML = '';
+  if (welcome) messagesEl.appendChild(welcome);
+
+  for (const msg of messages) {
+    if (msg.role === 'user') {
+      appendUserMessage(msg.content);
+    } else if (msg.role === 'assistant') {
+      const parsed = parseResponse(msg.content);
+      appendAIMessage(parsed.display, parsed.rtmRows, parsed.gherkin);
+    }
+  }
+  scrollBottom?.();
+}
+
+async function previewSession(sessionId) {
+  if (!GW?.isOnline) return;
+  try {
+    const session = await apiCall('GET', `/sessions/${sessionId}`);
+    const msgs    = session.messages || [];
+    const preview = msgs.slice(-4).map(m =>
+      `${m.role === 'user' ? '👤' : '🤖'} ${m.content.substring(0, 120)}${m.content.length > 120 ? '…' : ''}`
+    ).join('\n\n');
+    alert(`Preview: "${session.title}"\n\n${preview}\n\n${msgs.length} mensagens total`);
+  } catch(e) { toast('Erro ao carregar preview', 'err'); }
+}
+
+async function exportSession(sessionId) {
+  if (!GW?.isOnline) return;
+  try {
+    const session = await apiCall('GET', `/sessions/${sessionId}`);
+    const blob = new Blob([JSON.stringify(session, null, 2)], { type: 'application/json' });
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: `aqua-qe-session-${session.title.substring(0,30).replace(/[^a-z0-9]/gi,'-')}.json`,
+    });
+    a.click();
+    toast('Sessão exportada', 'ok');
+  } catch(e) { toast('Erro ao exportar', 'err'); }
+}
+
+async function deleteSession(sessionId) {
+  if (!confirm('Deletar esta sessão permanentemente?')) return;
+  try {
+    await apiCall('DELETE', `/sessions/${sessionId}`);
+    if (SESSION.currentId === sessionId) {
+      SESSION.currentId = null;
+      setAutosaveDot('unsaved', 'não salvo');
+    }
+    loadSessions();
+    toast('Sessão deletada', 'info');
+  } catch(e) { toast('Erro ao deletar', 'err'); }
+}
+
+function newSession() {
+  if (SESSION.isDirty && state.history.length) {
+    if (!confirm('Criar nova sessão? A sessão atual não salva será perdida.')) return;
+  }
+  clearHistory();
+  SESSION.currentId = null;
+  SESSION.isDirty   = false;
+  setAutosaveDot('unsaved', 'nova sessão');
+  showPanel('chat', document.querySelector('.nav-item'));
+  toast('Nova sessão iniciada', 'info');
+}
+
+// ── localStorage fallback (gateway offline) ──────────────────
+
+function saveToLocalStorage() {
+  try {
+    const key  = 'aqua-qe-sessions';
+    const data = JSON.parse(localStorage.getItem(key) || '[]');
+    const payload = { ...buildSessionPayload(), id: SESSION.currentId || ('local-' + Date.now()), saved_at: new Date().toISOString() };
+    const idx = data.findIndex(s => s.id === payload.id);
+    if (idx >= 0) data[idx] = payload; else data.unshift(payload);
+    localStorage.setItem(key, JSON.stringify(data.slice(0, 20)));
+    SESSION.currentId = payload.id;
+    SESSION.isDirty   = false;
+    setAutosaveDot('saved', 'salvo (local)');
+    toast('Salvo localmente (gateway offline)', 'info');
+    loadFromLocalStorage();
+  } catch(e) { toast('Erro ao salvar localmente', 'err'); }
+}
+
+function loadFromLocalStorage() {
+  try {
+    const data = JSON.parse(localStorage.getItem('aqua-qe-sessions') || '[]');
+    const mapped = data.map(s => ({
+      id:         s.id,
+      title:      buildSessionPayload().messages?.[0]?.content?.substring(0,60) || 'Sessão local',
+      summary:    `${(s.messages||[]).filter(m=>m.role==='user').length} msgs · local`,
+      updated_at: s.saved_at || new Date().toISOString(),
+      provider:   s.provider || 'local',
+      msg_count:  (s.messages||[]).filter(m=>m.role==='user').length,
+      ct_count:   (s.rtm_items||[]).length,
+      cost_usd:   0,
+    }));
+    renderSessionsList(mapped);
+    document.getElementById('sessions-count').textContent = mapped.length;
+  } catch(e) {}
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso.replace('Z',''));
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60)    return 'agora';
+  if (diff < 3600)  return Math.floor(diff/60) + 'min';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h';
+  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
+}
+
+function timeAgo(d) {
+  if (!d) return '';
+  const diff = (new Date() - d) / 1000;
+  if (diff < 10)   return 'agora';
+  if (diff < 3600) return Math.floor(diff/60) + 'min atrás';
+  return Math.floor(diff/3600) + 'h atrás';
+}
+
+async function apiCall(method, path, body) {
+  const url = (GW?.gatewayUrl || 'http://localhost:8080') + '/api/v1' + path;
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const resp = await fetch(url, opts);
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+    throw new Error(err.detail || resp.statusText);
+  }
+  return resp.json();
 }
 
 // =================== INIT ===================
@@ -1772,6 +2829,13 @@ function updateChatGwIndicator() {
       GW.connMode   = 'gateway';
       GW.gatewayUrl = 'http://localhost:8080';
       console.log('[AQuA-QE] Gateway online em http://localhost:8080');
+      // Load session count for badge
+      fetch('http://localhost:8080/api/v1/sessions?limit=1')
+        .then(r => r.json())
+        .then(d => {
+          const n = d.total || 0;
+          document.getElementById('sessions-count').textContent = n;
+        }).catch(() => {});
     } else {
       throw new Error('status != ok');
     }

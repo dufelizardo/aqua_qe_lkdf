@@ -1,0 +1,26 @@
+# AQuA-QE LKDF — .gitignore
+
+# Secrets — nunca versionar
+config/.env
+config/*.key
+*.env
+
+# Config gerada (opcional — remova se quiser versionar settings sem keys)
+# config/gateway.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

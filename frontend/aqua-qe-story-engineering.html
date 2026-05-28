@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQuA-QE — Story Engineering · §17.2</title>
+<!-- Monaco Editor via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/loader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root {
+  --b3:     #00509E; --b3l:  #0070CC; --b3d:    #003D7A;
+  --b3pale: #E8F2FB; --b3mid:#C5DEFF;
+  --acc:    #00D4AA; --acc2: #00A882;
+  --gold:   #F59E0B; --goldp:#FFF8E6;
+  --red:    #EF4444; --redp: #FEF2F2;
+  --grn:    #10B981; --grnp: #ECFDF5;
+  --pur:    #7C3AED; --purp: #F0EBFF;
+  --org:    #F97316;
+  --bg:     #F0F4FA; --wh:   #FFFFFF;
+  --s1:     #F7F9FC; --s2:   #EFF3F8;
+  --bd:     #D5E3F2; --bd2:  #B8CEEA;
+  --t1:     #0D1F35; --t2:   #3A5A7A; --t3: #6B8CAE;
+  --fn:     'DM Sans',sans-serif;
+  --fm:     'IBM Plex Mono',monospace;
+  --r: 8px; --rl: 14px;
+  --sh:  0 1px 8px rgba(0,80,158,.08);
+  --sh2: 0 4px 24px rgba(0,80,158,.14);
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html,body { height:100%; font-family:var(--fn); background:var(--bg); color:var(--t1); font-size:14px; overflow:hidden; }
+
+/* ══ LAYOUT ══ */
+.se { display:grid; grid-template-rows:52px 1fr 28px; height:100vh; }
+
+/* ══ TOPBAR ══ */
+.tb {
+  background:var(--b3d); display:flex; align-items:center;
+  padding:0 16px; gap:12px;
+  border-bottom:2px solid transparent;
+  background-image:linear-gradient(var(--b3d),var(--b3d)),
+    linear-gradient(90deg,transparent,var(--acc),var(--b3l),transparent);
+  background-origin:border-box;
+  background-clip:padding-box,border-box;
+}
+.logo { display:flex; align-items:center; gap:8px; }
+.lpill { background:linear-gradient(135deg,var(--b3l),var(--acc)); color:white; font-weight:700; font-size:11px; padding:3px 10px; border-radius:5px; letter-spacing:.07em; }
+.tb-title { color:white; font-weight:600; font-size:14px; }
+.tb-sep   { color:rgba(255,255,255,.2); }
+.tb-sub   { color:rgba(255,255,255,.5); font-size:12px; }
+.tb-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+.tb-pill  { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.75); padding:4px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-family:var(--fn); transition:all .15s; }
+.tb-pill:hover { background:rgba(255,255,255,.16); }
+.tb-pill.primary { background:var(--acc); border-color:var(--acc); color:white; }
+.tb-pill.primary:hover { background:var(--acc2); }
+.score-ring { width:38px; height:38px; position:relative; }
+.score-ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+.score-ring-text { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:white; font-family:var(--fm); }
+.tb-divider { width:1px; height:28px; background:rgba(255,255,255,.1); }
+
+/* ══ BODY ══ */
+.se-body { display:grid; grid-template-columns:280px 1fr 300px; overflow:hidden; }
+
+/* ══ LEFT: Story list ══ */
+.left-col { background:var(--wh); border-right:1px solid var(--bd); display:flex; flex-direction:column; overflow:hidden; }
+.col-header { padding:12px 14px 10px; border-bottom:1px solid var(--bd); background:var(--s1); flex-shrink:0; }
+.col-title { font-size:12px; font-weight:700; color:var(--t1); }
+.col-sub   { font-size:10px; color:var(--t3); margin-top:2px; }
+.new-story-btn { width:calc(100% - 28px); margin:10px 14px 4px; padding:7px; background:var(--b3); color:white; border:none; border-radius:7px; font-family:var(--fn); font-size:12px; font-weight:600; cursor:pointer; transition:background .15s; }
+.new-story-btn:hover { background:var(--b3l); }
+.story-list { flex:1; overflow-y:auto; padding:6px 0; }
+
+/* Story item */
+.si { padding:10px 14px; cursor:pointer; border-left:3px solid transparent; transition:all .12s; }
+.si:hover { background:var(--b3pale); }
+.si.active { background:var(--b3pale); border-left-color:var(--b3); }
+.si-name { font-size:12px; font-weight:600; color:var(--t1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.si-row  { display:flex; gap:5px; margin-top:4px; align-items:center; }
+.si-badge { font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; }
+.si-ver { font-size:10px; color:var(--t3); font-family:var(--fm); margin-left:auto; }
+
+/* ══ CENTER: Monaco Editor ══ */
+.center-col { display:flex; flex-direction:column; overflow:hidden; }
+
+/* Tab bar */
+.tab-row { background:var(--wh); border-bottom:1px solid var(--bd); display:flex; align-items:center; padding:0 14px; gap:2px; height:40px; flex-shrink:0; }
+.tab { padding:7px 14px; font-size:12px; font-weight:500; cursor:pointer; border-radius:5px 5px 0 0; color:var(--t3); transition:all .12s; border-bottom:2px solid transparent; margin-bottom:-1px; display:flex; align-items:center; gap:5px; }
+.tab:hover { color:var(--b3); background:var(--b3pale); }
+.tab.active { color:var(--b3); border-bottom-color:var(--b3); background:var(--b3pale); font-weight:600; }
+.tab-actions { margin-left:auto; display:flex; gap:6px; }
+.ta-btn { padding:5px 11px; border-radius:6px; font-size:11px; font-family:var(--fn); cursor:pointer; border:1px solid var(--bd); background:var(--wh); color:var(--t2); transition:all .12s; font-weight:500; }
+.ta-btn:hover { background:var(--s1); }
+.ta-btn.primary { background:var(--b3); color:white; border-color:var(--b3); }
+.ta-btn.primary:hover { background:var(--b3l); }
+.ta-btn.acc { background:var(--acc); color:white; border-color:var(--acc); }
+.ta-btn.acc:hover { background:var(--acc2); }
+
+/* Editor container */
+.editor-wrap { flex:1; overflow:hidden; position:relative; }
+#monaco-editor { width:100%; height:100%; }
+
+/* Version bar below editor */
+.version-bar { background:var(--s1); border-top:1px solid var(--bd); padding:6px 14px; display:flex; align-items:center; gap:10px; flex-shrink:0; font-size:11px; color:var(--t3); }
+.vb-ver { font-family:var(--fm); font-weight:600; color:var(--b3); }
+.vb-time { font-family:var(--fm); }
+.vb-dot { width:6px; height:6px; border-radius:50%; }
+.vb-dot.clean { background:var(--grn); }
+.vb-dot.dirty { background:var(--gold); animation:blink .8s step-start infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
+.vb-actions { margin-left:auto; display:flex; gap:6px; }
+
+/* ══ RIGHT: Panels ══ */
+.right-col { background:var(--wh); border-left:1px solid var(--bd); display:flex; flex-direction:column; overflow:hidden; }
+.rp-tabs { display:flex; border-bottom:1px solid var(--bd); background:var(--s1); }
+.rp-tab { flex:1; padding:8px 4px; text-align:center; font-size:11px; font-weight:500; color:var(--t3); cursor:pointer; border-bottom:2px solid transparent; transition:all .12s; }
+.rp-tab:hover { color:var(--b3); }
+.rp-tab.active { color:var(--b3); border-bottom-color:var(--b3); background:var(--b3pale); font-weight:700; }
+.rp-body { flex:1; overflow-y:auto; }
+.rp-panel { display:none; padding:14px; }
+.rp-panel.active { display:block; }
+
+/* Sections inside right panels */
+.rp-section { margin-bottom:16px; }
+.rp-label { font-size:10px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:7px; display:flex; align-items:center; gap:6px; }
+.rp-label span { flex:1; }
+.add-btn { font-size:16px; cursor:pointer; color:var(--b3); line-height:1; }
+.add-btn:hover { color:var(--b3l); }
+
+/* RN / CA items */
+.rn-item, .ca-item {
+  display:flex; align-items:flex-start; gap:8px;
+  padding:8px 10px; border:1px solid var(--bd);
+  border-radius:7px; margin-bottom:6px; background:var(--s1);
+  transition:all .15s;
+}
+.rn-item:hover, .ca-item:hover { border-color:var(--b3mid); }
+.rn-badge { flex-shrink:0; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; font-family:var(--fm); margin-top:1px; }
+.rn-badge.rn { background:var(--b3pale); color:var(--b3); }
+.rn-badge.ca { background:var(--grnp); color:#065F46; }
+.rn-text { flex:1; font-size:12px; color:var(--t2); line-height:1.5; }
+.rn-del { color:var(--t3); cursor:pointer; font-size:14px; flex-shrink:0; margin-top:1px; }
+.rn-del:hover { color:var(--red); }
+
+/* Risk meter */
+.risk-meter { display:flex; gap:6px; }
+.risk-opt { flex:1; padding:6px 8px; border-radius:6px; border:1.5px solid var(--bd); cursor:pointer; text-align:center; font-size:11px; font-weight:600; transition:all .12s; }
+.risk-opt:hover { border-color:var(--bd2); }
+.risk-opt.selected.high { background:var(--redp); border-color:var(--red); color:var(--red); }
+.risk-opt.selected.mid  { background:var(--goldp); border-color:var(--gold); color:#92400E; }
+.risk-opt.selected.low  { background:var(--grnp); border-color:var(--grn); color:#065F46; }
+
+/* Score gauge */
+.score-gauge { text-align:center; padding:8px 0; }
+.score-num { font-size:42px; font-weight:700; font-family:var(--fm); line-height:1; }
+.score-lbl { font-size:11px; color:var(--t3); margin-top:4px; }
+.score-bar { height:6px; background:var(--s2); border-radius:3px; margin:10px 0 6px; overflow:hidden; }
+.score-fill { height:100%; border-radius:3px; transition:width .5s cubic-bezier(.34,1.56,.64,1); }
+
+/* RTM mini in right panel */
+.rtm-mini { width:100%; border-collapse:collapse; font-size:11px; }
+.rtm-mini th { background:var(--s2); padding:4px 8px; text-align:left; color:var(--t3); font-size:10px; text-transform:uppercase; border-bottom:1px solid var(--bd); }
+.rtm-mini td { padding:5px 8px; border-bottom:1px solid var(--bd); }
+.rtm-mini tr:last-child td { border-bottom:none; }
+.rtm-mini tr:hover td { background:var(--b3pale); }
+
+/* Versions timeline */
+.ver-timeline { display:flex; flex-direction:column; gap:8px; }
+.ver-item { display:flex; gap:8px; }
+.ver-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:3px; }
+.ver-dot.current { background:var(--b3); box-shadow:0 0 0 3px var(--b3pale); }
+.ver-dot.old { background:var(--bd2); }
+.ver-info { flex:1; }
+.ver-label { font-size:12px; font-weight:600; color:var(--t1); }
+.ver-sub   { font-size:10px; color:var(--t3); font-family:var(--fm); }
+.ver-restore { font-size:10px; color:var(--b3); cursor:pointer; margin-top:2px; }
+.ver-restore:hover { text-decoration:underline; }
+
+/* Defects */
+.defect-item { padding:8px 10px; border:1px solid var(--bd); border-radius:7px; margin-bottom:6px; border-left:3px solid var(--red); }
+.defect-id { font-size:10px; font-weight:700; color:var(--red); font-family:var(--fm); }
+.defect-desc { font-size:12px; color:var(--t2); margin-top:2px; }
+
+/* Chat panel (AI Assist) */
+.ai-messages { max-height:260px; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; }
+.ai-msg { padding:8px 10px; border-radius:8px; font-size:12px; line-height:1.6; }
+.ai-msg.user { background:var(--b3); color:white; align-self:flex-end; max-width:85%; border-bottom-right-radius:3px; }
+.ai-msg.ai   { background:var(--s1); border:1px solid var(--bd); align-self:flex-start; max-width:90%; border-bottom-left-radius:3px; }
+.ai-input-row { display:flex; gap:6px; padding:8px 10px; border-top:1px solid var(--bd); }
+.ai-input { flex:1; border:1px solid var(--bd); border-radius:6px; padding:6px 10px; font-family:var(--fn); font-size:12px; outline:none; resize:none; background:var(--s1); }
+.ai-input:focus { border-color:var(--b3); }
+.ai-send { background:var(--b3); color:white; border:none; border-radius:6px; padding:0 12px; cursor:pointer; font-size:16px; }
+.ai-send:hover { background:var(--b3l); }
+
+/* ══ STATUSBAR ══ */
+.statusbar { background:var(--b3d); display:flex; align-items:center; padding:0 14px; gap:14px; font-size:10px; color:rgba(255,255,255,.45); font-family:var(--fm); border-top:1px solid rgba(255,255,255,.06); }
+.sb-v { color:rgba(255,255,255,.75); font-weight:600; }
+.sb-sep { color:rgba(255,255,255,.15); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:10px; }
+
+/* Toast */
+#toasts { position:fixed; bottom:36px; right:16px; display:flex; flex-direction:column; gap:6px; z-index:9999; }
+.toast { padding:8px 14px; border-radius:7px; font-size:12px; font-weight:500; box-shadow:var(--sh2); animation:ti .2s ease; }
+@keyframes ti { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:none} }
+.t-ok { background:var(--grn); color:white; }
+.t-inf{ background:var(--b3); color:white; }
+.t-err{ background:var(--red); color:white; }
+
+/* Spinner */
+@keyframes spin { to{transform:rotate(360deg)} }
+.spin { animation:spin .7s linear infinite; display:inline-block; }
+</style>
+</head>
+<body>
+<div class="se">
+
+<!-- TOPBAR -->
+<div class="tb">
+  <div class="logo">
+    <div class="lpill">AQuA-QE</div>
+    <span class="tb-title">Story Engineering</span>
+    <span class="tb-sep">·</span>
+    <span class="tb-sub">§17.2 — Fase 3</span>
+  </div>
+  <div class="tb-right">
+    <!-- Score ring -->
+    <div class="score-ring" title="Quality Score">
+      <svg viewBox="0 0 36 36">
+        <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="3"/>
+        <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--acc)" stroke-width="3"
+          stroke-dasharray="0 100" id="score-arc" stroke-linecap="round"/>
+      </svg>
+      <div class="score-ring-text" id="score-ring-txt">—</div>
+    </div>
+    <div class="tb-divider"></div>
+    <div style="text-align:center;">
+      <div style="color:var(--acc);font-weight:700;font-size:15px;line-height:1;font-family:var(--fm);" id="tb-rn">0</div>
+      <div style="color:rgba(255,255,255,.4);font-size:9px;text-transform:uppercase;">RNs</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="color:var(--acc);font-weight:700;font-size:15px;line-height:1;font-family:var(--fm);" id="tb-ca">0</div>
+      <div style="color:rgba(255,255,255,.4);font-size:9px;text-transform:uppercase;">CAs</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="color:var(--gold);font-weight:700;font-size:15px;line-height:1;font-family:var(--fm);" id="tb-ct">0</div>
+      <div style="color:rgba(255,255,255,.4);font-size:9px;text-transform:uppercase;">CTs</div>
+    </div>
+    <div class="tb-divider"></div>
+    <button class="tb-pill" onclick="analyzeWithAI()">🧠 Analisar com IA</button>
+    <button class="tb-pill primary" onclick="saveStory()">💾 Salvar v<span id="save-ver">1</span></button>
+    <button class="tb-pill" onclick="exportStory()">⬇ Exportar</button>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="se-body">
+
+  <!-- LEFT: Story List -->
+  <div class="left-col">
+    <div class="col-header">
+      <div class="col-title">Histórias</div>
+      <div class="col-sub" id="stories-sub">0 histórias</div>
+    </div>
+    <button class="new-story-btn" onclick="newStory()">+ Nova História</button>
+    <div class="story-list" id="story-list"></div>
+  </div>
+
+  <!-- CENTER: Monaco Editor -->
+  <div class="center-col">
+    <!-- Tab bar -->
+    <div class="tab-row">
+      <div class="tab active" id="tab-story"  onclick="switchTab('story')">📝 História</div>
+      <div class="tab"        id="tab-gherkin" onclick="switchTab('gherkin')">🥒 Gherkin</div>
+      <div class="tab"        id="tab-robot"   onclick="switchTab('robot')">🤖 Robot</div>
+      <div class="tab"        id="tab-diff"    onclick="switchTab('diff')" style="display:none;">⊟ Diff</div>
+      <div class="tab-actions">
+        <button class="ta-btn" onclick="formatContent()">⌘⇧F Format</button>
+        <button class="ta-btn" onclick="insertTemplate('ac')">+ CA</button>
+        <button class="ta-btn" onclick="insertTemplate('rn')">+ RN</button>
+        <button class="ta-btn acc" onclick="analyzeWithAI()">🧠 IA</button>
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div class="editor-wrap">
+      <div id="monaco-editor"></div>
+    </div>
+
+    <!-- Version bar -->
+    <div class="version-bar">
+      <span class="vb-dot dirty" id="vb-dot"></span>
+      <span class="vb-ver" id="vb-ver">v1</span>
+      <span class="vb-time" id="vb-time">não salvo</span>
+      <div class="vb-actions">
+        <button class="ta-btn" onclick="showDiff()" id="btn-diff" style="display:none;">⊟ Ver diff</button>
+        <button class="ta-btn" onclick="copyContent()">📋 Copiar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Panels -->
+  <div class="right-col">
+    <div class="rp-tabs">
+      <div class="rp-tab active" onclick="switchRPanel('score')">📊 Score</div>
+      <div class="rp-tab"        onclick="switchRPanel('rnca')">📋 RN/CA</div>
+      <div class="rp-tab"        onclick="switchRPanel('rtm')">🔗 RTM</div>
+      <div class="rp-tab"        onclick="switchRPanel('compliance')">⚖️ Compliance</div>
+      <div class="rp-tab"        onclick="switchRPanel('versions')">🕐 Versões</div>
+      <div class="rp-tab"        onclick="switchRPanel('ai')">🤖 IA</div>
+    </div>
+    <div class="rp-body">
+
+      <!-- SCORE panel -->
+      <div class="rp-panel active" id="rp-score">
+        <div class="score-gauge">
+          <div class="score-num" id="score-num" style="color:var(--t3);">—</div>
+          <div class="score-lbl">Quality Score</div>
+          <div class="score-bar"><div class="score-fill" id="score-fill" style="width:0%;background:var(--grn)"></div></div>
+          <div style="font-size:10px;color:var(--t3);" id="score-detail">Escreva ou analise a história para ver o score</div>
+        </div>
+
+        <div class="rp-section">
+          <div class="rp-label">⚠️ Risco Geral</div>
+          <div class="risk-meter" id="risk-meter">
+            <div class="risk-opt high" onclick="setRisk('high')">🔴 Alto</div>
+            <div class="risk-opt mid selected" onclick="setRisk('mid')">🟡 Médio</div>
+            <div class="risk-opt low" onclick="setRisk('low')">🟢 Baixo</div>
+          </div>
+        </div>
+
+        <div class="rp-section">
+          <div class="rp-label">📈 Dimensões</div>
+          <div id="score-dims" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+
+        <div class="rp-section">
+          <div class="rp-label">⚡ Gaps</div>
+          <div id="gaps-list" style="font-size:12px;color:var(--t3);">Nenhum gap detectado</div>
+        </div>
+      </div>
+
+      <!-- RN/CA panel -->
+      <div class="rp-panel" id="rp-rnca">
+        <div class="rp-section">
+          <div class="rp-label">
+            <span>Regras de Negócio (RN)</span>
+            <span class="add-btn" onclick="addRN()">＋</span>
+          </div>
+          <div id="rn-list"></div>
+        </div>
+        <div class="rp-section">
+          <div class="rp-label">
+            <span>Critérios de Aceite (CA)</span>
+            <span class="add-btn" onclick="addCA()">＋</span>
+          </div>
+          <div id="ca-list"></div>
+        </div>
+      </div>
+
+      <!-- RTM panel -->
+      <div class="rp-panel" id="rp-rtm">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div style="flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:7px;padding:8px 10px;text-align:center;">
+            <div style="font-size:20px;font-weight:700;color:var(--b3);font-family:var(--fm);" id="rtm-ct-count">0</div>
+            <div style="font-size:10px;color:var(--t3);">CTs</div>
+          </div>
+          <div style="flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:7px;padding:8px 10px;text-align:center;">
+            <div style="font-size:20px;font-weight:700;color:var(--red);font-family:var(--fm);" id="rtm-risk-count">0</div>
+            <div style="font-size:10px;color:var(--t3);">Alto risco</div>
+          </div>
+          <div style="flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:7px;padding:8px 10px;text-align:center;">
+            <div style="font-size:20px;font-weight:700;color:var(--grn);font-family:var(--fm);" id="rtm-auto-count">0</div>
+            <div style="font-size:10px;color:var(--t3);">Auto</div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="rtm-mini">
+            <thead><tr><th>ID</th><th>RN</th><th>Risco</th><th>Auto</th></tr></thead>
+            <tbody id="rtm-body"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:6px;">
+          <button class="ta-btn" style="flex:1;font-size:11px;" onclick="exportRTM()">⬇ CSV</button>
+          <button class="ta-btn primary" style="flex:1;font-size:11px;" onclick="generateCTs()">🧠 Gerar CTs</button>
+        </div>
+      </div>
+
+      <!-- COMPLIANCE panel -->
+      <div class="rp-panel" id="rp-compliance">
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;background:var(--b3pale);padding:3px 8px;border-radius:4px;border:1.5px solid var(--b3mid);" id="cmp-lbl-WCAG">
+            <input type="checkbox" checked value="WCAG" onchange="complianceStdChanged()"> WCAG
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;background:var(--redp);padding:3px 8px;border-radius:4px;border:1.5px solid #FCA5A5;" id="cmp-lbl-LGPD">
+            <input type="checkbox" checked value="LGPD" onchange="complianceStdChanged()"> LGPD
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;background:var(--goldp);padding:3px 8px;border-radius:4px;border:1.5px solid #FCD34D;" id="cmp-lbl-OWASP">
+            <input type="checkbox" checked value="OWASP" onchange="complianceStdChanged()"> OWASP
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;background:var(--purp);padding:3px 8px;border-radius:4px;border:1.5px solid #C4B5FD;" id="cmp-lbl-ISO25010">
+            <input type="checkbox" checked value="ISO25010" onchange="complianceStdChanged()"> ISO 25010
+          </label>
+          <button style="padding:3px 10px;border-radius:5px;font-size:11px;font-family:var(--fn);background:var(--b3);color:white;border:none;cursor:pointer;margin-left:auto;" onclick="runCompliance()">▶ Analisar</button>
+        </div>
+
+        <div id="cmp-result">
+          <div style="text-align:center;padding:20px;color:var(--t3);font-size:12px;">
+            <div style="font-size:32px;margin-bottom:8px;">⚖️</div>
+            Clique em ▶ Analisar para verificar conformidade
+          </div>
+        </div>
+      </div>
+
+      <!-- VERSIONS panel -->
+      <div class="rp-panel" id="rp-versions">
+        <div class="ver-timeline" id="ver-timeline"></div>
+        <div style="margin-top:12px;">
+          <button class="ta-btn" style="width:100%;font-size:11px;" onclick="saveStory()">💾 Salvar nova versão</button>
+        </div>
+      </div>
+
+      <!-- AI ASSIST panel -->
+      <div class="rp-panel" id="rp-ai" style="padding:0;display:flex;flex-direction:column;height:100%;">
+        <div class="ai-messages" id="ai-messages">
+          <div class="ai-msg ai">Olá! Sou o assistente de engenharia de história. Posso ajudar a:<br>• Extrair RN e CA da história<br>• Detectar ambiguidades<br>• Gerar cenários Gherkin<br>• Calcular o quality score<br><br>Clique em <strong>🧠 Analisar</strong> ou me pergunte algo!</div>
+        </div>
+        <div class="ai-input-row">
+          <textarea class="ai-input" id="ai-input" rows="2" placeholder="Pergunte sobre a história..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMsg();}"></textarea>
+          <button class="ai-send" onclick="sendAIMsg()">➤</button>
+        </div>
+      </div>
+
+    </div><!-- /rp-body -->
+  </div>
+
+</div><!-- /se-body -->
+
+<!-- STATUSBAR -->
+<div class="statusbar">
+  <span>Story Engineering · AQuA-QE §17.2</span>
+  <span class="sb-sep">|</span>
+  <span>Story: <span class="sb-v" id="sb-story">—</span></span>
+  <span>Versão: <span class="sb-v" id="sb-ver">v1</span></span>
+  <span>Linhas: <span class="sb-v" id="sb-lines">0</span></span>
+  <span class="sb-sep">|</span>
+  <span>Gateway: <span class="sb-v" id="sb-gw">offline</span></span>
+  <span style="margin-left:auto;" id="sb-msg"></span>
+</div>
+
+</div><!-- /se -->
+<div id="toasts"></div>
+
+<script>
+// ════════════════════════════════════
+// STATE
+// ════════════════════════════════════
+const SE = {
+  stories:       [],
+  activeIdx:     -1,
+  activeTab:     'story',
+  isAIBusy:      false,
+  isDirty:       false,
+  gwUrl:         'http://localhost:8080',
+  gwOnline:      false,
+  autoSaveTimer: null,
+};
+
+// Default story template
+const STORY_TEMPLATE = `# História de Usuário
+
+Como [ATOR]
+Quero [AÇÃO / FUNCIONALIDADE]
+Para [BENEFÍCIO / OBJETIVO DE NEGÓCIO]
+
+---
+
+## Contexto
+
+[Descreva o contexto e o problema que esta história resolve]
+
+---
+
+## Critérios de Aceite (CA)
+
+- CA-01: Dado que [precondição], quando [ação], então [resultado esperado]
+- CA-02: 
+
+---
+
+## Regras de Negócio (RN)
+
+- RN-01: 
+- RN-02: 
+
+---
+
+## Requisitos Não Funcionais
+
+- Performance: 
+- Segurança: 
+- Acessibilidade: WCAG 2.1 AA
+
+---
+
+## Notas Técnicas
+
+[Dependências, integrações, restrições técnicas]
+
+---
+
+## Definition of Done
+
+- [ ] Todos os CAs validados
+- [ ] Testes automatizados criados
+- [ ] Code review aprovado
+- [ ] Deploy em staging validado
+`;
+
+const GHERKIN_TEMPLATE = `# language: pt
+
+Funcionalidade: [Nome da Funcionalidade]
+  Como [ator]
+  Quero [ação]
+  Para [benefício]
+
+  Contexto:
+    Dado que [precondição global]
+
+  @smoke @regressao
+  Cenário: [Fluxo principal — caminho feliz]
+    Dado que [precondição específica]
+    Quando [ação do usuário]
+    Então [resultado esperado]
+    E [resultado adicional]
+
+  @negativo
+  Cenário: [Fluxo alternativo — cenário de erro]
+    Dado que [precondição]
+    Quando [ação inválida]
+    Então [mensagem de erro esperada]
+
+  Esquema do Cenário: [Cenário parametrizado]
+    Dado que o campo "<campo>" contém "<valor>"
+    Quando o usuário submete o formulário
+    Então o resultado deve ser "<resultado>"
+
+    Exemplos:
+      | campo  | valor  | resultado |
+      | email  | válido | sucesso   |
+      | email  | vazio  | erro      |
+`;
+
+const ROBOT_TEMPLATE = `*** Settings ***
+Library     SeleniumLibrary
+Library     Collections
+Resource    ../resources/keywords.robot
+Resource    ../resources/variables.robot
+
+Suite Setup       Abrir Navegador    \${URL}    \${BROWSER}
+Suite Teardown    Fechar Navegador
+
+*** Variables ***
+\${URL}          https://app.exemplo.com
+\${BROWSER}      chrome
+\${USUARIO}      usuario@email.com
+\${SENHA}        Senha@123
+
+*** Test Cases ***
+
+# CT-001 - RN-01 | CA-01: Fluxo principal
+CT-001 - Fluxo Principal - Sucesso
+    [Documentation]    Verifica o fluxo principal da história
+    [Tags]             smoke    regression
+    [Setup]            Preparar Ambiente
+    Executar Ação Principal
+    Verificar Resultado Esperado
+    [Teardown]         Limpar Dados
+
+# CT-002 - RN-01 | CA-02: Fluxo alternativo
+CT-002 - Tratamento de Erro
+    [Documentation]    Verifica o comportamento em caso de erro
+    [Tags]             regression    negative
+    Executar Acao Com Dados Invalidos
+    Verificar Mensagem De Erro    Mensagem esperada
+
+*** Keywords ***
+
+Preparar Ambiente
+    [Documentation]    Configura pré-condições do teste
+    Log    Iniciando teste
+
+Executar Ação Principal
+    [Documentation]    Executa a ação principal do caso de teste
+    Log    Executando ação
+
+Verificar Resultado Esperado
+    [Documentation]    Verifica se o resultado está correto
+    Log    Verificando resultado
+
+Executar Acao Com Dados Invalidos
+    Log    Executando com dados inválidos
+
+Verificar Mensagem De Erro
+    [Arguments]    \${mensagem}
+    Log    Verificando mensagem: \${mensagem}
+
+Limpar Dados
+    Log    Limpando dados
+`;
+
+// ════════════════════════════════════
+// MONACO INIT
+// ════════════════════════════════════
+let editor = null;
+
+require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs' } });
+require(['vs/editor/editor.main'], function() {
+  // Register AQuA-QE Story language
+  monaco.languages.register({ id: 'aqua-story' });
+  monaco.languages.setMonarchTokensProvider('aqua-story', {
+    tokenizer: {
+      root: [
+        [/^#{1,3} .+$/, 'keyword.story-heading'],
+        [/^(Como|Quero|Para) .+$/, 'keyword.story-actor'],
+        [/^(CA|RN)-\d+:/, 'keyword.story-ref'],
+        [/^\- (CA|RN)-\d+:.*$/, 'string.story-item'],
+        [/^\- \[ \].*$/, 'comment.story-todo'],
+        [/^\- \[x\].*$/, 'regexp.story-done'],
+        [/\[.+?\]/, 'type.story-placeholder'],
+        [/^---+$/, 'delimiter'],
+        [/#.*$/, 'comment'],
+      ]
+    }
+  });
+  monaco.editor.defineTheme('aqua-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token:'keyword.story-heading', foreground:'7dd3fc', fontStyle:'bold' },
+      { token:'keyword.story-actor',   foreground:'a78bfa', fontStyle:'bold' },
+      { token:'keyword.story-ref',     foreground:'34d399', fontStyle:'bold' },
+      { token:'string.story-item',     foreground:'c3e88d' },
+      { token:'comment.story-todo',    foreground:'fbbf24' },
+      { token:'regexp.story-done',     foreground:'34d399' },
+      { token:'type.story-placeholder',foreground:'fb923c' },
+      { token:'delimiter',             foreground:'546e7a' },
+      { token:'comment',               foreground:'546e7a', fontStyle:'italic' },
+    ],
+    colors: {
+      'editor.background': '#0A1628',
+      'editor.foreground': '#EEFFFF',
+      'editorLineNumber.foreground': '#37556E',
+      'editorLineNumber.activeForeground': '#7DD3FC',
+      'editor.selectionBackground': '#1E3A5F',
+      'editor.lineHighlightBackground': '#0D1E35',
+      'editorCursor.foreground': '#00D4AA',
+      'editorWhitespace.foreground': '#1A2D45',
+    }
+  });
+
+  editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+    value: STORY_TEMPLATE,
+    language: 'aqua-story',
+    theme: 'aqua-dark',
+    fontSize: 13,
+    fontFamily: '"IBM Plex Mono", "Cascadia Code", "Fira Code", monospace',
+    fontLigatures: true,
+    lineHeight: 22,
+    minimap: { enabled: true, scale: 1 },
+    scrollBeyondLastLine: false,
+    wordWrap: 'on',
+    renderWhitespace: 'selection',
+    smoothScrolling: true,
+    cursorBlinking: 'smooth',
+    cursorSmoothCaretAnimation: 'on',
+    bracketPairColorization: { enabled: true },
+    guides: { bracketPairs: true, indentation: true },
+    padding: { top: 14, bottom: 14 },
+    suggest: { showSnippets: true },
+  });
+
+  // Register snippets
+  monaco.languages.registerCompletionItemProvider('aqua-story', {
+    provideCompletionItems: (model, position) => {
+      const suggestions = [
+        { label:'ca', kind:monaco.languages.CompletionItemKind.Snippet, insertText:'CA-${1:01}: Dado que ${2:precondição}, quando ${3:ação}, então ${4:resultado}', insertTextRules:4, documentation:'Critério de Aceite' },
+        { label:'rn', kind:monaco.languages.CompletionItemKind.Snippet, insertText:'RN-${1:01}: ${2:descrição da regra de negócio}', insertTextRules:4, documentation:'Regra de Negócio' },
+        { label:'ct', kind:monaco.languages.CompletionItemKind.Snippet, insertText:'CT-${1:001} - RN-${2:01} | CA-${3:01}: ${4:descrição do caso de teste}', insertTextRules:4, documentation:'Caso de Teste' },
+        { label:'us', kind:monaco.languages.CompletionItemKind.Snippet, insertText:'Como ${1:ator}\nQuero ${2:ação}\nPara ${3:benefício}', insertTextRules:4, documentation:'User Story' },
+      ];
+      return { suggestions };
+    }
+  });
+
+  // onChange
+  editor.onDidChangeModelContent(() => {
+    SE.isDirty = true;
+    document.getElementById('vb-dot').className = 'vb-dot dirty';
+    document.getElementById('vb-time').textContent = 'não salvo';
+    updateLineCount();
+    syncRNCAfromEditor();
+    debounceScoreCalc();
+    clearTimeout(SE.autoSaveTimer);
+    SE.autoSaveTimer = setTimeout(autoSave, 10000);
+  });
+
+  // Resize
+  new ResizeObserver(() => editor.layout()).observe(document.getElementById('monaco-editor'));
+
+  // Init with one default story
+  newStory(false);
+  renderVersions();
+  updateScore();
+  probeGateway();
+});
+
+// ════════════════════════════════════
+// STORIES LIST
+// ════════════════════════════════════
+function newStory(notify = true) {
+  const n = SE.stories.length + 1;
+  const story = {
+    id:       'SE-' + String(n).padStart(3,'0'),
+    name:     n === 1 ? 'US: Nova História' : `US: História ${n}`,
+    versions: [{ v:1, content:STORY_TEMPLATE, gherkin:GHERKIN_TEMPLATE, robot:ROBOT_TEMPLATE, ts: new Date().toISOString(), score:0 }],
+    rns:      [],
+    cas:      [],
+    rtmItems: [],
+    risk:     'mid',
+    tags:     [],
+    created:  new Date().toISOString(),
+  };
+  SE.stories.push(story);
+  SE.activeIdx = SE.stories.length - 1;
+  renderStoryList();
+  loadActiveStory();
+  if (notify) toast(`História "${story.name}" criada`, 'inf');
+}
+
+function renderStoryList() {
+  const list = document.getElementById('story-list');
+  document.getElementById('stories-sub').textContent = SE.stories.length + ' histórias';
+  if (!SE.stories.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--t3);font-size:12px;">Nenhuma história</div>';
+    return;
+  }
+  list.innerHTML = SE.stories.map((s, i) => {
+    const cur = s.versions[s.versions.length - 1];
+    const risk = s.risk === 'high' ? '🔴' : s.risk === 'mid' ? '🟡' : '🟢';
+    const scoreColor = cur.score >= 80 ? 'var(--grn)' : cur.score >= 60 ? 'var(--gold)' : cur.score > 0 ? 'var(--red)' : 'var(--t3)';
+    return `<div class="si ${i === SE.activeIdx ? 'active' : ''}" onclick="selectStory(${i})">
+      <div class="si-name">${escH(s.name)}</div>
+      <div class="si-row">
+        <span class="si-badge" style="background:var(--b3pale);color:var(--b3);">${s.rns.length} RN</span>
+        <span class="si-badge" style="background:var(--grnp);color:#065F46;">${s.cas.length} CA</span>
+        <span>${risk}</span>
+        <span class="si-ver" style="color:${scoreColor};">${cur.score > 0 ? cur.score + '%' : 'v' + cur.v}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectStory(idx) {
+  if (SE.isDirty) autoSave();
+  SE.activeIdx = idx;
+  renderStoryList();
+  loadActiveStory();
+}
+
+function loadActiveStory() {
+  if (SE.activeIdx < 0) return;
+  const s   = SE.stories[SE.activeIdx];
+  const cur = s.versions[s.versions.length - 1];
+
+  // Set editor content based on active tab
+  const content = SE.activeTab === 'gherkin' ? cur.gherkin
+                : SE.activeTab === 'robot'   ? cur.robot
+                : cur.content;
+  editor?.setValue(content);
+  editor?.setScrollTop(0);
+
+  SE.isDirty = false;
+  document.getElementById('vb-dot').className = 'vb-dot clean';
+  document.getElementById('vb-ver').textContent = 'v' + cur.v;
+  document.getElementById('vb-time').textContent = formatDate(cur.ts);
+  document.getElementById('sb-story').textContent = s.name;
+  document.getElementById('sb-ver').textContent = 'v' + cur.v;
+  document.getElementById('save-ver').textContent = cur.v;
+
+  renderRNCA();
+  renderRTM();
+  renderVersions();
+  updateScore();
+  updateTopbar();
+}
+
+// ════════════════════════════════════
+// TABS
+// ════════════════════════════════════
+const TAB_LANGS = { story:'aqua-story', gherkin:'gherkin', robot:'robotframework', diff:'text' };
+
+function switchTab(tab) {
+  if (!editor || SE.activeIdx < 0) return;
+  const s   = SE.stories[SE.activeIdx];
+  const cur = s.versions[s.versions.length - 1];
+
+  // Save current tab content
+  if (SE.isDirty) {
+    const val = editor.getValue();
+    if (SE.activeTab === 'gherkin') cur.gherkin = val;
+    else if (SE.activeTab === 'robot') cur.robot = val;
+    else cur.content = val;
+  }
+
+  SE.activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab)?.classList.add('active');
+
+  const content = tab === 'gherkin' ? cur.gherkin : tab === 'robot' ? cur.robot : cur.content;
+  monaco.editor.setModelLanguage(editor.getModel(), TAB_LANGS[tab] || 'text');
+  editor.setValue(content);
+  SE.isDirty = false;
+  document.getElementById('vb-dot').className = 'vb-dot clean';
+}
+
+// ════════════════════════════════════
+// SAVE & VERSIONS
+// ════════════════════════════════════
+function saveStory() {
+  if (SE.activeIdx < 0) return;
+  const s   = SE.stories[SE.activeIdx];
+  const cur = s.versions[s.versions.length - 1];
+  const val = editor.getValue();
+
+  // Increment version
+  const newVer = { v: cur.v + 1, ts: new Date().toISOString(), score: cur.score };
+  if (SE.activeTab === 'gherkin') { newVer.content = cur.content; newVer.gherkin = val; newVer.robot = cur.robot; }
+  else if (SE.activeTab === 'robot') { newVer.content = cur.content; newVer.gherkin = cur.gherkin; newVer.robot = val; }
+  else { newVer.content = val; newVer.gherkin = cur.gherkin; newVer.robot = cur.robot; }
+
+  s.versions.push(newVer);
+  SE.isDirty = false;
+  document.getElementById('vb-dot').className = 'vb-dot clean';
+  document.getElementById('vb-ver').textContent = 'v' + newVer.v;
+  document.getElementById('vb-time').textContent = 'agora';
+  document.getElementById('sb-ver').textContent = 'v' + newVer.v;
+  document.getElementById('save-ver').textContent = newVer.v;
+  document.getElementById('btn-diff').style.display = s.versions.length > 1 ? 'inline-block' : 'none';
+
+  renderVersions();
+  renderStoryList();
+  updateScore();
+  toast('Versão v' + newVer.v + ' salva', 'ok');
+}
+
+function autoSave() {
+  if (!SE.isDirty || SE.activeIdx < 0) return;
+  const s   = SE.stories[SE.activeIdx];
+  const cur = s.versions[s.versions.length - 1];
+  const val = editor?.getValue() || '';
+  if (SE.activeTab === 'gherkin') cur.gherkin = val;
+  else if (SE.activeTab === 'robot') cur.robot = val;
+  else cur.content = val;
+  SE.isDirty = false;
+  document.getElementById('vb-dot').className = 'vb-dot clean';
+  document.getElementById('vb-time').textContent = 'salvo automaticamente';
+}
+
+function restoreVersion(vIdx) {
+  if (SE.activeIdx < 0) return;
+  const s   = SE.stories[SE.activeIdx];
+  const ver = s.versions[vIdx];
+  if (!ver) return;
+  const content = SE.activeTab === 'gherkin' ? ver.gherkin : SE.activeTab === 'robot' ? ver.robot : ver.content;
+  editor.setValue(content || '');
+  toast('Versão v' + ver.v + ' restaurada — salve para confirmar', 'inf');
+}
+
+function renderVersions() {
+  if (SE.activeIdx < 0) return;
+  const s   = SE.stories[SE.activeIdx];
+  const verts = document.getElementById('ver-timeline');
+  verts.innerHTML = [...s.versions].reverse().map((v, i) => {
+    const isCur = i === 0;
+    return `<div class="ver-item">
+      <div class="ver-dot ${isCur ? 'current' : 'old'}"></div>
+      <div class="ver-info">
+        <div class="ver-label">v${v.v} ${isCur ? '<span style="font-size:10px;background:var(--b3pale);color:var(--b3);padding:1px 5px;border-radius:3px;font-weight:700;">ATUAL</span>' : ''}</div>
+        <div class="ver-sub">${formatDate(v.ts)} · score: ${v.score || 0}%</div>
+        ${!isCur ? `<div class="ver-restore" onclick="restoreVersion(${s.versions.length - 1 - i})">↺ Restaurar esta versão</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════
+// RN / CA
+// ════════════════════════════════════
+function syncRNCAfromEditor() {
+  if (SE.activeIdx < 0 || SE.activeTab !== 'story') return;
+  const content = editor.getValue();
+  const story   = SE.stories[SE.activeIdx];
+
+  // Extract RNs
+  const rns = [...content.matchAll(/^[-•*]\s*(RN-\d+):\s*(.+)$/gm)].map(m => ({ id:m[1], text:m[2].trim() }));
+  if (rns.length) story.rns = rns;
+
+  // Extract CAs
+  const cas = [...content.matchAll(/^[-•*]\s*(CA-\d+):\s*(.+)$/gm)].map(m => ({ id:m[1], text:m[2].trim() }));
+  if (cas.length) story.cas = cas;
+
+  renderRNCA();
+  updateTopbar();
+}
+
+function renderRNCA() {
+  if (SE.activeIdx < 0) return;
+  const s = SE.stories[SE.activeIdx];
+
+  document.getElementById('rn-list').innerHTML = s.rns.length
+    ? s.rns.map((rn, i) => `<div class="rn-item">
+        <span class="rn-badge rn">${escH(rn.id)}</span>
+        <span class="rn-text" contenteditable="true" onblur="updateRN(${i},this.textContent)">${escH(rn.text)}</span>
+        <span class="rn-del" onclick="deleteRN(${i})">×</span>
+      </div>`).join('')
+    : '<div style="color:var(--t3);font-size:12px;padding:8px 0;">Nenhuma RN detectada. Escreva RN-01: ... no editor.</div>';
+
+  document.getElementById('ca-list').innerHTML = s.cas.length
+    ? s.cas.map((ca, i) => `<div class="ca-item">
+        <span class="rn-badge ca">${escH(ca.id)}</span>
+        <span class="rn-text" contenteditable="true" onblur="updateCA(${i},this.textContent)">${escH(ca.text)}</span>
+        <span class="rn-del" onclick="deleteCA(${i})">×</span>
+      </div>`).join('')
+    : '<div style="color:var(--t3);font-size:12px;padding:8px 0;">Nenhuma CA detectada. Escreva CA-01: ... no editor.</div>';
+
+  document.getElementById('tb-rn').textContent = s.rns.length;
+  document.getElementById('tb-ca').textContent = s.cas.length;
+}
+
+function addRN() {
+  if (SE.activeIdx < 0) return;
+  const s = SE.stories[SE.activeIdx];
+  const n = s.rns.length + 1;
+  const id = `RN-${String(n).padStart(2,'0')}`;
+  s.rns.push({ id, text:'Nova regra de negócio' });
+  renderRNCA();
+  // Insert in editor
+  const cur = editor.getValue();
+  const ins = `\n- ${id}: Nova regra de negócio`;
+  const rnSection = cur.indexOf('## Regras de Negócio');
+  if (rnSection >= 0) {
+    const pos = cur.indexOf('\n', rnSection + 20);
+    editor.executeEdits('', [{ range: editor.getModel().getPositionAt(pos), text: ins }]);
+  }
+}
+
+function addCA() {
+  if (SE.activeIdx < 0) return;
+  const s = SE.stories[SE.activeIdx];
+  const n = s.cas.length + 1;
+  const id = `CA-${String(n).padStart(2,'0')}`;
+  s.cas.push({ id, text:'Dado que [precondição], quando [ação], então [resultado]' });
+  renderRNCA();
+}
+
+function updateRN(i, text) { if (SE.activeIdx >= 0) { SE.stories[SE.activeIdx].rns[i].text = text; SE.isDirty = true; } }
+function updateCA(i, text) { if (SE.activeIdx >= 0) { SE.stories[SE.activeIdx].cas[i].text = text; SE.isDirty = true; } }
+function deleteRN(i) { if (SE.activeIdx >= 0) { SE.stories[SE.activeIdx].rns.splice(i,1); renderRNCA(); } }
+function deleteCA(i) { if (SE.activeIdx >= 0) { SE.stories[SE.activeIdx].cas.splice(i,1); renderRNCA(); } }
+
+// ════════════════════════════════════
+// SCORE ENGINE
+// ════════════════════════════════════
+let scoreTimer = null;
+function debounceScoreCalc() { clearTimeout(scoreTimer); scoreTimer = setTimeout(updateScore, 1500); }
+
+function updateScore() {
+  if (SE.activeIdx < 0 || !editor) return;
+  const s       = SE.stories[SE.activeIdx];
+  const content = editor.getValue();
+
+  // Heuristic score
+  let score = 0;
+  const checks = [
+    { test: /Como .+\nQuero .+\nPara .+/.test(content), pts:20, label:'Estrutura US completa' },
+    { test: s.rns.length >= 2,                           pts:15, label:'≥2 Regras de Negócio' },
+    { test: s.cas.length >= 2,                           pts:15, label:'≥2 Critérios de Aceite' },
+    { test: /WCAG|acessib/i.test(content),               pts:10, label:'Acessibilidade mencionada' },
+    { test: /segurança|LGPD|privacidade/i.test(content), pts:10, label:'Segurança/privacidade' },
+    { test: /performance|tempo de resposta/i.test(content), pts:5, label:'Performance definida' },
+    { test: /Definition of Done/i.test(content),         pts:10, label:'DoD presente' },
+    { test: content.length > 300,                        pts:10, label:'Descrição suficiente' },
+    { test: s.rtmItems.length > 0,                       pts:5,  label:'CTs vinculados' },
+  ];
+
+  const passed = checks.filter(c => c.test);
+  score = passed.reduce((s, c) => s + c.pts, 0);
+  score = Math.min(100, score);
+
+  // Update story
+  const cur = s.versions[s.versions.length - 1];
+  cur.score = score;
+
+  // Update UI
+  const scoreEl = document.getElementById('score-num');
+  const color   = score >= 80 ? 'var(--grn)' : score >= 60 ? 'var(--gold)' : 'var(--red)';
+  scoreEl.textContent = score + '%';
+  scoreEl.style.color = color;
+
+  document.getElementById('score-fill').style.width  = score + '%';
+  document.getElementById('score-fill').style.background = color;
+  document.getElementById('score-detail').textContent =
+    `${passed.length}/${checks.length} critérios OK · ${checks.length - passed.length} pendentes`;
+
+  // Score arc
+  const arc = document.getElementById('score-arc');
+  arc.setAttribute('stroke-dasharray', score + ' ' + (100 - score));
+  arc.setAttribute('stroke', score >= 80 ? '#00D4AA' : score >= 60 ? '#F59E0B' : '#EF4444');
+  document.getElementById('score-ring-txt').textContent = score;
+
+  // Gaps
+  const gaps = checks.filter(c => !c.test).map(c => c.label);
+  document.getElementById('gaps-list').innerHTML = gaps.length
+    ? gaps.map(g => `<div style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--t2);padding:3px 0;"><span style="color:var(--red);">✗</span>${escH(g)}</div>`).join('')
+    : '<div style="color:var(--grn);font-size:12px;">✓ Nenhum gap detectado</div>';
+
+  // Dims
+  const dims = [
+    { label:'Funcional', val:Math.min(100,s.cas.length*20), color:'var(--b3)' },
+    { label:'Técnica',   val:Math.min(100,/segurança|performance/.test(content)?60:20), color:'var(--pur)' },
+    { label:'Compliance',val:Math.min(100,/WCAG|LGPD/.test(content)?70:10), color:'var(--red)' },
+    { label:'Docs',      val:Math.min(100,content.length > 500 ? 80 : content.length/10), color:'var(--gold)' },
+  ];
+  document.getElementById('score-dims').innerHTML = dims.map(d => `
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="font-size:11px;color:var(--t2);width:80px;">${d.label}</div>
+      <div style="flex:1;height:6px;background:var(--s2);border-radius:3px;overflow:hidden;">
+        <div style="height:100%;width:${d.val}%;background:${d.color};border-radius:3px;transition:width .5s;"></div>
+      </div>
+      <div style="font-size:11px;font-family:var(--fm);color:var(--t2);width:32px;text-align:right;">${d.val}%</div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════
+// RTM
+// ════════════════════════════════════
+function renderRTM() {
+  if (SE.activeIdx < 0) return;
+  const s     = SE.stories[SE.activeIdx];
+  const items = s.rtmItems;
+  const altos = items.filter(i => i.risco === 'Alto').length;
+  const autos = items.filter(i => i.auto  === 'Sim').length;
+  document.getElementById('rtm-ct-count').textContent   = items.length;
+  document.getElementById('rtm-risk-count').textContent = altos;
+  document.getElementById('rtm-auto-count').textContent = autos;
+  document.getElementById('tb-ct').textContent          = items.length;
+  document.getElementById('rtm-body').innerHTML = items.length
+    ? items.map(r => `<tr>
+        <td style="font-family:var(--fm);font-size:11px;">${escH(r.id)}</td>
+        <td>${escH(r.rn)}</td>
+        <td><span style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;background:${r.risco==='Alto'?'var(--redp)':r.risco==='Médio'?'var(--goldp)':'var(--grnp)'};color:${r.risco==='Alto'?'var(--red)':r.risco==='Médio'?'#92400E':'#065F46'}">${r.risco}</span></td>
+        <td style="color:${r.auto==='Sim'?'var(--grn)':'var(--t3)'};">${r.auto}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--t3);">Clique em "Gerar CTs" para criar casos de teste</td></tr>';
+}
+
+async function generateCTs() {
+  if (SE.activeIdx < 0) return;
+  const s       = SE.stories[SE.activeIdx];
+  const content = editor.getValue();
+  toast('Gerando CTs via IA…', 'inf');
+
+  if (SE.gwOnline) {
+    try {
+      const resp = await fetch(`${SE.gwUrl}/api/v1/analyze`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ engine:'requirement', content, max_tokens:2000, deployment_mode:'cloud' }),
+      });
+      const data = await resp.json();
+      parseAndAddCTs(data.content, s);
+      return;
+    } catch(e) {}
+  }
+  // Offline: generate from RNs/CAs
+  s.rtmItems = s.rns.flatMap((rn, ri) =>
+    s.cas.slice(ri, ri + 2).map((ca, ci) => ({
+      id:    `CT-${String(s.rtmItems.length + ri*2 + ci + 1).padStart(3,'0')}`,
+      rn:    rn.id, ca: ca.id,
+      desc:  `Verificar: ${rn.text.substring(0,50)}`,
+      risco: ri === 0 ? 'Alto' : 'Médio',
+      prio:  ri === 0 ? 'Alta' : 'Média',
+      gap:   'Nenhum', auto:'Sim',
+    }))
+  );
+  renderRTM();
+  renderStoryList();
+  toast(s.rtmItems.length + ' CTs gerados', 'ok');
+}
+
+function parseAndAddCTs(content, s) {
+  const rows = [];
+  const block = content.match(/```rtm\n([\s\S]*?)```/);
+  if (block) {
+    block[1].trim().split('\n').forEach(line => {
+      const p = line.split('|');
+      if (p.length >= 8) rows.push({ id:p[0].trim(), rn:p[1].trim(), ca:p[2].trim(), desc:p[3].trim(), risco:p[4].trim(), gap:p[5].trim(), prio:p[6].trim(), auto:p[7].trim() });
+    });
+  }
+  if (rows.length) {
+    s.rtmItems = rows;
+    renderRTM();
+    renderStoryList();
+    toast(rows.length + ' CTs extraídos via IA', 'ok');
+  } else {
+    generateCTs(); // fallback
+  }
+}
+
+function exportRTM() {
+  if (SE.activeIdx < 0) return;
+  const s = SE.stories[SE.activeIdx];
+  const hdr = 'ID,RN,CA,Descrição,Risco,Gap,Prioridade,Automatizável\n';
+  const csv = s.rtmItems.map(r => [r.id,r.rn,r.ca,`"${r.desc}"`,r.risco,r.gap,r.prio,r.auto].join(',')).join('\n');
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([hdr+csv],{type:'text/csv'})),
+    download: `rtm-${s.name.replace(/[^a-z0-9]/gi,'-')}.csv`,
+  });
+  a.click();
+  toast('RTM exportada como CSV', 'ok');
+}
+
+// ════════════════════════════════════
+// AI ASSIST (right panel)
+// ════════════════════════════════════
+async function sendAIMsg() {
+  const input = document.getElementById('ai-input');
+  const text  = input.value.trim();
+  if (!text || SE.isAIBusy) return;
+  input.value = '';
+  appendAIMsg(text, 'user');
+  SE.isAIBusy = true;
+  appendAIMsg('<span class="spin">⏳</span> Processando…', 'ai', 'ai-thinking');
+  await callAI(text);
+  SE.isAIBusy = false;
+}
+
+async function analyzeWithAI() {
+  if (!editor || SE.isAIBusy) return;
+  const content = editor.getValue();
+  switchRPanel('ai');
+  appendAIMsg('🧠 Analisar esta história completa: extrair RN, CA, riscos e sugerir cenários Gherkin.', 'user');
+  SE.isAIBusy = true;
+  appendAIMsg('<span class="spin">⏳</span> Analisando…', 'ai', 'ai-thinking');
+  await callAI('Analise a seguinte história e extraia RN, CA, riscos e sugira cenários Gherkin:\n\n' + content);
+  SE.isAIBusy = false;
+}
+
+async function callAI(prompt) {
+  const thinkEl = document.getElementById('ai-thinking');
+  try {
+    let response = '';
+    if (SE.gwOnline) {
+      const resp = await fetch(`${SE.gwUrl}/api/v1/analyze/stream`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ engine:'requirement', content:prompt, max_tokens:1500, deployment_mode:'cloud' }),
+      });
+      if (resp.ok) {
+        thinkEl?.remove();
+        const msgEl = appendAIMsg('', 'ai');
+        const reader = resp.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, {stream:true});
+          const lines = buf.split('\n'); buf = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.startsWith('data:')) continue;
+            const raw = line.slice(5).trim();
+            if (!raw) continue;
+            try {
+              const ev = JSON.parse(raw);
+              if (ev.event === 'token') { response += ev.token; msgEl.innerHTML = mdToHtml(response); scrollAI(); }
+            } catch(e) {}
+          }
+        }
+        // Extract and apply RNs/CAs from response
+        if (SE.activeIdx >= 0) {
+          syncResponseToStory(response);
+        }
+        return;
+      }
+    }
+    // Offline mock
+    thinkEl?.remove();
+    response = mockAIResponse(prompt);
+    appendAIMsg(mdToHtml(response), 'ai');
+    if (SE.activeIdx >= 0) syncResponseToStory(response);
+  } catch(e) {
+    thinkEl?.remove();
+    appendAIMsg('❌ Erro: ' + e.message, 'ai');
+  }
+}
+
+function syncResponseToStory(response) {
+  const s = SE.stories[SE.activeIdx];
+  const rns = [...response.matchAll(/RN-(\d+):\s*(.+?)(?=\n|$)/g)].map(m => ({ id:`RN-${m[1].padStart(2,'0')}`, text:m[2].trim() }));
+  const cas = [...response.matchAll(/CA-(\d+):\s*(.+?)(?=\n|$)/g)].map(m => ({ id:`CA-${m[1].padStart(2,'0')}`, text:m[2].trim() }));
+  if (rns.length) { s.rns = rns; renderRNCA(); updateTopbar(); }
+  if (cas.length) { s.cas = cas; renderRNCA(); updateTopbar(); }
+  const gherkinMatch = response.match(/```gherkin\n([\s\S]*?)```/);
+  if (gherkinMatch) {
+    const cur = s.versions[s.versions.length - 1];
+    cur.gherkin = gherkinMatch[1];
+    toast('Gherkin atualizado → aba Gherkin', 'ok');
+  }
+  updateScore();
+  renderVersions();
+  renderStoryList();
+}
+
+function appendAIMsg(html, role, id) {
+  const msgs = document.getElementById('ai-messages');
+  const el   = document.createElement('div');
+  el.className = 'ai-msg ' + role;
+  el.innerHTML = html;
+  if (id) el.id = id;
+  msgs.appendChild(el);
+  scrollAI();
+  return el;
+}
+
+function scrollAI() {
+  const msgs = document.getElementById('ai-messages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function mockAIResponse(prompt) {
+  return `## 🧠 Análise da História
+
+**RN-01:** Autenticação obrigatória com credenciais válidas
+**RN-02:** Bloqueio após 5 tentativas inválidas
+**RN-03:** Token de sessão com expiração de 24h
+
+**CA-01:** Dado que o usuário tem credenciais válidas, quando acessa o sistema, então é redirecionado ao dashboard
+**CA-02:** Dado que o usuário errou a senha 5x, quando tenta novamente, então recebe mensagem de bloqueio
+**CA-03:** Dado que o token expirou, quando tenta acessar, então é redirecionado ao login
+
+\`\`\`gherkin
+Funcionalidade: Autenticação
+  Cenário: Login com sucesso
+    Dado que tenho credenciais válidas
+    Quando me autentico no sistema
+    Então sou redirecionado ao dashboard
+\`\`\`
+
+**Quality Score estimado:** 75% — faltam requisitos não funcionais e critérios de acessibilidade.`;
+}
+
+// ════════════════════════════════════
+// TOOLBAR HELPERS
+// ════════════════════════════════════
+function insertTemplate(type) {
+  if (!editor) return;
+  const templates = {
+    ac: '\n- CA-XX: Dado que [precondição], quando [ação], então [resultado esperado]',
+    rn: '\n- RN-XX: [descrição da regra de negócio]',
+  };
+  editor.trigger('keyboard', 'type', { text: templates[type] || '' });
+  editor.focus();
+}
+
+function formatContent() {
+  editor?.getAction('editor.action.formatDocument')?.run();
+  toast('Formatado', 'inf');
+}
+
+function copyContent() {
+  const val = editor?.getValue() || '';
+  navigator.clipboard?.writeText(val).then(() => toast('Copiado!', 'ok'));
+}
+
+function setRisk(r) {
+  if (SE.activeIdx >= 0) SE.stories[SE.activeIdx].risk = r;
+  document.querySelectorAll('.risk-opt').forEach(el => {
+    el.classList.remove('selected');
+    if ((r==='high'&&el.classList.contains('high'))||(r==='mid'&&el.classList.contains('mid'))||(r==='low'&&el.classList.contains('low'))) el.classList.add('selected');
+  });
+}
+
+function showDiff() {
+  if (SE.activeIdx < 0) return;
+  const s = SE.stories[SE.activeIdx];
+  if (s.versions.length < 2) { toast('Precisa de pelo menos 2 versões para comparar', 'inf'); return; }
+  const cur  = s.versions[s.versions.length - 1];
+  const prev = s.versions[s.versions.length - 2];
+  const origModel = monaco.editor.createModel(prev.content, 'aqua-story');
+  const modModel  = monaco.editor.createModel(cur.content,  'aqua-story');
+  monaco.editor.createDiffEditor(document.getElementById('monaco-editor'), { theme:'aqua-dark' }).setModel({ original: origModel, modified: modModel });
+  toast('Diff: v' + prev.v + ' → v' + cur.v, 'inf');
+}
+
+function exportStory() {
+  if (SE.activeIdx < 0) return;
+  const s    = SE.stories[SE.activeIdx];
+  const blob = new Blob([JSON.stringify(s, null, 2)], { type:'application/json' });
+  const a    = Object.assign(document.createElement('a'), { href:URL.createObjectURL(blob), download:`story-${s.id}.json` });
+  a.click();
+  toast('História exportada', 'ok');
+}
+
+function switchRPanel(panel) {
+  document.querySelectorAll('.rp-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.rp-panel').forEach(p => p.classList.remove('active'));
+  const tabs = ['score','rnca','rtm','compliance','versions','ai'];
+  const ti   = tabs.indexOf(panel);
+  if (ti >= 0) document.querySelectorAll('.rp-tab')[ti]?.classList.add('active');
+  document.getElementById('rp-' + panel)?.classList.add('active');
+  if (panel === 'compliance') runCompliance();
+}
+
+// ── Compliance §38 ────────────────────────────────────────────
+function complianceStdChanged() { /* nothing — runs on click */ }
+
+async function runCompliance() {
+  if (SE.activeIdx < 0) return;
+  const s       = SE.stories[SE.activeIdx];
+  const content = editor?.getValue() || '';
+  const stds    = [...document.querySelectorAll('#rp-compliance input[type=checkbox]:checked')].map(c=>c.value);
+  const result  = document.getElementById('cmp-result');
+  result.innerHTML = '<div style="text-align:center;padding:16px;color:var(--t3);font-size:12px;"><span class="spin">⚙️</span> Analisando...</div>';
+
+  let data;
+  if (SE.gwOnline) {
+    try {
+      const resp = await fetch(`${SE.gwUrl}/api/v1/compliance/analyze`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: content, standards: stds, story_name: s.name }),
+      });
+      data = await resp.json();
+    } catch(e) { data = localCompliance(content, stds, s.name); }
+  } else {
+    data = localCompliance(content, stds, s.name);
+  }
+
+  renderComplianceResult(data);
+}
+
+function localCompliance(text, stds, storyName) {
+  // Lightweight local rules matching (subset)
+  const checks = [
+    { std:'WCAG', code:'1.4.3', title:'Contraste mínimo',     ok: /contraste|contrast/i.test(text)   },
+    { std:'WCAG', code:'2.1.1', title:'Teclado',              ok: /teclado|keyboard/i.test(text)     },
+    { std:'WCAG', code:'4.1.2', title:'Atributos ARIA',       ok: /aria-|aria label/i.test(text)     },
+    { std:'LGPD', code:'Art.8', title:'Consentimento',        ok: /consentimento|opt.in/i.test(text) },
+    { std:'LGPD', code:'Art.46','title':'Criptografia',       ok: /criptografi|https|bcrypt/i.test(text) },
+    { std:'OWASP', code:'A01', title:'Controle de acesso',    ok: /autorização|role|permissão/i.test(text)},
+    { std:'OWASP', code:'A02', title:'Criptografia',          ok: /https|tls|hash/i.test(text)       },
+    { std:'ISO25010', code:'6.1', title:'Performance SLA',   ok: /\d+\s*s|latência|sla/i.test(text)  },
+  ].filter(c => stds.includes(c.std));
+
+  const passed = checks.filter(c => c.ok);
+  const failed = checks.filter(c => !c.ok);
+  const score  = checks.length ? Math.round(passed.length/checks.length*100) : 0;
+  const byStd  = {};
+  stds.forEach(s => {
+    const sr = checks.filter(c=>c.std===s);
+    const sp = sr.filter(c=>c.ok);
+    byStd[s] = { total:sr.length, passed:sp.length, failed:sr.length-sp.length, score:sr.length?Math.round(sp.length/sr.length*100):0, level:'' };
+    byStd[s].level = byStd[s].score>=80?'✅ Conforme':byStd[s].score>=50?'⚠️ Parcial':'❌ Não Conforme';
+  });
+  return {
+    story_name: storyName, score, level: score>=80?'AA':score>=60?'A':'Não Conforme',
+    total_rules: checks.length, passed: passed.length, failed: failed.length,
+    critical_issues: failed.filter(c=>['Art.8','A01','A02'].includes(c.code)).length,
+    by_standard: byStd,
+    findings: failed.map(c=>({...c,compliant:false,severity:'high',remediation:'Verificar conformidade'})),
+    recommendations: failed.slice(0,4).map(c=>({...c,remediation:`Adicionar critérios para ${c.title}`})),
+  };
+}
+
+function renderComplianceResult(data) {
+  const result = document.getElementById('cmp-result');
+  if (!data) { result.innerHTML='<div style="color:var(--red);font-size:12px;">Erro na análise</div>'; return; }
+
+  const scoreColor = data.score>=80?'var(--grn)':data.score>=60?'var(--gold)':'var(--red)';
+  const stdColors  = {WCAG:'var(--b3)',LGPD:'var(--red)',OWASP:'var(--gold)',ISO25010:'var(--pur)'};
+
+  result.innerHTML = `
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:38px;font-weight:700;color:${scoreColor};font-family:var(--fm);line-height:1;">${data.score}%</div>
+      <div style="font-size:12px;font-weight:600;color:${scoreColor};">${data.level}</div>
+      <div style="font-size:10px;color:var(--t3);margin-top:3px;">${data.passed}/${data.total_rules} regras · ${data.critical_issues} críticos</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+      ${Object.entries(data.by_standard||{}).map(([std,sd]) => `
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="font-size:11px;font-weight:600;color:${stdColors[std]||'var(--t2)'};width:70px;">${std}</div>
+          <div style="flex:1;height:6px;background:var(--s2);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${sd.score||0}%;background:${stdColors[std]||'var(--b3)'};border-radius:3px;"></div>
+          </div>
+          <div style="font-size:10px;color:var(--t3);width:30px;text-align:right;">${sd.score||0}%</div>
+        </div>`).join('')}
+    </div>
+
+    ${data.recommendations?.length ? `
+      <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">⚡ Correções Prioritárias</div>
+      ${data.recommendations.slice(0,4).map(r=>`
+        <div style="padding:6px 8px;border-radius:6px;background:${r.severity==='critical'?'var(--redp)':r.severity==='high'?'var(--goldp)':'var(--s1)'};border:1px solid ${r.severity==='critical'?'#FCA5A5':r.severity==='high'?'#FCD34D':'var(--bd)'};margin-bottom:5px;">
+          <div style="font-size:10px;font-weight:700;color:${r.severity==='critical'?'var(--red)':'#92400E'};">${r.standard} ${r.code} · ${r.title}</div>
+          <div style="font-size:11px;color:var(--t2);margin-top:2px;">${r.remediation}</div>
+        </div>`).join('')}
+    ` : '<div style="color:var(--grn);font-size:12px;padding:8px 0;">✓ Sem recomendações críticas</div>'}
+  `;
+}
+
+// ════════════════════════════════════
+// TOPBAR SYNC
+// ════════════════════════════════════
+function updateTopbar() {
+  if (SE.activeIdx < 0) return;
+  const s = SE.stories[SE.activeIdx];
+  document.getElementById('tb-rn').textContent = s.rns.length;
+  document.getElementById('tb-ca').textContent = s.cas.length;
+  document.getElementById('tb-ct').textContent = s.rtmItems.length;
+}
+
+function updateLineCount() {
+  const lines = editor?.getModel()?.getLineCount() || 0;
+  document.getElementById('sb-lines').textContent = lines;
+}
+
+// ════════════════════════════════════
+// GATEWAY PROBE
+// ════════════════════════════════════
+async function probeGateway() {
+  try {
+    const r = await fetch(`${SE.gwUrl}/health`, { signal: AbortSignal.timeout(2500) });
+    const d = await r.json();
+    if (d.status === 'ok') {
+      SE.gwOnline = true;
+      document.getElementById('sb-gw').textContent = 'online ✓';
+      toast('Gateway conectado', 'ok');
+    }
+  } catch(e) {
+    document.getElementById('sb-gw').textContent = 'offline';
+  }
+}
+
+// ════════════════════════════════════
+// UTILS
+// ════════════════════════════════════
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function mdToHtml(t) {
+  return t
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`([^`]+)`/g,'<code style="background:rgba(0,80,158,.15);padding:1px 4px;border-radius:3px;font-family:var(--fm);">$1</code>')
+    .replace(/^## (.+)$/gm,'<strong style="color:var(--b3);">$1</strong>')
+    .replace(/^[*\-] (.+)$/gm,'<div style="padding:1px 0 1px 10px;">• $1</div>')
+    .replace(/\n/g,'<br>');
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso.replace('Z',''));
+  const diff = (Date.now() - d) / 1000;
+  if (diff < 60)   return 'agora';
+  if (diff < 3600) return Math.floor(diff/60) + 'min atrás';
+  if (diff < 86400)return Math.floor(diff/3600) + 'h atrás';
+  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+function toast(msg, type='inf') {
+  const map = { ok:'t-ok', inf:'t-inf', err:'t-err' };
+  const el  = Object.assign(document.createElement('div'), { className:'toast '+(map[type]||'t-inf'), textContent:msg });
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+</script>
+</body>
+</html>

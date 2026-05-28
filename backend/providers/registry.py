@@ -78,9 +78,7 @@ DEFAULT_PROVIDERS: dict[ProviderName, ProviderConfig] = {
             "gemini-2.5-pro-preview-05-06",       # mais capaz da família 2.5
             "gemini-2.0-flash",                   # rápido, barato, multimodal
             "gemini-2.0-flash-lite",              # ainda mais barato
-            "gemini-1.5-pro",                     # contexto 2M
-            "gemini-1.5-flash",                   # 1.5 rápido
-            "gemini-1.5-flash-8b",                # lightweight
+            "gemini-1.5-pro",                     # contexto 2M (ainda ativo)
         ],
         default_model="gemini-2.0-flash",
         max_tokens=8192,

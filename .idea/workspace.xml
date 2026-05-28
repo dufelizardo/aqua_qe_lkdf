@@ -5,7 +5,46 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d9f5c0c5-5c43-48d6-a1b0-daa065e4f010" name="Changes" comment="change project business">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/ci.yml" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/api/routes_cicd.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/api/routes_compliance.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/api/routes_graph.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/api/routes_knowledge.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/api/routes_observability.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/api/routes_rag.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/api/routes_security.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/api/routes_sessions.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/engines/compliance_engine.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/gateway/cicd.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/gateway/config_manager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/gateway/graph_db.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/gateway/knowledge.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/gateway/observability.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/gateway/rag.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/gateway/security.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/gateway/session_manager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/gateway.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/graph.db" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/knowledge.db" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/sessions.db" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/aqua-qe-observability.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/aqua-qe-roadmap.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/aqua-qe-story-engineering.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/aqua-qe-workbench.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/knowledge-explorer.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/observability.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/story-engineering.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/workbench.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/api/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/api/routes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/gateway/core.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/gateway/core.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/models/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/models/schemas.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/providers/adapters.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/providers/adapters.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/providers/registry.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/providers/registry.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/aqua-qe.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/aqua-qe.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/gateway-panel.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/gateway-panel.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,41 +77,41 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "dufelizardo"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;dufelizardo&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/dufelizardo/aqua_qe_lkdf.git",
-    "accountId": "6d3d8ca7-faa9-4fd7-a77c-617548b66fdb"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/dufelizardo/aqua_qe_lkdf.git&quot;,
+    &quot;accountId&quot;: &quot;6d3d8ca7-faa9-4fd7-a77c-617548b66fdb&quot;
   }
-}]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2
-}]]></component>
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="3EAEi0ycdO7PqmQFav2FXCCRR96" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "main",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -104,7 +143,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779623425102</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="change project business">
+      <option name="closed" value="true" />
+      <created>1779623957668</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1779623957668</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

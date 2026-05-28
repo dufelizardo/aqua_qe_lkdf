@@ -281,6 +281,8 @@ html, body { height: 100%; font-family: var(--sans); background: var(--bg); colo
   <div class="sb-section">Configuração</div>
   <div class="nav" onclick="show('routing', this)"><span class="nav-icon">🗺️</span>Engine Routing</div>
   <div class="nav" onclick="show('test', this)"><span class="nav-icon">🧪</span>Test & Debug</div>
+  <div class="nav" onclick="show('config', this)"><span class="nav-icon">💾</span>Persistência</div>
+  <div class="nav" onclick="show('security', this)"><span class="nav-icon">🔒</span>Segurança §30</div>
   <div class="sb-section">Observabilidade</div>
   <div class="nav" onclick="show('logs', this)"><span class="nav-icon">📋</span>Execution Logs<span class="nav-badge" id="nb-logs">0</span></div>
   <div class="nav" onclick="show('stats', this)"><span class="nav-icon">📈</span>Estatísticas</div>
@@ -528,6 +530,220 @@ html, body { height: 100%; font-family: var(--sans); background: var(--bg); colo
   </div>
 </div>
 
+<!-- ════ CONFIG PERSISTENCE ════ -->
+<div class="panel" id="panel-config">
+  <div class="ph">
+    <div><div class="ph-title">💾 Persistência de Configuração</div><div class="ph-sub">API keys · Settings · Routing — salvos entre restarts</div></div>
+    <div class="ph-right">
+      <button class="btn btn-sm" onclick="loadConfigStatus()">↻ Refresh</button>
+      <button class="btn btn-sm btn-primary" onclick="saveSnapshot()">📸 Salvar Snapshot</button>
+    </div>
+  </div>
+  <div class="pb">
+
+    <!-- Status dos arquivos -->
+    <div class="sdiv">📁 Arquivos de Configuração</div>
+    <div class="g2" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="ct">⚙️ gateway.json</div>
+        <div id="cfg-json-status" style="font-size:12px;color:var(--txt3);">Carregando...</div>
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <button class="btn btn-sm" onclick="downloadConfigJSON()">⬇ Baixar</button>
+          <button class="btn btn-sm btn-primary" onclick="saveSnapshot()">💾 Salvar agora</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">🔑 .env (API Keys)</div>
+        <div id="cfg-env-status" style="font-size:12px;color:var(--txt3);">Carregando...</div>
+        <div style="margin-top:10px;">
+          <div style="font-size:11px;color:var(--txt3);background:var(--surf2);padding:8px 10px;border-radius:6px;font-family:var(--mono);">
+            📌 Nunca commitado no git<br>
+            📌 Só existe localmente em <code>config/.env</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Keys manager -->
+    <div class="sdiv">🔑 Gerenciar API Keys</div>
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:flex-end;">
+        <div style="flex:1;">
+          <label style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Provider</label>
+          <select id="cfg-key-provider" onchange="onCfgProviderChange()" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:7px;font-size:13px;font-family:var(--sans);">
+            <option value="anthropic">Anthropic</option>
+            <option value="openai">OpenAI</option>
+            <option value="google_gemini">Google Gemini</option>
+            <option value="groq">Groq</option>
+            <option value="mistral">Mistral</option>
+            <option value="azure_openai">Azure OpenAI</option>
+          </select>
+        </div>
+        <div style="flex:2;">
+          <label style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">API Key</label>
+          <input type="password" id="cfg-key-value" placeholder="sk-... / AIza... / gsk_..."
+            style="width:100%;padding:8px 12px;border:1px solid var(--bdr);border-radius:7px;font-size:13px;font-family:var(--mono);"
+            onkeydown="if(event.key==='Enter')saveCfgKey()">
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="saveCfgKey()" style="flex-shrink:0;padding:8px 16px;">💾 Salvar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCfgKey()" style="flex-shrink:0;">🗑</button>
+      </div>
+      <div id="cfg-key-result" style="font-size:12px;min-height:20px;"></div>
+      <!-- Keys status table -->
+      <div style="margin-top:12px;" id="cfg-keys-table-wrap">
+        <table class="tbl" id="cfg-keys-table">
+          <thead><tr><th>Provider</th><th>Status</th><th>Ação</th></tr></thead>
+          <tbody id="cfg-keys-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Provider settings persisted -->
+    <div class="sdiv">⚙️ Settings Persistidos (gateway.json)</div>
+    <div id="cfg-providers-wrap" class="card" style="margin-bottom:20px;">
+      <div style="color:var(--txt3);font-size:12px;">Carregando...</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="sdiv">🔧 Ações</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn" onclick="saveSnapshot()">📸 Salvar snapshot completo</button>
+      <button class="btn" onclick="downloadConfigJSON()">⬇ Exportar gateway.json</button>
+      <button class="btn" onclick="importConfigJSON()">⬆ Importar gateway.json</button>
+      <input type="file" id="cfg-import-input" accept=".json" style="display:none;" onchange="onImportFile(event)">
+      <button class="btn btn-danger btn-sm" onclick="resetConfig()">↺ Resetar tudo</button>
+    </div>
+    <div id="cfg-action-result" style="margin-top:10px;font-size:12px;min-height:20px;"></div>
+
+  </div>
+</div>
+
+<!-- ════ SECURITY ════ -->
+<div class="panel" id="panel-security">
+  <div class="ph">
+    <div><div class="ph-title">🔒 Segurança & Governança §30</div><div class="ph-sub">PII · Mascaramento · Auditoria · Política</div></div>
+    <div class="ph-right">
+      <button class="btn btn-sm" onclick="loadSecurity()">↻ Refresh</button>
+      <button class="btn btn-sm btn-primary" onclick="saveSecPolicy()">💾 Salvar Política</button>
+    </div>
+  </div>
+  <div class="pb" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+    <!-- Coluna esquerda: métricas + política -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Métricas -->
+      <div class="sdiv">📊 Estatísticas de Auditoria</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;" id="sec-stats-grid">
+        <div class="card" style="padding:10px 12px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--b3);font-family:var(--mono);" id="sec-total">0</div>
+          <div style="font-size:10px;color:var(--txt3);">Total Audited</div>
+        </div>
+        <div class="card" style="padding:10px 12px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--success);font-family:var(--mono);" id="sec-allowed">0</div>
+          <div style="font-size:10px;color:var(--txt3);">Permitidos</div>
+        </div>
+        <div class="card" style="padding:10px 12px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--warn);font-family:var(--mono);" id="sec-masked">0</div>
+          <div style="font-size:10px;color:var(--txt3);">Mascarados</div>
+        </div>
+        <div class="card" style="padding:10px 12px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--danger);font-family:var(--mono);" id="sec-blocked">0</div>
+          <div style="font-size:10px;color:var(--txt3);">Bloqueados</div>
+        </div>
+      </div>
+
+      <!-- PII stats -->
+      <div class="sdiv">🔍 Detecções de PII por Tipo</div>
+      <div id="sec-pii-stats" class="card" style="padding:12px;">
+        <div style="color:var(--txt3);font-size:12px;">Carregando...</div>
+      </div>
+
+      <!-- Scanner rápido -->
+      <div class="sdiv">🧪 Scanner de PII</div>
+      <div class="card" style="padding:12px;">
+        <textarea id="sec-scan-input" rows="4" placeholder="Cole texto aqui para escanear PII..."
+          style="width:100%;border:1px solid var(--bdr);border-radius:6px;font-family:var(--sans);font-size:12px;padding:8px;resize:vertical;outline:none;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-sm" onclick="scanPII()">🔍 Detectar</button>
+          <button class="btn btn-sm btn-primary" onclick="maskPII()">🛡 Mascarar</button>
+        </div>
+        <div id="sec-scan-result" style="margin-top:10px;font-size:12px;min-height:20px;"></div>
+      </div>
+    </div>
+
+    <!-- Coluna direita: política + audit log -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Política -->
+      <div class="sdiv">⚙️ Política de Segurança</div>
+      <div class="card" style="padding:12px;display:flex;flex-direction:column;gap:10px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:var(--txt2);">
+          <input type="checkbox" id="pol-pii-enabled" checked onchange="policyChanged()">
+          <span><strong>Detecção de PII habilitada</strong> — inspeciona todos os prompts</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:var(--txt2);">
+          <input type="checkbox" id="pol-mask-send" checked onchange="policyChanged()">
+          <span><strong>Mascarar antes de enviar</strong> — remove PII antes do LLM</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:var(--txt2);">
+          <input type="checkbox" id="pol-mask-resp" onchange="policyChanged()">
+          <span><strong>Mascarar nas respostas</strong> — remove PII das respostas do LLM</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:var(--txt2);">
+          <input type="checkbox" id="pol-block-high" onchange="policyChanged()">
+          <span><strong>Bloquear risco alto</strong> — rejeita prompts com PII crítica</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:var(--txt2);">
+          <input type="checkbox" id="pol-lgpd" onchange="policyChanged()">
+          <span><strong>Modo LGPD</strong> — auditoria extra e mascaramento ampliado</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:var(--txt2);">
+          <input type="checkbox" id="pol-audit-all" checked onchange="policyChanged()">
+          <span><strong>Auditar todos os requests</strong> — log completo de auditoria</span>
+        </label>
+
+        <div style="margin-top:4px;">
+          <label style="font-size:11px;font-weight:700;color:var(--txt3);display:block;margin-bottom:4px;">Tamanho máximo de prompt (chars)</label>
+          <input type="number" id="pol-max-len" value="50000" min="1000" max="200000"
+            style="width:100%;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--sans);font-size:12px;outline:none;">
+        </div>
+
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--txt3);display:block;margin-bottom:6px;">Padrões PII habilitados</label>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;" id="pol-patterns">
+            <!-- gerado por JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit log -->
+      <div class="sdiv">📋 Log de Auditoria</div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <select id="audit-filter" onchange="loadAuditLog()" style="padding:6px 8px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--sans);font-size:12px;">
+          <option value="">Todos</option>
+          <option value="masked">Mascarados</option>
+          <option value="blocked">Bloqueados</option>
+          <option value="flagged">Flagged</option>
+          <option value="allowed">Permitidos</option>
+        </select>
+        <input id="audit-search" placeholder="Buscar..." oninput="loadAuditLog()"
+          style="flex:1;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--sans);font-size:12px;outline:none;">
+        <button class="btn btn-sm" onclick="exportAuditLog()">⬇ CSV</button>
+      </div>
+      <div class="card" style="overflow:hidden;">
+        <table class="tbl" id="audit-tbl">
+          <thead><tr><th>ID</th><th>Ação</th><th>Outcome</th><th>Risco</th><th>PII</th><th>Timestamp</th></tr></thead>
+          <tbody id="audit-tbody">
+            <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--txt3);">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- ════ LOGS ════ -->
 <div class="panel" id="panel-logs">
   <div class="ph">
@@ -728,6 +944,8 @@ function show(id, el) {
   if (id === 'logs')      loadLogs();
   if (id === 'stats')     loadStats();
   if (id === 'overview')  renderOverview();
+  if (id === 'config')    loadConfigStatus();
+  if (id === 'security')  loadSecurity();
 }
 
 // ════════════════════════════════════
@@ -1674,6 +1892,392 @@ function toast(msg, type='info') {
   el.textContent = msg;
   document.getElementById('toasts').appendChild(el);
   setTimeout(() => el.remove(), 3000);
+}
+
+// ════════════════════════════════════
+// CONFIG PERSISTENCE
+// ════════════════════════════════════
+
+const PROVIDER_KEY_HINTS = {
+  anthropic:    'sk-ant-...',
+  openai:       'sk-...',
+  google_gemini:'AIza...',
+  groq:         'gsk_...',
+  mistral:      'API key do console.mistral.ai',
+  azure_openai: 'Key do Azure Portal',
+};
+
+async function loadConfigStatus() {
+  try {
+    const data = await apiCall('GET', '/config/status');
+    renderConfigStatus(data);
+
+    const keys = await apiCall('GET', '/config/keys');
+    renderKeysTable(keys);
+  } catch(e) {
+    document.getElementById('cfg-json-status').innerHTML =
+      '<span style="color:var(--danger);">Backend offline</span>';
+    document.getElementById('cfg-env-status').innerHTML =
+      '<span style="color:var(--danger);">Backend offline</span>';
+  }
+}
+
+function renderConfigStatus(data) {
+  const jsonEl = document.getElementById('cfg-json-status');
+  const envEl  = document.getElementById('cfg-env-status');
+
+  jsonEl.innerHTML = `
+    <div style="line-height:2;">
+      <div>Arquivo: <code style="font-size:11px;">${data.config_file || 'config/gateway.json'}</code></div>
+      <div>Existe: <strong style="color:${data.config_exists?'var(--success)':'var(--warn)'};">${data.config_exists?'✓ Sim':'✗ Ainda não'}</strong></div>
+      <div>Providers salvos: <strong>${(data.providers_in_config||[]).length}</strong> (${(data.providers_in_config||[]).join(', ') || '—'})</div>
+      <div>Rotas salvas: <strong>${(data.routes_in_config||[]).length}</strong></div>
+      <div>Última atualização: <span style="color:var(--txt3);">${data.last_updated || 'nunca'}</span></div>
+    </div>`;
+
+  const cfgKeys = data.keys_configured || [];
+  envEl.innerHTML = `
+    <div style="line-height:2;">
+      <div>Arquivo: <code style="font-size:11px;">${data.env_file || 'config/.env'}</code></div>
+      <div>Existe: <strong style="color:${data.env_exists?'var(--success)':'var(--warn)'};">${data.env_exists?'✓ Sim':'✗ Ainda não'}</strong></div>
+      <div>Keys configuradas: <strong style="color:${cfgKeys.length?'var(--success)':'var(--warn)'};">${cfgKeys.length}</strong></div>
+      <div style="font-size:11px;color:var(--txt3);">${cfgKeys.map(p=>`✓ ${p}`).join(' · ') || '—'}</div>
+    </div>`;
+
+  // Providers wrap
+  const provWrap = document.getElementById('cfg-providers-wrap');
+  if (data.providers_in_config?.length) {
+    provWrap.innerHTML = `
+      <div style="font-size:12px;color:var(--txt2);line-height:2;">
+        ${(data.providers_in_config||[]).map(p=>`<div>✓ <strong>${p}</strong> — settings no json</div>`).join('')}
+        ${(data.keys_configured||[]).map(p=>`<div>🔑 <strong>${p}</strong> — key no .env</div>`).join('')}
+      </div>`;
+  } else {
+    provWrap.innerHTML = '<div style="color:var(--txt3);font-size:12px;">Nenhuma configuração salva ainda. Use "Salvar Snapshot" para persistir o estado atual.</div>';
+  }
+}
+
+function renderKeysTable(data) {
+  const all = [
+    'anthropic','openai','google_gemini','groq','mistral','azure_openai','ollama','vllm'
+  ];
+  const configured = data.configured || [];
+  document.getElementById('cfg-keys-body').innerHTML = all.map(p => `
+    <tr>
+      <td><strong>${p}</strong></td>
+      <td>${configured.includes(p)
+          ? '<span class="badge bgrn">✓ Configurada</span>'
+          : '<span class="badge bgray">✗ Não configurada</span>'}</td>
+      <td>
+        <button class="btn btn-sm" onclick="quickEditKey('${p}')">✏️ Editar</button>
+        ${configured.includes(p) ? `<button class="btn btn-sm btn-danger" onclick="deleteKeyFor('${p}')">🗑</button>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+function onCfgProviderChange() {
+  const prov = document.getElementById('cfg-key-provider').value;
+  const input = document.getElementById('cfg-key-value');
+  input.placeholder = PROVIDER_KEY_HINTS[prov] || 'API Key...';
+}
+
+function quickEditKey(prov) {
+  document.getElementById('cfg-key-provider').value = prov;
+  document.getElementById('cfg-key-value').value = '';
+  document.getElementById('cfg-key-value').focus();
+  onCfgProviderChange();
+  toast(`Editando key de ${prov}`, 'info');
+}
+
+async function saveCfgKey() {
+  const prov = document.getElementById('cfg-key-provider').value;
+  const key  = document.getElementById('cfg-key-value').value.trim();
+  if (!key) { toast('Digite a API key', 'err'); return; }
+
+  const resultEl = document.getElementById('cfg-key-result');
+  resultEl.style.color = 'var(--txt3)';
+  resultEl.textContent = 'Salvando...';
+
+  try {
+    await apiCall('POST', '/config/api-key', { provider: prov, api_key: key });
+    document.getElementById('cfg-key-value').value = '';
+    resultEl.style.color = 'var(--success)';
+    resultEl.textContent = `✓ Key de "${prov}" salva no .env e aplicada ao gateway`;
+    toast(`Key de ${prov} salva ✓`, 'ok');
+    await loadConfigStatus();
+  } catch(e) {
+    resultEl.style.color = 'var(--danger)';
+    resultEl.textContent = `✗ Erro: ${e.message}`;
+    toast('Erro ao salvar key', 'err');
+  }
+}
+
+async function deleteCfgKey() {
+  const prov = document.getElementById('cfg-key-provider').value;
+  if (!confirm(`Remover API key de "${prov}"?`)) return;
+  try {
+    await apiCall('POST', '/config/api-key', { provider: prov, api_key: '' });
+    document.getElementById('cfg-key-result').textContent = `✓ Key de "${prov}" removida`;
+    toast(`Key de ${prov} removida`, 'info');
+    await loadConfigStatus();
+  } catch(e) {
+    toast('Erro ao remover key', 'err');
+  }
+}
+
+async function deleteKeyFor(prov) {
+  if (!confirm(`Remover API key de "${prov}"?`)) return;
+  try {
+    await apiCall('POST', '/config/api-key', { provider: prov, api_key: '' });
+    toast(`Key de ${prov} removida`, 'info');
+    await loadConfigStatus();
+  } catch(e) { toast('Erro', 'err'); }
+}
+
+async function saveSnapshot() {
+  const resultEl = document.getElementById('cfg-action-result');
+  if (resultEl) { resultEl.style.color = 'var(--txt3)'; resultEl.textContent = 'Salvando snapshot...'; }
+  try {
+    await apiCall('POST', '/config/snapshot');
+    toast('Snapshot salvo ✓', 'ok');
+    if (resultEl) { resultEl.style.color = 'var(--success)'; resultEl.textContent = '✓ Snapshot completo salvo em config/gateway.json'; }
+    await loadConfigStatus();
+  } catch(e) {
+    toast('Erro ao salvar snapshot', 'err');
+    if (resultEl) { resultEl.style.color = 'var(--danger)'; resultEl.textContent = `✗ ${e.message}`; }
+  }
+}
+
+async function downloadConfigJSON() {
+  try {
+    const data = await apiCall('GET', '/config/status');
+    // Fetch the actual json file content via a fresh snapshot
+    await apiCall('POST', '/config/snapshot');
+    toast('Baixe o arquivo config/gateway.json da pasta do projeto', 'info');
+  } catch(e) {
+    toast('Backend offline', 'err');
+  }
+}
+
+function importConfigJSON() {
+  document.getElementById('cfg-import-input').click();
+}
+
+async function onImportFile(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    // Apply routing overrides
+    for (const [engine, routing] of Object.entries(data.routing || {})) {
+      const r = LOCAL.routing.find(x => x.engine === engine);
+      if (r) {
+        r.primary   = routing.primary   || r.primary;
+        r.model     = routing.model     || r.model;
+        r.fallbacks = routing.fallbacks || r.fallbacks;
+        r.strategy  = routing.strategy  || r.strategy;
+      }
+      await apiCall('PUT', '/routing/' + engine, {
+        primary_provider:   routing.primary,
+        primary_model:      routing.model,
+        fallback_providers: routing.fallbacks || [],
+        strategy:           routing.strategy || 'capability_match',
+      }).catch(() => {});
+    }
+    renderRouting();
+    toast(`✓ ${Object.keys(data.routing||{}).length} rotas importadas`, 'ok');
+    document.getElementById('cfg-action-result').textContent =
+      `✓ Importado: ${Object.keys(data.providers||{}).length} providers, ${Object.keys(data.routing||{}).length} rotas`;
+  } catch(e) {
+    toast('Erro ao importar: ' + e.message, 'err');
+  }
+  event.target.value = '';
+}
+
+async function resetConfig() {
+  if (!confirm('Resetar toda configuração persistida? (Não remove as API keys do .env)')) return;
+  LOCAL.routing = buildDefaultRouting();
+  changedEngines.clear();
+  renderRouting();
+  // Push all defaults to backend
+  for (const r of LOCAL.routing) {
+    await apiCall('PUT', '/routing/' + r.engine, {
+      primary_provider:   r.primary,
+      primary_model:      r.model,
+      fallback_providers: r.fallbacks,
+      strategy:           r.strategy,
+    }).catch(() => {});
+  }
+  await saveSnapshot();
+  toast('Configuração resetada ao padrão', 'info');
+}
+
+// ════════════════════════════════════
+// SECURITY & GOVERNANCE §30
+// ════════════════════════════════════
+const PII_PATTERNS_ALL = ['cpf','cnpj','email','phone_br','cep','rg','credit_card','api_key','bearer','password','ip_v4'];
+let _secPolicyDirty = false;
+
+async function loadSecurity() {
+  try {
+    const [summary, piiStats, auditData] = await Promise.all([
+      apiCall('GET', '/security/summary'),
+      apiCall('GET', '/security/pii-stats'),
+      apiCall('GET', '/security/audit?limit=30'),
+    ]);
+
+    // Stats
+    const as = summary.audit_stats || {};
+    document.getElementById('sec-total').textContent   = as.total   || 0;
+    document.getElementById('sec-allowed').textContent = as.allowed || 0;
+    document.getElementById('sec-masked').textContent  = as.masked  || 0;
+    document.getElementById('sec-blocked').textContent = as.blocked || 0;
+
+    // PII stats
+    const byType = piiStats.by_type || {};
+    const piiEl  = document.getElementById('sec-pii-stats');
+    const maxPII = Math.max(...Object.values(byType), 1);
+    piiEl.innerHTML = Object.entries(byType).length
+      ? Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <div style="font-size:11px;color:var(--txt2);width:100px;font-family:var(--mono);">${k}</div>
+            <div style="flex:1;height:6px;background:var(--surf2);border-radius:3px;overflow:hidden;">
+              <div style="height:100%;width:${v/maxPII*100}%;background:var(--warn);border-radius:3px;"></div>
+            </div>
+            <div style="font-size:11px;font-family:var(--mono);color:var(--txt2);width:24px;text-align:right;">${v}</div>
+          </div>`).join('')
+      : '<div style="color:var(--success);font-size:12px;">✓ Nenhuma detecção registrada</div>';
+
+    // Policy
+    const pol = summary.policy || {};
+    document.getElementById('pol-pii-enabled').checked = pol.pii_masking_enabled !== false;
+    document.getElementById('pol-mask-send').checked   = pol.mask_before_send    !== false;
+    document.getElementById('pol-mask-resp').checked   = pol.mask_in_response    === true;
+    document.getElementById('pol-block-high').checked  = pol.block_on_high_risk  === true;
+    document.getElementById('pol-lgpd').checked        = pol.lgpd_mode           === true;
+    document.getElementById('pol-audit-all').checked   = pol.audit_all_requests  !== false;
+    document.getElementById('pol-max-len').value       = pol.max_prompt_length   || 50000;
+
+    const enabledPats = pol.pii_patterns_enabled || PII_PATTERNS_ALL;
+    document.getElementById('pol-patterns').innerHTML = PII_PATTERNS_ALL.map(p => `
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;background:var(--surf2);padding:3px 8px;border-radius:4px;border:1px solid ${enabledPats.includes(p)?'var(--b3)':'var(--bdr)'};">
+        <input type="checkbox" ${enabledPats.includes(p)?'checked':''} value="${p}" onchange="policyChanged()" style="margin:0;">
+        ${p}
+      </label>`).join('');
+
+    _secPolicyDirty = false;
+
+    // Audit log
+    renderAuditLog(auditData.entries || []);
+
+  } catch(e) {
+    document.getElementById('sec-pii-stats').innerHTML =
+      `<div style="color:var(--danger);font-size:12px;">Backend offline — ${e.message}</div>`;
+  }
+}
+
+function policyChanged() { _secPolicyDirty = true; }
+
+async function saveSecPolicy() {
+  const patterns = [...document.querySelectorAll('#pol-patterns input:checked')].map(i => i.value);
+  const updates = {
+    pii_masking_enabled:  document.getElementById('pol-pii-enabled').checked,
+    mask_before_send:     document.getElementById('pol-mask-send').checked,
+    mask_in_response:     document.getElementById('pol-mask-resp').checked,
+    block_on_high_risk:   document.getElementById('pol-block-high').checked,
+    lgpd_mode:            document.getElementById('pol-lgpd').checked,
+    audit_all_requests:   document.getElementById('pol-audit-all').checked,
+    max_prompt_length:    parseInt(document.getElementById('pol-max-len').value) || 50000,
+    pii_patterns_enabled: patterns,
+  };
+  try {
+    await apiCall('PATCH', '/security/policy', { updates });
+    _secPolicyDirty = false;
+    toast('Política de segurança salva ✓', 'ok');
+  } catch(e) {
+    toast('Erro ao salvar política: ' + e.message, 'err');
+  }
+}
+
+async function scanPII() {
+  const text = document.getElementById('sec-scan-input').value.trim();
+  if (!text) { toast('Digite texto para escanear', 'info'); return; }
+  try {
+    const data = await apiCall('POST', '/security/scan', { text });
+    const f = data.findings || {};
+    const res = document.getElementById('sec-scan-result');
+    if (f.pii_types?.length || f.sensitive_terms?.length) {
+      const riskColor = f.risk_level==='high'?'var(--danger)':f.risk_level==='medium'?'var(--warn)':'var(--success)';
+      res.innerHTML = `<div style="padding:8px 10px;border-radius:6px;background:${f.risk_level==='high'?'var(--dangerp)':f.risk_level==='medium'?'var(--goldp)':'var(--successpale)'};border:1px solid ${riskColor};">
+        <strong style="color:${riskColor};">⚠️ Risco: ${f.risk_level.toUpperCase()}</strong><br>
+        ${f.pii_types?.length ? `PII detectada: <strong>${f.pii_types.join(', ')}</strong><br>` : ''}
+        ${f.sensitive_terms?.length ? `Termos sensíveis: ${f.sensitive_terms.join(', ')}` : ''}
+        <div style="margin-top:4px;font-size:11px;color:var(--txt3);">Tipos que seriam mascarados: ${data.would_mask?.join(', ') || 'nenhum'}</div>
+      </div>`;
+    } else {
+      res.innerHTML = '<div style="padding:8px 10px;border-radius:6px;background:var(--successpale);border:1px solid var(--success);color:#065F46;">✓ Nenhuma PII detectada — texto seguro</div>';
+    }
+  } catch(e) { toast('Scanner offline', 'err'); }
+}
+
+async function maskPII() {
+  const text = document.getElementById('sec-scan-input').value.trim();
+  if (!text) return;
+  try {
+    const data = await apiCall('POST', '/security/mask', { text });
+    document.getElementById('sec-scan-input').value = data.masked_text;
+    const res = document.getElementById('sec-scan-result');
+    res.innerHTML = data.changed
+      ? `<div style="padding:8px 10px;border-radius:6px;background:var(--b3pale);border:1px solid var(--b3mid);">
+          ✓ Mascarado: <strong>${data.masked_types.join(', ')}</strong>
+        </div>`
+      : '<div style="color:var(--success);font-size:12px;">✓ Nenhuma PII para mascarar</div>';
+  } catch(e) { toast('Mascaramento offline', 'err'); }
+}
+
+async function loadAuditLog() {
+  const outcome = document.getElementById('audit-filter').value;
+  const q       = document.getElementById('audit-search').value.trim();
+  try {
+    let url = '/security/audit?limit=50';
+    if (outcome) url += `&outcome=${outcome}`;
+    if (q)       url += `&q=${encodeURIComponent(q)}`;
+    const data = await apiCall('GET', url);
+    renderAuditLog(data.entries || []);
+  } catch(e) {}
+}
+
+function renderAuditLog(entries) {
+  const outcomeChip = o =>
+    o==='allowed' ? '<span class="badge bgrn" style="font-size:10px;">✓ permitido</span>' :
+    o==='masked'  ? '<span class="badge" style="font-size:10px;background:var(--goldp);color:#92400E;">⚙ mascarado</span>' :
+    o==='blocked' ? '<span class="badge" style="font-size:10px;background:var(--dangerp);color:var(--danger);">✗ bloqueado</span>' :
+    o==='flagged' ? '<span class="badge" style="font-size:10px;background:var(--purpale);color:var(--purple);">⚑ flagged</span>' :
+    `<span class="badge bgray" style="font-size:10px;">${o}</span>`;
+
+  const riskColor = r => r==='high'?'var(--danger)':r==='medium'?'var(--warn)':'var(--success)';
+
+  document.getElementById('audit-tbody').innerHTML = entries.length
+    ? entries.map(e => `<tr>
+        <td style="font-family:var(--mono);font-size:10px;color:var(--txt3);">${e.id}</td>
+        <td style="font-size:11px;">${e.action}</td>
+        <td>${outcomeChip(e.outcome)}</td>
+        <td style="font-size:11px;font-weight:600;color:${riskColor(e.risk_level)};">${e.risk_level}</td>
+        <td style="font-size:10px;font-family:var(--mono);color:var(--txt3);">${(e.pii_types||[]).join(', ')||'—'}</td>
+        <td style="font-size:10px;font-family:var(--mono);color:var(--txt3);white-space:nowrap;">${(e.timestamp||'').substring(11,23)}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--txt3);">Nenhuma entrada de auditoria</td></tr>';
+}
+
+function exportAuditLog() {
+  apiCall('GET', '/security/audit?limit=500').then(data => {
+    const entries = data.entries || [];
+    const hdr = 'ID,Ação,Outcome,Risco,PII,Timestamp,Session\n';
+    const csv = entries.map(e => [e.id,e.action,e.outcome,e.risk_level,(e.pii_types||[]).join('|'),e.timestamp,e.session_id||''].join(',')).join('\n');
+    _dlBlob(hdr+csv, 'aqua-qe-audit.csv', 'text/csv');
+    toast(`${entries.length} entradas exportadas`, 'ok');
+  }).catch(() => toast('Erro ao exportar', 'err'));
 }
 
 // ════════════════════════════════════

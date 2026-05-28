@@ -1,0 +1,14 @@
+{
+  "deployment_mode": "cloud",
+  "_updated_at": "2026-05-26T21:50:43.902715Z",
+  "routing": {
+    "requirement": {
+      "primary": "anthropic",
+      "model": "claude-sonnet-4-5",
+      "fallbacks": [
+        "openai"
+      ],
+      "strategy": "capability_match"
+    }
+  }
+}
